@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-Docs E-Sign Portal - Sender Audit Trail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="portal-header">
+    <div class="header-left">
+      <!-- S-Docs Logo Mockup -->
+      <div class="logo-wrapper">
+        <div class="logo-squares">
+          <span class="square sq-blue"></span>
+          <span class="square sq-green"></span>
+          <span class="square sq-orange"></span>
+          <span class="square sq-purple"></span>
+        </div>
+        <span class="logo-text">s-docs</span>
+      </div>
+      <span class="badge-enterprise">Enterprise</span>
+
+      <!-- Primary Tabs -->
+      <nav class="portal-nav">
+        <a href="#" class="nav-item active" id="tab-sig-requests">Signature requests</a>
+        <a href="#" class="nav-item">Documents</a>
+        <a href="#" class="nav-item">Templates</a>
+        <a href="#" class="nav-item">Settings</a>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <button class="header-action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        Take a tour
+      </button>
+      <button class="header-action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"></path>
+        </svg>
+        help
+      </button>
+      <div class="user-profile">
+        <span class="profile-avatar">A</span>
+        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Portal Sub-Header (User email) -->
+  <div class="sub-header">
+    <span class="user-email">sbokhari@sdocs.com</span>
+  </div>
+
+  <!-- Main Split Layout -->
+  <main class="portal-body">
+    
+    <!-- Left Column: Signature Requests List -->
+    <section class="requests-section">
+      <div class="section-header">
+        <h2 class="section-title">Signature requests</h2>
+        <button class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add
+        </button>
+      </div>
+
+      <!-- Requests Table Header -->
+      <div class="table-header">
+        <div class="col-status">Status</div>
+        <div class="col-request">Request</div>
+      </div>
+
+      <!-- Requests List Rows -->
+      <div class="requests-list" id="requests-list">
+        
+        <!-- Row 1 -->
+        <div class="request-row" data-request-id="req-1">
+          <div class="col-status">
+            <span class="status-pill pill-draft">Draft</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">Enclosure Document -2026-06-02 -Test Ticket 01</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> Test Ticket 01</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 2 (Default Selected Active Row) -->
+        <div class="request-row active" data-request-id="req-2">
+          <div class="col-status">
+            <span class="status-pill pill-sent" id="req-2-status">Sent</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">S-Docs-NDA</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> S-Docs</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="request-row" data-request-id="req-3">
+          <div class="col-status">
+            <span class="status-pill pill-completed">Completed</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">Security Solution Deployment - MediaFlow Productions-Quote</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> Security Solution Deployment - MediaFlow Productions</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="request-row" data-request-id="req-4">
+          <div class="col-status">
+            <span class="status-pill pill-sent">Sent</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">Shaun - AC3 Test -2026-05-28 -S-Docs</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> S-Docs</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="request-row" data-request-id="req-5">
+          <div class="col-status">
+            <span class="status-pill pill-sent">Sent</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">Blank PDF April 3 2026.pdf</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 6 -->
+        <div class="request-row" data-request-id="req-6">
+          <div class="col-status">
+            <span class="status-pill pill-completed">Completed</span>
+          </div>
+          <div class="col-request">
+            <h3 class="req-name">S-Docs -NDA</h3>
+            <p class="req-meta">
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> S-Docs 2.0</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> 1 document</span>
+              <span class="meta-item"><svg viewBox="0 0 24 24" class="meta-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> 1 recipient</span>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Right Column: Audit Trail Drawer -->
+    <aside class="audit-drawer" id="audit-drawer">
+      <div class="drawer-header">
+        <span class="doc-count">Document 1 of 1</span>
+        <div class="doc-summary-header">
+          <h2 class="drawer-doc-name" id="drawer-doc-name">S-Docs-NDA</h2>
+          <span class="status-badge-inline badge-sent" id="drawer-doc-status-badge">Sent</span>
+        </div>
+      </div>
+
+      <div class="drawer-body">
+        
+        <!-- Toggle details helper info -->
+        <p class="helper-info">Click any status row chevron to view detailed activity logs.</p>
+        
+        <!-- Timeline Component -->
+        <div class="timeline" id="audit-timeline">
+          <!-- Timeline will be populated dynamically based on request ID -->
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Persistent Tour Guide Overlay (Floating Widget) -->
+  <div class="tour-guide-widget open" id="tour-widget">
+    <div class="tour-header">
+      <div class="tour-badge">
+        <svg class="tour-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <span>Interactive Tour</span>
+      </div>
+      <button class="tour-close-btn" id="tour-minimize-btn" title="Minimize/Maximize Guide">
+        <svg class="chevron-icon" id="tour-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="tour-content" id="tour-content-area">
+      <h4 class="tour-step-title" id="tour-step-title">Step 6: Sender's Audit Trail</h4>
+      <p class="tour-step-desc" id="tour-step-desc">
+        We are now in the S-Docs Sender Portal. The status drawer for the **S-Docs-NDA** document displays the updated signing timeline.
+        <br><br>
+        Notice the new <strong>"Delegated"</strong> event entry highlighted below. It dynamically reflects the details entered by the signer!
+        <br><br>
+        <strong>Action:</strong> Click on the highlighted <strong>"Delegated"</strong> chevron to view the delegation details and reason.
+      </p>
+      
+      <div class="tour-footer">
+        <div class="tour-progress">
+          <span class="step-dot" data-step="1"></span>
+          <span class="step-dot" data-step="2"></span>
+          <span class="step-dot" data-step="3"></span>
+          <span class="step-dot" data-step="4"></span>
+          <span class="step-dot" data-step="5"></span>
+          <span class="step-dot active" data-step="6"></span>
+        </div>
+        <div class="tour-nav-buttons">
+          <button class="tour-btn tour-btn-secondary" id="tour-prev-btn">Back</button>
+          <button class="tour-btn tour-btn-primary" id="tour-finish-btn">Finish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Identity Provider</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="okta-login.css">
+</head>
+<body>
+  <div class="idp-page">
+    <div class="idp-card">
+      <div class="idp-logo-row">
+        <div class="idp-logo-mark">O</div>
+        <span class="idp-logo-text">okta</span>
+      </div>
+
+      <h1 class="idp-title" id="idp-title">Sign In</h1>
+      <p class="idp-subtitle">to continue to <strong>S-Docs E-Signature</strong></p>
+
+      <form id="idp-form">
+        <div class="idp-form-group">
+          <label for="idp-username">Username</label>
+          <input type="email" id="idp-username" required>
+        </div>
+        <div class="idp-form-group" id="idp-password-group" style="display:none;">
+          <label for="idp-password">Password</label>
+          <input type="password" id="idp-password" placeholder="Enter your password">
+        </div>
+        <button type="submit" class="idp-btn" id="idp-submit-btn">Next</button>
+      </form>
+
+      <div class="idp-loading" id="idp-loading">
+        <div class="idp-spinner"></div>
+        <p>Signing you in&hellip;</p>
+      </div>
+
+      <p class="idp-footer">This is a simulated identity provider screen for prototyping purposes only.</p>
+    </div>
+  </div>
+
+  <script src="okta-login.js"></script>
+</body>
+</html>

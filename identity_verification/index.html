@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Identity - E-Sign Identity Verification Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype-only control: in production the signer never sees this, they only see
+       whichever single method the sender configured for them. -->
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype Control</span>
+    <label for="sender-method-select">Sender-configured verification method:</label>
+    <select id="sender-method-select">
+      <option value="email">Email</option>
+      <option value="sms">SMS / Text Message</option>
+      <option value="oidc">Single Sign-On (Okta)</option>
+      <option value="jumio">ID + Selfie Verification (Jumio)</option>
+    </select>
+    <span class="proto-toolbar-hint">In production, the signer only ever sees the one method above &mdash; never a choice.</span>
+  </div>
+
+  <!-- Top Document Header Bar -->
+  <header class="document-header" id="document-header">
+    <div class="header-left">
+      <h1 class="document-title" id="doc-title-heading">CloudFlow Order Form -7/28/2026.pdf</h1>
+      <p class="signer-info" id="signer-recipient-info">You are signing as <strong>Cloud Flow</strong> (Recipient 2 of 2)</p>
+    </div>
+    <div class="header-right">
+      <span class="status-badge" id="verify-status-badge">Identity Not Verified</span>
+    </div>
+  </header>
+
+  <!-- Main Canvas Wrapper -->
+  <main class="page-container" id="main-content">
+
+    <!-- Screen 1: Consent Card -->
+    <div class="card active" id="consent-card">
+      <div class="card-header">
+        <h2 class="card-title">Consent to do Business Electronically</h2>
+      </div>
+      <div class="card-body">
+        <p class="consent-text">
+          The information provided in this document is for general informational purposes only and does <strong>not</strong> constitute legal, financial, or professional advice. While every effort has been made to ensure the accuracy and reliability of the content, no guarantees are made regarding its completeness or applicability to your specific situation. <a href="#" class="inline-link">Click Here</a>
+        </p>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-outline" id="btn-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-consent">Confirm</button>
+      </div>
+    </div>
+
+    <!-- Screen 2a: Email Verify -->
+    <div class="card" id="email-verify-card">
+      <div class="card-header">
+        <h2 class="card-title">Verify your identity</h2>
+      </div>
+      <div class="card-body text-center">
+        <div class="verify-method-badge verify-badge-email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
+        </div>
+        <p class="consent-text">You must verify your identity to complete this document. Click the button below and a verification code will be sent to your email address<br><strong id="email-verify-address">anarasimhan@sdocs.com</strong></p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-email-back">Back</button>
+        <button class="btn btn-primary" id="btn-email-send">Confirm</button>
+      </div>
+    </div>
+
+    <!-- Screen 2b: SMS Verify -->
+    <div class="card" id="sms-verify-card">
+      <div class="card-header">
+        <h2 class="card-title">Verify your identity</h2>
+      </div>
+      <div class="card-body text-center">
+        <div class="verify-method-badge verify-badge-sms">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        </div>
+        <p class="consent-text">You must verify your identity to complete this document. Click the button below and a verification code will be sent via text message to<br><strong id="sms-verify-number">(•••) •••-0148</strong></p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-sms-back">Back</button>
+        <button class="btn btn-primary" id="btn-sms-send">Confirm</button>
+      </div>
+    </div>
+
+    <!-- Screen 2c: OIDC / Okta Verify -->
+    <div class="card" id="oidc-verify-card">
+      <div class="card-header">
+        <h2 class="card-title">Verify with Single Sign-On</h2>
+      </div>
+      <div class="card-body text-center">
+        <div class="verify-method-badge verify-badge-oidc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <p class="consent-text">You'll be securely redirected to your organization's identity provider to sign in. Once authenticated, you'll be brought right back here to continue signing.</p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-oidc-back">Back</button>
+        <button class="btn btn-okta" id="btn-oidc-continue">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="10"></circle></svg>
+          Continue with Okta
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 2d-i: Jumio Intro -->
+    <div class="card" id="jumio-intro-card">
+      <div class="card-header">
+        <h2 class="card-title">Verify with ID + Selfie</h2>
+      </div>
+      <div class="card-body text-center">
+        <div class="verify-method-badge verify-badge-jumio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </div>
+        <p class="consent-text">To confirm you're really you, we'll ask for a quick selfie and a photo of a government-issued ID (like a driver's license or passport). This is handled securely by our verification partner, Jumio.</p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-jumio-back">Back</button>
+        <button class="btn btn-primary" id="btn-jumio-start">Begin Verification</button>
+      </div>
+    </div>
+
+    <!-- Screen 2d-ii: Jumio Selfie Capture -->
+    <div class="card" id="jumio-selfie-card">
+      <div class="card-header">
+        <h2 class="card-title">Take a Selfie</h2>
+        <span class="jumio-step-tag">Step 1 of 2</span>
+      </div>
+      <div class="card-body text-center">
+        <div class="camera-frame camera-frame-round" id="selfie-frame">
+          <svg class="camera-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <div class="capture-flash" id="selfie-flash"></div>
+          <svg class="capture-check" id="selfie-check" viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+        </div>
+        <p class="camera-hint">Center your face in the frame and hold still</p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-selfie-back">Back</button>
+        <button class="btn btn-primary" id="btn-selfie-capture">Capture Selfie</button>
+      </div>
+    </div>
+
+    <!-- Screen 2d-iii: Jumio ID Capture -->
+    <div class="card" id="jumio-id-card">
+      <div class="card-header">
+        <h2 class="card-title">Photograph Your ID</h2>
+        <span class="jumio-step-tag">Step 2 of 2</span>
+      </div>
+      <div class="card-body text-center">
+        <div class="camera-frame camera-frame-card" id="id-frame">
+          <svg class="camera-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"></rect><circle cx="8" cy="12" r="2"></circle><line x1="13" y1="10" x2="19" y2="10"></line><line x1="13" y1="14" x2="19" y2="14"></line></svg>
+          <div class="capture-flash" id="id-flash"></div>
+          <svg class="capture-check" id="id-check" viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+        </div>
+        <p class="camera-hint">Align your driver's license within the frame</p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-id-back">Back</button>
+        <button class="btn btn-primary" id="btn-id-capture">Capture ID</button>
+      </div>
+    </div>
+
+    <!-- Screen 2d-iv: Jumio Processing -->
+    <div class="card" id="jumio-processing-card">
+      <div class="card-body text-center">
+        <div class="spinner-ring"></div>
+        <h2 class="card-title" style="margin-top: 18px;">Verifying your identity&hellip;</h2>
+        <p class="consent-text">Hang tight, this usually takes just a few seconds.</p>
+        <p class="powered-by-tag">Powered by Jumio</p>
+      </div>
+    </div>
+
+    <!-- Screen 3: Verified Success -->
+    <div class="card" id="verified-success-card">
+      <div class="card-body text-center">
+        <div class="success-icon-wrapper">
+          <div class="success-checkmark">
+            <svg class="checkmark-svg" viewBox="0 0 52 52">
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+        </div>
+        <h2 class="card-title text-success">Identity Verified</h2>
+        <p class="consent-text" id="verified-method-note">Verified via Email.</p>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-try-another">Try Another Method</button>
+        <button class="btn btn-primary" id="btn-goto-document">Continue to Document</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Verification Code (OTP) Modal -->
+  <div class="modal-overlay" id="otp-modal">
+    <div class="modal-container modal-container-narrow">
+      <div class="modal-header">
+        <h3 class="modal-title">Enter your verification code to continue</h3>
+        <button class="modal-close" id="otp-close-x" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="modal-description">We've sent a code to <strong id="otp-destination">anarasimhan@sdocs.com</strong></p>
+        <div class="otp-input-row">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+          <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+        </div>
+        <p class="resend-text">Didn't get a code?<br><a href="#" class="inline-link" id="otp-resend">Click to resend</a> in <span id="otp-resend-timer">00:115</span> sec</p>
+      </div>
+      <div class="modal-footer justify-center">
+        <button class="btn btn-primary btn-full" id="btn-otp-verify">Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Signing View Overlay -->
+  <div class="signing-view-overlay" id="signing-view">
+    <header class="signing-header">
+      <div class="header-left">
+        <h1 class="signing-doc-title">CloudFlow Order Form -7/28/2026.pdf</h1>
+        <p class="signing-recipient-subtitle">You are signing as <strong>Cloud Flow</strong> (Recipient 2 of 2)</p>
+      </div>
+      <div class="header-right">
+        <span class="verified-pill" id="signing-verified-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Verified via Email
+        </span>
+        <div class="progress-bar-container">
+          <div class="progress-track">
+            <div class="progress-fill" id="signing-progress-fill"></div>
+          </div>
+          <span class="progress-text" id="signing-progress-text">0%</span>
+        </div>
+        <button class="btn btn-primary" id="btn-signing-finish">Finish</button>
+      </div>
+    </header>
+
+    <div class="signing-tabs-bar">
+      <div class="signing-tab active">CloudFlow Order form&hellip;</div>
+    </div>
+
+    <div class="signing-workspace">
+      <aside class="thumbnail-sidebar">
+        <div class="thumbnail-card active">
+          <div class="thumbnail-page-preview">
+            <div class="preview-line-placeholder pl-preview-1"></div>
+            <div class="preview-line-placeholder pl-preview-2"></div>
+            <div class="preview-sig-placeholder"></div>
+          </div>
+          <span class="thumbnail-label">Page 1 of 2</span>
+        </div>
+        <div class="thumbnail-card">
+          <div class="thumbnail-page-preview">
+            <div class="preview-line-placeholder pl-preview-1"></div>
+            <div class="preview-line-placeholder pl-preview-2"></div>
+          </div>
+          <span class="thumbnail-label">Page 2 of 2</span>
+        </div>
+      </aside>
+
+      <div class="document-canvas-wrapper">
+        <div class="pdf-page-canvas">
+          <div class="doc-heading-placeholder">Abbott Laboratories</div>
+          <div class="doc-orderform-title">ORDER FORM (Q-987654)</div>
+
+          <div class="start-tag-pointer">Start</div>
+
+          <div class="signature-tag-field" id="sig-field-trigger">
+            <span class="sig-placeholder">Sign here <span class="asterisk">*</span></span>
+            <div class="signed-signature-preview" id="signed-preview-text">Cloud Flow</div>
+          </div>
+
+          <div class="page-line-placeholder pl-1"></div>
+          <div class="page-line-placeholder pl-2"></div>
+          <div class="page-line-placeholder pl-3"></div>
+          <div class="page-line-placeholder pl-4"></div>
+          <div class="page-line-placeholder pl-5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent Tour Guide Overlay -->
+  <div class="tour-guide-widget open" id="tour-widget">
+    <div class="tour-header">
+      <div class="tour-badge">
+        <svg class="tour-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <span>Interactive Tour</span>
+      </div>
+      <button class="tour-close-btn" id="tour-minimize-btn" title="Minimize/Maximize Guide">
+        <svg class="chevron-icon" id="tour-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="tour-content" id="tour-content-area">
+      <h4 class="tour-step-title" id="tour-step-title">Step 1: Signer Consent Screen</h4>
+      <p class="tour-step-desc" id="tour-step-desc">
+        Welcome to the e-signature identity verification prototype. The signer starts with the usual consent screen.
+        <br><br>
+        <strong>Action:</strong> Click <strong>"Confirm"</strong> to proceed to identity verification.
+      </p>
+
+      <div class="tour-footer">
+        <div class="tour-progress">
+          <span class="step-dot active" data-step="1"></span>
+          <span class="step-dot" data-step="2"></span>
+          <span class="step-dot" data-step="3"></span>
+        </div>
+        <div class="tour-nav-buttons">
+          <button class="tour-btn tour-btn-secondary" id="tour-prev-btn" disabled>Back</button>
+          <button class="tour-btn tour-btn-primary" id="tour-next-btn">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent to do Business Electronically - E-Sign Delegation Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Document Header Bar -->
+  <header class="document-header" id="document-header">
+    <div class="header-left">
+      <h1 class="document-title" id="doc-title-heading">S-Docs-NDA</h1>
+      <p class="signer-info" id="signer-recipient-info">You are signing as <strong>Default Signer</strong> (Recipient 1 of 1)</p>
+    </div>
+    <div class="header-right">
+      <span class="status-badge">Signing Session</span>
+    </div>
+  </header>
+
+  <!-- Main Canvas Wrapper -->
+  <main class="page-container" id="main-content">
+    
+    <!-- Consent Card (Screen 1) -->
+    <div class="card active" id="consent-card">
+      <div class="card-header">
+        <h2 class="card-title">Consent to do Business Electronically</h2>
+      </div>
+      <div class="card-body">
+        <p class="consent-text">
+          The information provided in this document is for general informational purposes only and does <strong>not</strong> constitute legal, financial, or professional advice. While every effort has been made to ensure the accuracy and reliability of the content, no guarantees are made regarding its completeness or applicability to your specific situation. <a href="#" class="inline-link" id="consent-terms-link">Click Here</a>
+        </p>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-outline" id="btn-cancel">Cancel</button>
+        <div class="action-buttons-right">
+          <button class="btn-delegate-style" id="btn-delegate-trigger">
+            <svg class="btn-icon-grey" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2H6a2 2 0 0 0-2 2v12m0 4v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+              <polyline points="13 2 13 9 20 9"></polyline>
+              <path d="M2 15a2 2 0 0 1 2-2h4"></path>
+              <polyline points="6 11 8 13 6 15"></polyline>
+            </svg>
+            Delegate
+          </button>
+          <button class="btn btn-primary" id="btn-confirm-consent">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success & Redirect Card (Screen 3) -->
+    <div class="card" id="success-card">
+      <div class="card-body text-center">
+        <div class="success-icon-wrapper">
+          <div class="success-checkmark">
+            <svg class="checkmark-svg" viewBox="0 0 52 52">
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+        </div>
+        
+        <h2 class="card-title text-success">Signing Successfully Delegated</h2>
+        
+        <div class="delegation-summary-box">
+          <p class="summary-label">Delegated To:</p>
+          <p class="summary-value" id="success-delegate-name">Firstname Lastname</p>
+          <p class="summary-email" id="success-delegate-email">email@example.com</p>
+        </div>
+
+        <div class="countdown-container">
+          <div class="timer-ring-container">
+            <svg class="timer-svg" viewBox="0 0 80 80">
+              <circle class="timer-bg" cx="40" cy="40" r="36"></circle>
+              <circle class="timer-progress" id="timer-bar" cx="40" cy="40" r="36"></circle>
+            </svg>
+            <div class="timer-seconds" id="timer-seconds-text">30</div>
+          </div>
+          <p class="countdown-text">Redirecting you to <strong>www.sdocs.com</strong>...</p>
+        </div>
+      </div>
+      <div class="card-footer justify-center">
+        <button class="btn btn-outline" id="btn-restart-tour-early">Restart Tour</button>
+        <button class="btn btn-primary" id="btn-redirect-now">Redirect Now (Skip)</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Document Signing View Overlay (Screen 1.5) -->
+  <div class="signing-view-overlay" id="signing-view">
+    <header class="signing-header">
+      <div class="header-left">
+        <h1 class="signing-doc-title">Blank PDF April 3 2026.pdf</h1>
+        <p class="signing-recipient-subtitle">You are signing as <strong>Anand</strong> (Recipient 1 of 1)</p>
+      </div>
+      <div class="header-right">
+        <!-- Progress Bar Mockup -->
+        <div class="progress-bar-container">
+          <div class="progress-track">
+            <div class="progress-fill" id="signing-progress-fill"></div>
+          </div>
+          <span class="progress-text" id="signing-progress-text">0%</span>
+        </div>
+        <button class="btn-delegate-style" id="btn-signing-delegate">
+          <svg class="btn-icon-grey" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2H6a2 2 0 0 0-2 2v12m0 4v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+            <path d="M2 15a2 2 0 0 1 2-2h4"></path>
+            <polyline points="6 11 8 13 6 15"></polyline>
+          </svg>
+          Delegate
+        </button>
+        <button class="btn btn-primary" id="btn-signing-finish">Finish</button>
+      </div>
+    </header>
+
+    <!-- Tab row -->
+    <div class="signing-tabs-bar">
+      <div class="signing-tab active">Blank PDF April 3 20...</div>
+    </div>
+
+    <!-- Signing workspace -->
+    <div class="signing-workspace">
+      <!-- Thumbnail Sidebar -->
+      <aside class="thumbnail-sidebar">
+        <div class="thumbnail-card active">
+          <div class="thumbnail-page-preview">
+            <div class="preview-line-placeholder pl-preview-1"></div>
+            <div class="preview-line-placeholder pl-preview-2"></div>
+            <div class="preview-sig-placeholder"></div>
+          </div>
+          <span class="thumbnail-label">Page 1 of 1</span>
+        </div>
+      </aside>
+      
+      <!-- Document Canvas -->
+      <div class="document-canvas-wrapper">
+        <div class="pdf-page-canvas">
+          <!-- Yellow 'Start' arrow pointer -->
+          <div class="start-tag-pointer">
+            Start
+          </div>
+          
+          <!-- Clickable Signature field tag -->
+          <div class="signature-tag-field" id="sig-field-trigger">
+            <span class="sig-placeholder">Sign here <span class="asterisk">*</span></span>
+            <div class="signed-signature-preview" id="signed-preview-text">Default Signer</div>
+          </div>
+
+          <!-- Rest of page content styled line placeholders -->
+          <div class="page-line-placeholder pl-1"></div>
+          <div class="page-line-placeholder pl-2"></div>
+          <div class="page-line-placeholder pl-3"></div>
+          <div class="page-line-placeholder pl-4"></div>
+          <div class="page-line-placeholder pl-5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delegation Modal Overlay (Screen 2) -->
+  <div class="modal-overlay" id="delegation-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Delegate Signing Authority</h3>
+        <button class="modal-close" id="modal-close-x" aria-label="Close modal">&times;</button>
+      </div>
+      <form id="delegation-form">
+        <div class="modal-body">
+          <p class="modal-description">Provide the details of the individual you wish to delegate your signing authority to. An email notification will be sent to them to complete the document signing.</p>
+          
+          <div class="warning-line">
+            <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Any data entered will be reset once delegated to another signer</span>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first-name">First Name <span class="required">*</span></label>
+              <input type="text" id="first-name" name="firstName" required placeholder="e.g. Jane" value="John">
+            </div>
+            <div class="form-group">
+              <label for="last-name">Last Name <span class="required">*</span></label>
+              <input type="text" id="last-name" name="lastName" required placeholder="e.g. Smith" value="Smith">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address <span class="required">*</span></label>
+            <input type="email" id="email" name="email" required placeholder="jane.smith@example.com" value="john_ceo@acme.com">
+          </div>
+
+          <div class="form-group">
+            <label for="reason">Reason for Delegation <span class="required">*</span></label>
+            <textarea id="reason" name="reason" rows="3" required placeholder="Describe why you are delegating signing authority (e.g., traveling without email access, out of office)">Exceeds my dollar threshold for signatory authority.</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="modal-btn-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-btn-confirm">Confirm Delegation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Persistent Tour Guide Overlay (Floating Widget) -->
+  <div class="tour-guide-widget open" id="tour-widget">
+    <div class="tour-header">
+      <div class="tour-badge">
+        <svg class="tour-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <span>Interactive Tour</span>
+      </div>
+      <button class="tour-close-btn" id="tour-minimize-btn" title="Minimize/Maximize Guide">
+        <svg class="chevron-icon" id="tour-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="tour-content" id="tour-content-area">
+      <h4 class="tour-step-title" id="tour-step-title">Step 1: Signer Consent Screen</h4>
+      <p class="tour-step-desc" id="tour-step-desc">
+        Welcome to the esignature signer experience. S-Docs asks the signer for electronic business consent. 
+        We have added a new <strong>"Delegate"</strong> button to allow the recipient to pass the signature authority to another person.
+        <br><br>
+        <strong>Action:</strong> Click the highlighted <strong>"Delegate"</strong> button to begin.
+      </p>
+      
+      <div class="tour-footer">
+        <div class="tour-progress">
+          <span class="step-dot active" data-step="1"></span>
+          <span class="step-dot" data-step="2"></span>
+          <span class="step-dot" data-step="3"></span>
+          <span class="step-dot" data-step="4"></span>
+          <span class="step-dot" data-step="5"></span>
+          <span class="step-dot" data-step="6"></span>
+        </div>
+        <div class="tour-nav-buttons">
+          <button class="tour-btn tour-btn-secondary" id="tour-prev-btn" disabled>Back</button>
+          <button class="tour-btn tour-btn-primary" id="tour-next-btn">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

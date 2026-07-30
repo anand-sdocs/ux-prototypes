@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salesforce Hierarchy Navigator - S-Docs Prototype</title>
+  <!-- Modern Font from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <!-- S-Docs Simulating Logo -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0176d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      <div class="doc-info">
+        <div class="doc-title">
+          pdf upload chris
+          <span class="badge-draft">Draft</span>
+        </div>
+        <div class="doc-subtitle">
+          <span>S-Docs Inc | Opportunity Data</span>
+          <span>•</span>
+          <span>Last saved Jun 2, 2026 08:49 am</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <button class="btn">Take a tour</button>
+      <button class="btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Help
+      </button>
+      <button class="btn">Preview</button>
+      <button class="btn btn-primary">Publish template</button>
+    </div>
+  </header>
+
+  <!-- App Main Body -->
+  <div class="app-body" style="position: relative;">
+    
+    <!-- Sidebar Explorer -->
+    <aside class="app-sidebar">
+      
+      <!-- Tabs (Data Active) -->
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active">Data</div>
+        <div class="sidebar-tab" style="cursor: not-allowed; opacity: 0.5;">Settings</div>
+      </div>
+      
+      <!-- Type Filter Buttons Row -->
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" title="Show All Types">All</button>
+        <button class="filter-btn" data-filter="text" title="Text / String Fields">T</button>
+        <button class="filter-btn" data-filter="number" title="Numeric / Currency Fields">#</button>
+        <button class="filter-btn" data-filter="boolean_date" title="Checkbox / Date Fields">☑</button>
+        <button class="filter-btn" data-filter="reference" title="Lookup Relationships">🔗</button>
+      </div>
+      
+      <!-- Search Input Container -->
+      <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Search fields...">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </div>
+      
+      <!-- Scrollable Explorer Panels -->
+      <div class="sidebar-content">
+        
+        <!-- Object Accordions List (Initially Opportunity, new ones added dynamically) -->
+        <div class="accordions-container">
+          <!-- Standalone Static RUNTIME Accordion to match Screenshot structure -->
+          <div class="accordion-section">
+            <div class="accordion-header" style="opacity: 0.6; cursor: default;">
+              <div class="accordion-header-left">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>Runtime</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Container for Dynamic Salesforce Object Accordions -->
+          <div id="accordions-list">
+            <!-- Opportunity accordion and others injected here -->
+          </div>
+        </div>
+        
+      </div>
+    </aside>
+
+    <!-- Floating Flyout Submenu Panel (To the right of the main menu, floats above canvas) -->
+    <div id="flyout-panel" class="flyout-panel">
+      <!-- Close Button -->
+      <button class="flyout-close-btn" id="btn-close-flyout" title="Close Submenu">×</button>
+      <!-- Flyout Content Container -->
+      <div class="flyout-content-wrapper">
+        <!-- Breadcrumbs (Injected dynamically) -->
+        <div id="flyout-breadcrumbs"></div>
+        
+        <!-- Flyout Search & Filter Controls -->
+        <div class="flyout-controls">
+          <div class="filter-bar" style="border-bottom: none; background-color: transparent; padding: 8px 0 4px 0;">
+            <button class="filter-btn flyout-filter-btn active" data-filter="all" title="Show All Types">All</button>
+            <button class="filter-btn flyout-filter-btn" data-filter="text" title="Text Fields">T</button>
+            <button class="filter-btn flyout-filter-btn" data-filter="number" title="Numeric Fields">#</button>
+            <button class="filter-btn flyout-filter-btn" data-filter="boolean_date" title="Checkbox / Date Fields">☑</button>
+            <button class="filter-btn flyout-filter-btn" data-filter="reference" title="Lookup Relationships">🔗</button>
+          </div>
+          <div class="search-container" style="padding: 6px 0 10px 0; border-bottom: 1px solid var(--border-color);">
+            <input type="text" id="flyout-search-input" class="search-input" placeholder="Search fields in submenu...">
+            <svg class="search-icon" style="right: 10px;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+        </div>
+        
+        <!-- Flyout Fields List (Injected dynamically) -->
+        <div id="flyout-fields-list" style="margin-top: 12px; flex: 1;">
+          <!-- Field cards list injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Workspace -->
+    <main class="app-workspace">
+      
+      <!-- Canvas Toolbar controls -->
+      <div class="workspace-toolbar">
+        <span style="font-weight: 500; color: var(--text-muted);">Page 1 of 1</span>
+        <div style="flex: 1;"></div>
+        <button class="btn" id="btn-clear-canvas">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          Clear Canvas
+        </button>
+      </div>
+      
+      <!-- Canvas Page View -->
+      <div class="canvas-container">
+        <div class="blank-page-canvas" id="blank-page-canvas">
+          
+          <!-- Instructions Placeholder inside empty Canvas -->
+          <div class="canvas-placeholder" id="canvas-placeholder">
+            <svg class="canvas-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <div style="font-size: 14px; font-weight: 500;">Drop Salesforce Fields Here</div>
+            <div style="font-size: 11px;">Drag fields from the active Explorer submenu or side accordions and drop them on this page.</div>
+          </div>
+          
+          <!-- Dropped Merge Tags will render here -->
+          
+        </div>
+      </div>
+    </main>
+    
+  </div>
+
+  <!-- Toast Notification element -->
+  <div class="toast" id="toast">Merge tag copied to clipboard!</div>
+
+  <!-- Scripts -->
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
