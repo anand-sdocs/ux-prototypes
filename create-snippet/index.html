@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Templates - S-Docs Create Snippet Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="top-nav">
+    <div class="top-nav-left">
+      <div class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0176d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        s-docs
+        <span class="badge-enterprise">Enterprise</span>
+      </div>
+      <nav class="top-nav-links">
+        <a href="#">Signature requests</a>
+        <a href="#">Documents</a>
+        <a href="#" class="active">Templates</a>
+        <a href="#">Settings</a>
+      </nav>
+    </div>
+    <div class="top-nav-right">
+      <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18l6-4 6 4V3z"></path></svg>Take a tour</a>
+      <a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path></svg>help</a>
+      <div class="avatar">A</div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-header-row">
+      <h1 class="page-title">Templates</h1>
+      <div class="header-actions-right">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" placeholder="Search">
+        </div>
+        <button class="filters-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+          Filters
+        </button>
+      </div>
+    </div>
+
+    <div class="page-header-row" style="margin-top:-8px;">
+      <div class="split-btn" id="split-btn">
+        <button class="split-btn-main" id="btn-add-main">+ Add</button>
+        <button class="split-btn-caret" id="btn-add-caret">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+
+        <div class="add-dropdown" id="add-dropdown">
+          <div class="add-dropdown-item" id="item-create-new">
+            <div>
+              <div class="add-dropdown-item-title">Create new</div>
+              <div class="add-dropdown-item-desc">Start a new blank template or snippet</div>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+
+            <div class="create-flyout" id="create-flyout">
+              <div class="create-flyout-item" id="item-new-template">
+                <div class="create-flyout-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+                <div>
+                  <div class="create-flyout-item-title">New Template</div>
+                  <div class="create-flyout-item-desc">A full document with a primary data source (e.g. Deal, Opportunity).</div>
+                </div>
+              </div>
+              <div class="create-flyout-item is-snippet" id="item-new-snippet">
+                <div class="create-flyout-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+                </div>
+                <div>
+                  <div class="create-flyout-item-title">New Snippet</div>
+                  <div class="create-flyout-item-desc">A reusable content block with its own variables, insertable into any template.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="add-dropdown-divider"></div>
+          <div class="add-dropdown-item">
+            <div>
+              <div class="add-dropdown-item-title">Upload a document</div>
+              <div class="add-dropdown-item-desc">Support for pdf</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="templates-table">
+      <thead>
+        <tr>
+          <th style="width:120px;">Status</th>
+          <th>Name</th>
+          <th style="width:140px;">Category</th>
+          <th style="width:160px;">Owner</th>
+          <th style="width:140px;">Last activity</th>
+        </tr>
+      </thead>
+      <tbody id="templates-tbody">
+        <tr>
+          <td><span class="status-pill published">Published</span></td>
+          <td>
+            <div class="doc-name">Contract Template</div>
+            <div class="doc-meta"><span>📄 Deal</span><span>🔗 S-Docs for HubSpot</span></div>
+          </td>
+          <td>Template</td>
+          <td>Anand Narasimhan</td>
+          <td>29 minute(s) ago</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill published">Published</span></td>
+          <td>
+            <div class="doc-name">Customer Address</div>
+            <div class="doc-meta"><span class="type-chip">Snippet</span></div>
+          </td>
+          <td>Snippet</td>
+          <td>Anand Narasimhan</td>
+          <td>2 day(s) ago</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill draft">Draft</span></td>
+          <td>
+            <div class="doc-name">Untitled Document</div>
+            <div class="doc-meta"><span>📄 Company</span><span>🔗 S-Docs for HubSpot</span></div>
+          </td>
+          <td>Template</td>
+          <td>Shaun Bokhari</td>
+          <td>1 day(s) ago</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill published">Published</span></td>
+          <td>
+            <div class="doc-name">Template 1</div>
+            <div class="doc-meta"><span>📄 Company</span><span>🔗 S-Docs for HubSpot</span></div>
+          </td>
+          <td>Template</td>
+          <td>Anand Narasimhan</td>
+          <td>22 day(s) ago</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
