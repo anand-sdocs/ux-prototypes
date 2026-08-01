@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Templates - S-Docs Workspace Switcher Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <div class="sdocs-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0176d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="logo-wordmark">s-docs</span>
+      </div>
+      <span class="badge-enterprise">ENTERPRISE</span>
+
+      <!-- Secondary switch-workspace entry point: mirrors the avatar menu action -->
+      <button class="header-ws-pill" id="header-ws-pill" title="Switch workspace"></button>
+
+      <nav class="main-nav">
+        <span class="nav-link">Signature requests</span>
+        <span class="nav-link">Documents</span>
+        <span class="nav-link active">Templates</span>
+        <span class="nav-link">Settings</span>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="header-text-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        Take a tour
+      </button>
+      <div class="help-btn-wrap">
+        <button class="header-icon-btn" title="Help">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+        <button class="header-icon-btn" style="width:16px;" title="Help menu">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      </div>
+
+      <div class="avatar-circle" id="avatar-btn"></div>
+
+      <div class="user-dropdown" id="user-dropdown">
+        <div class="dropdown-user-block">
+          <div class="dropdown-user-name" id="dd-user-name"></div>
+          <div class="dropdown-user-email" id="dd-user-email"></div>
+        </div>
+        <div class="dropdown-ws-block" id="dropdown-ws-block"></div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" id="btn-about-me">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a7 7 0 0 1 14 0v1"></path></svg>
+          About me
+        </button>
+        <button class="dropdown-item" id="btn-switch-workspace">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          Switch workspace
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item danger" id="btn-sign-out">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="toolbar-row">
+      <div class="toolbar-left">
+        <button class="btn btn-primary">+ Add</button>
+      </div>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" placeholder="Search">
+        </div>
+        <button class="btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          Filters
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="templates-table">
+        <thead>
+          <tr>
+            <th style="width:90px;">Status</th>
+            <th>Template</th>
+            <th style="width:120px;">Category</th>
+            <th style="width:160px;">Owner</th>
+            <th style="width:140px;">Last activity</th>
+            <th style="width:36px;"></th>
+          </tr>
+        </thead>
+        <tbody id="templates-tbody"><!-- injected --></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Switch Workspace Modal -->
+  <div class="modal-overlay" id="switch-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Switch workspace</h3>
+        <button class="modal-close" id="modal-close-x">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="workspace-list" id="modal-workspace-list"><!-- injected --></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="session.js"></script>
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
