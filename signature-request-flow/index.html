@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Signature Request - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Prototype-only control -->
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype Control</span>
+    <label for="variation-select">Scenario:</label>
+    <select id="variation-select">
+      <option value="1">Variation 1 &mdash; Ad hoc, Email verification only (toggle)</option>
+      <option value="2">Variation 2 &mdash; Ad hoc, Email + Okta-CAC (dropdown)</option>
+      <option value="3">Variation 3 &mdash; Template, Email + Okta-CAC (read-only dropdown)</option>
+    </select>
+    <span class="proto-toolbar-hint" id="variation-hint"></span>
+  </div>
+
+  <!-- Top Header / Stepper -->
+  <header class="doc-header">
+    <div class="header-left">
+      <h1 class="doc-title" id="doc-title" contenteditable="true" spellcheck="false">Identity Verification</h1>
+      <button class="icon-btn" id="btn-edit-title" title="Rename">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <span class="badge-draft">Draft</span>
+    </div>
+
+    <nav class="stepper" id="stepper">
+      <div class="step" data-step="1">
+        <span class="step-dot"></span>
+        <span class="step-label">Documents</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2">
+        <span class="step-dot"></span>
+        <span class="step-label">Signers</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3">
+        <span class="step-dot"></span>
+        <span class="step-label">Fields &amp; Data</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step="4">
+        <span class="step-dot"></span>
+        <span class="step-label">Review &amp; Send</span>
+      </div>
+    </nav>
+
+    <div class="header-right">
+      <button class="link-btn" id="btn-tour">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Take a tour
+      </button>
+      <button class="link-btn" id="btn-help">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        help
+      </button>
+      <button class="btn btn-outline" id="btn-back">Back</button>
+      <button class="btn btn-primary" id="btn-next">Next</button>
+    </div>
+  </header>
+
+  <main class="wizard-body">
+
+    <!-- STEP 1: Documents -->
+    <section class="step-panel active" id="panel-1">
+      <div class="panel-heading">
+        <div>
+          <h2>Documents</h2>
+          <p class="panel-sub">Add documents to be included in the envelope. You are able to edit and add fields to your documents before sending.</p>
+        </div>
+        <button class="btn btn-primary" id="btn-add-document">Add Document</button>
+        <input type="file" id="file-input" accept="application/pdf" hidden multiple>
+      </div>
+
+      <div class="doc-list" id="doc-list"></div>
+      <div class="empty-state" id="doc-empty">
+        <p>No documents added yet. Click <strong>Add Document</strong> to upload a PDF.</p>
+      </div>
+    </section>
+
+    <!-- STEP 2: Signers -->
+    <section class="step-panel" id="panel-2">
+      <div class="panel-heading">
+        <div>
+          <h2>Signers</h2>
+          <p class="panel-sub">Add recipients for each document and choose how their identity should be verified before signing.</p>
+        </div>
+      </div>
+
+      <div class="signers-card">
+        <div class="signers-table" id="signers-table">
+          <div class="signers-row signers-row-head">
+            <div class="col-doc">DOCUMENT</div>
+            <div class="col-signer">SIGNERS</div>
+            <div class="col-verify">IDENTITY VERIFICATION?</div>
+            <div class="col-actions"></div>
+          </div>
+          <div id="signers-body"></div>
+        </div>
+        <button class="add-signer-link" id="btn-add-signer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Add a Signer
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Fields & Data -->
+    <section class="step-panel" id="panel-3">
+      <div class="fields-tabbar" id="fields-tabbar"></div>
+      <div class="fields-layout">
+        <aside class="fields-palette">
+          <h3>Fields</h3>
+          <button class="field-group-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            Field Groups
+          </button>
+          <div class="palette-list" id="palette-list"></div>
+        </aside>
+        <div class="fields-canvas-wrap">
+          <div class="fields-canvas" id="fields-canvas"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: Review & Send -->
+    <section class="step-panel" id="panel-4">
+      <div class="review-layout">
+        <div class="email-card">
+          <h2>Email Message</h2>
+          <p class="panel-sub">The following email message will be sent to each recipient</p>
+
+          <label class="field-label">To</label>
+          <div class="static-field" id="review-to"></div>
+
+          <label class="field-label">CC</label>
+          <input class="static-input" type="text" placeholder="Enter email address(es)">
+
+          <label class="field-label">Subject line</label>
+          <div class="static-field subject-field">
+            <span class="merge-tag">{{Runtime.Record name}}</span> - Please sign
+          </div>
+
+          <label class="field-label">Message</label>
+          <div class="message-body">
+            <p>Dear <span class="merge-tag pill">RECIPIENT_FIRST_NAME</span> <span class="merge-tag pill">RECIPIENT_LAST_NAME</span></p>
+            <p>This is a friendly reminder that your documents are ready to be signed. To complete the e-signature process, please follow the steps below:</p>
+            <p>1. Click the Sign Now button below<br>2. Review the document(s) carefully<br>3. Click on signature fields to add your electronic signature<br>4. Submit once all required signature inputs are complete</p>
+            <p>This signature request will expire in <span class="merge-tag pill">EXPIRY_DAYS</span></p>
+            <p><span class="merge-tag pill">E_SIGN_LINK</span></p>
+            <p>Regards,<br><span class="merge-tag pill">SENDER_FIRST_NAME</span> <span class="merge-tag pill">SENDER_LAST_NAME</span></p>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="btn-request-signature">Request signature</button>
+        </div>
+
+        <div class="review-sidebar">
+          <div class="sidebar-card">
+            <div class="sidebar-card-head">
+              <h3>Documents <span class="count-badge" id="doc-count-badge">0</span></h3>
+              <button class="edit-link" data-goto="1">Edit</button>
+            </div>
+            <div id="review-doc-list"></div>
+          </div>
+
+          <div class="sidebar-card">
+            <div class="sidebar-card-head">
+              <h3>Recipients <span class="count-badge" id="recipient-count-badge">0</span></h3>
+              <button class="edit-link" data-goto="2">Edit</button>
+            </div>
+            <div id="review-recipient-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Persistent Developer Guide (Floating Widget) -->
+  <div class="tour-guide-widget" id="tour-widget">
+    <div class="tour-header" id="tour-header">
+      <div class="tour-badge">
+        <svg class="tour-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span>Developer Guide</span>
+      </div>
+      <button class="tour-close-btn" id="tour-minimize-btn" title="Minimize/Maximize Guide">
+        <svg class="chevron-icon" id="tour-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="tour-content" id="tour-content-area">
+      <h4 class="tour-step-title" id="tour-step-title"></h4>
+      <p class="tour-step-desc" id="tour-step-desc"></p>
+
+      <div class="tour-footer">
+        <div class="tour-progress" id="tour-progress">
+          <span class="step-dot" data-step="1"></span>
+          <span class="step-dot" data-step="2"></span>
+          <span class="step-dot" data-step="3"></span>
+          <span class="step-dot" data-step="4"></span>
+          <span class="step-dot" data-step="5"></span>
+        </div>
+        <div class="tour-nav-buttons">
+          <button class="tour-btn tour-btn-secondary" id="tour-prev-btn">Back</button>
+          <button class="tour-btn tour-btn-primary" id="tour-next-btn">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="success-modal">
+    <div class="modal modal-success">
+      <div class="success-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h3>Signature request sent</h3>
+      <p id="success-copy"></p>
+      <button class="btn btn-primary" id="btn-success-close">Done</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
