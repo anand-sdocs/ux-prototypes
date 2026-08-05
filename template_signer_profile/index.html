@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Signer Profile - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="doc-header">
+    <div class="header-left">
+      <span class="logo-mark">
+        <svg width="26" height="26" viewBox="0 0 24 24">
+          <polygon points="12,2 22,7 12,12" fill="#ff6b57"/>
+          <polygon points="2,7 12,12 12,22 2,17" fill="#3aa0ff"/>
+          <polygon points="22,7 12,12 12,22 22,17" fill="#3ecf8e"/>
+        </svg>
+      </span>
+      <div class="title-block">
+        <div class="title-row">
+          <h1 class="doc-title" id="doc-title" contenteditable="true" spellcheck="false">Untitled Document</h1>
+          <button class="icon-btn" id="btn-edit-title" title="Rename">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </button>
+          <span class="badge-draft">Draft</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-item">HubSpot-DEVE&hellip;</span>
+          <span class="meta-dot">&middot;</span>
+          <span class="meta-item">Company</span>
+          <span class="meta-dot">&middot;</span>
+          <span class="meta-item">Last saved on Aug 4, 2026 07:25 pm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="link-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Take a tour
+      </button>
+      <button class="link-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        help
+      </button>
+      <button class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview
+      </button>
+      <button class="btn btn-primary" id="btn-publish">Publish template</button>
+
+      <div class="kebab-wrap">
+        <button class="icon-btn kebab-btn" id="btn-kebab" title="More">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+        </button>
+        <div class="kebab-menu" id="kebab-menu">
+          <button data-panel="basic">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Properties
+          </button>
+          <button data-panel="signers">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Signers
+          </button>
+          <button data-panel="fieldgroups">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7l3-4h12l3 4"/></svg>
+            Field groups
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="left-toolbar">
+      <button class="tool-btn active" title="Edit">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <button class="tool-btn" title="Field groups">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="12" r="3"/><path d="M8.5 7.5 15.5 11M8.5 16.5 15.5 13"/></svg>
+      </button>
+    </aside>
+
+    <main class="canvas-area">
+      <div class="doc-page">
+        <div class="merge-field field-pink" style="top:26px; left:216px;">Company.Company name</div>
+
+        <div class="doc-brand">
+          <div class="doc-brand-name"><span class="brand-ellis">ELLIS</span><span class="brand-porter">PORTER</span></div>
+          <div class="doc-brand-tag">THE IMMIGRATION ATTORNEYS</div>
+        </div>
+
+        <h2 class="doc-h1">SAMPLE ENGAGEMENT AGREEMENT</h2>
+        <p class="doc-p"><strong>Demonstration document only.</strong> This fictional agreement is intended solely to demonstrate document automation and electronic signature workflows.</p>
+
+        <table class="doc-table">
+          <tr><td class="label-cell">Client Name</td><td>Christopher Anderson</td><td class="label-cell">Matter Type</td><td>EB-2 National Interest Waiver</td></tr>
+          <tr><td class="label-cell">Primary Beneficiary</td><td>Christopher Anderson</td><td class="label-cell">Matter Number</td><td>EP-2026-10482</td></tr>
+          <tr><td class="label-cell">Passport Number</td><td>X12345678</td><td class="label-cell">Country</td><td>United Kingdom</td></tr>
+          <tr><td class="label-cell">Responsible Attorney</td><td>Jane Smith</td><td class="label-cell">Effective Date</td><td>July 6, 2026</td></tr>
+          <tr><td class="label-cell">Email</td><td>chris@example.com</td><td class="label-cell">Phone</td><td>+1 (555) 555-1234</td></tr>
+        </table>
+
+        <h3 class="doc-h2">Scope of Representation</h3>
+        <p class="doc-p">The Firm will represent the Client in connection with preparation and filing of the immigration matter identified above, including legal strategy, document review, petition preparation, evidence organization, filing coordination, and routine communications.</p>
+
+        <div class="field-row">
+          <h3 class="doc-h2">Professional Fees</h3>
+          <div class="merge-field field-yellow" id="sign-here-field">Sign Here<span class="req-star">*</span></div>
+        </div>
+        <p class="doc-p">The Client agrees to pay a flat legal fee of $8,500 plus applicable government filing fees and approved third-party expenses. Premium processing, translations, credential evaluations, and other optional services may be billed separately.</p>
+
+        <h3 class="doc-h2">Client Responsibilities</h3>
+        <p class="doc-p">The Client agrees to provide complete and accurate information, promptly review drafts, supply requested supporting evidence, and immediately notify the Firm of any changes that may affect eligibility or case strategy.</p>
+
+        <h3 class="doc-h2">Communications</h3>
+        <p class="doc-p">The Firm will provide status updates throughout the engagement. The Client agrees to communicate primarily by email and to respond to requests for information in a timely manner.</p>
+      </div>
+    </main>
+
+    <aside class="settings-panel" id="settings-panel">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="btn-close-settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="settings-tabs">
+        <button class="tab-btn" data-tab="basic">Basic</button>
+        <button class="tab-btn" data-tab="signers">Signers</button>
+        <button class="tab-btn" data-tab="fieldgroups">Field groups</button>
+      </div>
+
+      <div class="settings-body">
+        <div class="tab-panel" data-panel="basic">
+          <p class="empty-hint">Template name, description and other basic properties would go here.</p>
+        </div>
+
+        <div class="tab-panel" data-panel="signers">
+          <button class="add-signer-row" id="btn-add-signer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Click to add
+          </button>
+          <div id="signers-list"></div>
+        </div>
+
+        <div class="tab-panel" data-panel="fieldgroups">
+          <p class="empty-hint">Reusable field groups for this template would go here.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Signer settings popover -->
+  <div class="signer-popover" id="signer-popover">
+    <div class="popover-header">
+      <h3>Signer</h3>
+      <button class="icon-btn" id="btn-close-popover">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="popover-body">
+      <label class="popover-label">Name</label>
+      <input class="popover-input" type="text" id="signer-name-input">
+
+      <label class="popover-label">Identification</label>
+      <div class="segmented-toggle" id="identification-toggle">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+      </div>
+
+      <div class="verification-method-row" id="verification-method-row" hidden>
+        <label class="popover-label">Verification methods</label>
+        <select class="popover-select" id="verification-method-select">
+          <option value="email">Email</option>
+          <option value="okta-cac">Okta-CAC</option>
+        </select>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="prefill-checkbox">
+        Prefill data?
+      </label>
+    </div>
+    <div class="popover-footer">
+      <button class="delete-signer-link" id="btn-delete-signer">Delete Signer</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
