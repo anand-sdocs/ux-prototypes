@@ -285,7 +285,8 @@ body {
   white-space: nowrap;
 }
 
-/* Toggle (variation 1) */
+/* Toggle (variations 1 & 2) */
+.verify-toggle-col { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .verify-toggle-wrap { display: flex; align-items: center; gap: 10px; }
 .verify-toggle {
   width: 40px; height: 22px;

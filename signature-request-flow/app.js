@@ -34,8 +34,8 @@ const TEMPLATE_DOCUMENT = { name: 'Identity Verification Template.pdf', size: '2
 const VERIFICATION_LABELS = { none: 'None', email: 'Email', 'okta-cac': 'Okta-CAC' };
 
 const VARIATION_HINTS = {
-  1: 'Ad hoc envelope, only "Email" verification is available for this sender, so a simple on/off toggle is shown.',
-  2: 'Ad hoc envelope, "Email" and "Okta-CAC" are both available, so recipients choose from a dropdown (None / Email / Okta-CAC).',
+  1: 'Ad hoc envelope with an Identification Yes/No toggle per recipient. Switching it to Yes reveals a dropdown, but "Email" is the only method available to this sender.',
+  2: 'Ad hoc envelope with the same Identification Yes/No toggle. Switching it to Yes reveals a dropdown with both "Email" and "Okta-CAC".',
   3: 'Sent from a template that requires "Email" and "Okta-CAC" verification. The dropdown is shown but locked — recipients cannot change it.'
 };
 
@@ -242,22 +242,32 @@ function renderSigners() {
     row.className = 'signers-row signers-body-row';
 
     let verifyControlHtml = '';
-    if (variation === 1) {
+    if (variation === 1 || variation === 2) {
+      // Variation 1 & 2 share one control shape: a Yes/No Identification
+      // toggle that reveals a verification-method dropdown when set to Yes.
+      // Only the set of methods in that dropdown differs between the two.
       const isOn = r.verification !== 'none';
+      const methodValue = isOn ? r.verification : 'email';
       verifyControlHtml = `
-        <div class="verify-toggle-wrap">
-          <button class="verify-toggle ${isOn ? 'on' : ''}" data-id="${r.id}" aria-label="Toggle email verification"></button>
-          <span class="verify-toggle-label ${isOn ? 'active' : ''}">${isOn ? 'Email' : 'None'}</span>
+        <div class="verify-toggle-col">
+          <div class="verify-toggle-wrap">
+            <button class="verify-toggle ${isOn ? 'on' : ''}" data-id="${r.id}" aria-label="Toggle identification"></button>
+            <span class="verify-toggle-label ${isOn ? 'active' : ''}">${isOn ? 'Yes' : 'No'}</span>
+          </div>
+          ${isOn ? `
+          <select class="verify-select" data-id="${r.id}">
+            <option value="email" ${methodValue === 'email' ? 'selected' : ''}>Email</option>
+            ${variation === 2 ? `<option value="okta-cac" ${methodValue === 'okta-cac' ? 'selected' : ''}>Okta-CAC</option>` : ''}
+          </select>` : ''}
         </div>`;
     } else {
-      const disabled = variation === 3 ? 'disabled' : '';
       verifyControlHtml = `
-        <select class="verify-select" data-id="${r.id}" ${disabled}>
+        <select class="verify-select" data-id="${r.id}" disabled>
           <option value="none" ${r.verification === 'none' ? 'selected' : ''}>None</option>
           <option value="email" ${r.verification === 'email' ? 'selected' : ''}>Email</option>
           <option value="okta-cac" ${r.verification === 'okta-cac' ? 'selected' : ''}>Okta-CAC</option>
         </select>
-        ${variation === 3 ? '<span class="readonly-tag">Template</span>' : ''}`;
+        <span class="readonly-tag">Template</span>`;
     }
 
     row.innerHTML = `
@@ -480,7 +490,7 @@ const DEV_GUIDE_STEPS = [
     title: 'Signers — identity verification control',
     wizardStep: 2,
     highlight: ['#signers-table'],
-    desc: `Each recipient has a single <code>verification</code> field: <code>'none' | 'email' | 'okta-cac'</code>. The <em>control</em> shown for it depends only on <code>variation</code>, not on the recipient: Variation 1 renders a toggle (only None/Email are possible), Variation 2 renders an enabled dropdown with all three options, Variation 3 renders the same dropdown but <code>disabled</code> and forced to <code>'okta-cac'</code> — a template's required verification method can't be overridden by the sender.`
+    desc: `Each recipient has a single <code>verification</code> field: <code>'none' | 'email' | 'okta-cac'</code>. Variations 1 &amp; 2 share one control shape — a Yes/No "Identification" toggle that reveals a method dropdown when set to Yes — they only differ in which <code>&lt;option&gt;</code>s that dropdown offers (Variation 1: Email only, Variation 2: Email + Okta-CAC). Variation 3 skips the toggle entirely: it renders the same dropdown but <code>disabled</code> and forced to <code>'okta-cac'</code> — a template's required verification method can't be overridden by the sender.`
   },
   {
     title: 'Fields & Data — simulated placement',
