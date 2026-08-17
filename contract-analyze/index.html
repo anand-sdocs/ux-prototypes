@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract Playbook Review - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">The contract, playbook, and analysis results are all seeded mock data &mdash; nothing here parses a real document or calls a model.</span>
+  </div>
+
+  <header class="app-header">
+    <div class="header-left">
+      <a class="back-link" href="../index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        All prototypes
+      </a>
+      <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg>
+      <div>
+        <div class="doc-title" id="doc-title-header">Contract Review</div>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm" id="btn-manage-playbook">Manage playbook</button>
+  </header>
+
+  <div class="review-shell">
+    <section class="doc-pane" id="doc-pane"></section>
+    <section class="score-pane">
+      <div class="score-header" id="score-header"></div>
+      <div class="playbook-pane-head">
+        <h3>Playbook results</h3>
+        <button class="btn btn-outline btn-sm" id="btn-reanalyze" style="display:none;">Re-analyze</button>
+      </div>
+      <div id="category-list"></div>
+    </section>
+  </div>
+
+  <!-- Playbook authoring modal -->
+  <div class="modal-overlay" id="playbook-modal">
+    <div class="modal-box-wide">
+      <div class="modal-header">
+        <h3>Manage playbook</h3>
+        <button class="icon-btn" id="playbook-modal-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="playbook-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" id="playbook-modal-done">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add question modal -->
+  <div class="modal-overlay" id="question-modal">
+    <div class="modal-box-wide" style="width:440px;">
+      <div class="modal-header">
+        <h3>Add a playbook question</h3>
+        <button class="icon-btn" id="question-modal-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label>Question</label>
+          <textarea class="text-input" id="new-question-text" rows="3" placeholder="e.g. Does the agreement cap liability at 12 months of fees?"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Desired answer</label>
+            <select class="text-input" id="new-question-desired">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Weight</label>
+            <select class="text-input" id="new-question-weight">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" id="question-modal-cancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="question-modal-save">Add question</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

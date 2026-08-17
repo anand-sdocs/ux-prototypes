@@ -27,10 +27,10 @@
     const card = document.createElement("button");
     card.className = "workspace-card";
     card.innerHTML = `
-      <div class="ws-avatar" style="background:${ws.color};">${ws.orgName.charAt(0)}</div>
+      <div class="ws-avatar" style="background:${ws.color};">${workspaceInitial(ws)}</div>
       <div class="ws-info">
         <div class="ws-name-row">
-          <span class="ws-org-name">${ws.orgName}</span>
+          <span class="ws-domain-name">${ws.domain}</span>
         </div>
         <div class="ws-meta-row">
           <div class="ws-meta-line ws-account-id">${workspaceIdentifierLine(ws)}</div>

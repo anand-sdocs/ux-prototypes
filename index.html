@@ -15,25 +15,100 @@
       --text-main: #181818;
       --text-muted: #5e6670;
       --border-color: #dddbda;
+      --sidebar-bg: #ffffff;
+      --sidebar-active-bg: #eaf4fd;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-app);
       color: var(--text-main);
-      padding: 48px 24px;
+      display: flex;
     }
-    .wrapper { max-width: 880px; margin: 0 auto; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 28px 16px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+    .masthead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; padding: 0 8px; }
+    .brand-logo { width: 26px; height: 26px; flex-shrink: 0; display: block; }
     h1 {
       font-family: 'Outfit', sans-serif;
-      font-size: 28px;
+      font-size: 19px;
       font-weight: 700;
-      margin-bottom: 8px;
     }
     .subtitle {
       color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 32px;
+      font-size: 12px;
+      margin-bottom: 24px;
+      padding: 0 8px;
+      line-height: 1.5;
+    }
+    nav.category-nav { display: flex; flex-direction: column; gap: 2px; }
+    .category-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .category-btn:hover { background: var(--bg-app); }
+    .category-btn.active {
+      background: var(--sidebar-active-bg);
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    .category-btn .count {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-app);
+      border-radius: 999px;
+      padding: 2px 8px;
+      min-width: 22px;
+      text-align: center;
+    }
+    .category-btn.active .count {
+      color: var(--primary-color);
+      background: #ffffff;
+    }
+
+    /* Main content */
+    main {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 1000px;
+    }
+    h2.section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .section-count {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 24px;
     }
     .grid {
       display: grid;
@@ -56,7 +131,7 @@
       border-color: #9fc9ee;
       transform: translateY(-2px);
     }
-    .card h2 {
+    .card h3 {
       font-family: 'Outfit', sans-serif;
       font-size: 15px;
       font-weight: 600;
@@ -68,66 +143,235 @@
       color: var(--text-muted);
       line-height: 1.5;
     }
+    section.group { display: none; }
+    section.group.active { display: block; }
     footer {
-      margin-top: 40px;
+      margin-top: 32px;
       font-size: 11.5px;
       color: var(--text-muted);
+    }
+
+    @media (max-width: 800px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
+      nav.category-nav { flex-direction: row; flex-wrap: wrap; }
+      .category-btn { width: auto; }
+      main { padding: 24px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <h1>S-Docs UX Prototypes</h1>
-    <p class="subtitle">Interactive design prototypes for the S-Docs e-signature platform.</p>
-
-    <div class="grid">
-      <a class="card" href="identity_verification/index.html">
-        <h2>Identity Verification</h2>
-        <p>Signer identity verification supporting Email, SMS, Single Sign-On (Okta), and ID + Selfie (Jumio).</p>
-      </a>
-      <a class="card" href="delegated-signatures/index.html">
-        <h2>Delegated Signatures</h2>
-        <p>Signer consent flow with the ability to delegate signing authority to another recipient.</p>
-      </a>
-      <a class="card" href="esign-audit-trail/index.html">
-        <h2>E-Sign Audit Trail</h2>
-        <p>Sender-facing portal showing the audit trail for a signature request.</p>
-      </a>
-      <a class="card" href="pdf-canvas-draw-fields/index.html">
-        <h2>PDF Canvas Draw Fields</h2>
-        <p>Draw-to-add-fields editor for placing signature and form fields on a PDF canvas.</p>
-      </a>
-      <a class="card" href="salesforce-hierarchy-navigator/index.html">
-        <h2>Salesforce Hierarchy Navigator</h2>
-        <p>Navigating and visualizing Salesforce org hierarchy relationships.</p>
-      </a>
-      <a class="card" href="apex_callable/index.html">
-        <h2>Apex Callable Editor</h2>
-        <p>Enhanced editor mockup for Apex-callable document generation.</p>
-      </a>
-      <a class="card" href="snippet-library/index.html">
-        <h2>Snippet Library</h2>
-        <p>Insert reusable content snippets into a template and map their inputs to the primary data source.</p>
-      </a>
-      <a class="card" href="create-snippet/index.html">
-        <h2>Create Snippet</h2>
-        <p>Author a new snippet: Runtime &amp; custom variables, drag-and-drop or @-mention insertion into the content.</p>
-      </a>
-      <a class="card" href="workspace-switcher/index.html">
-        <h2>Workspace Switcher</h2>
-        <p>Post-login workspace picker for emails linked to multiple customer records, plus switching workspaces from the account menu.</p>
-      </a>
-      <a class="card" href="signature-request-flow/index.html">
-        <h2>Signature Request Flow</h2>
-        <p>Sender wizard for creating a signature request: documents, signers with per-recipient identity verification, fields, and review &amp; send.</p>
-      </a>
-      <a class="card" href="template_signer_profile/index.html">
-        <h2>Template Signer Profile</h2>
-        <p>Template editor's Signers settings panel: per-signer Identification toggle revealing an Email / Okta-CAC verification method dropdown.</p>
-      </a>
+  <aside class="sidebar">
+    <div class="masthead">
+      <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg>
+      <h1>S-Docs UX Prototypes</h1>
     </div>
+    <p class="subtitle">Interactive design prototypes for the S-Docs e-signature platform.</p>
+    <nav class="category-nav">
+      <button class="category-btn" data-target="agentic">
+        <span>Agentic Platform</span><span class="count">11</span>
+      </button>
+      <button class="category-btn" data-target="identity">
+        <span>Identity Verification</span><span class="count">4</span>
+      </button>
+      <button class="category-btn" data-target="delegated">
+        <span>Delegated Signatures</span><span class="count">2</span>
+      </button>
+      <button class="category-btn" data-target="editor">
+        <span>Enhanced Editor</span><span class="count">1</span>
+      </button>
+      <button class="category-btn" data-target="pdf-template">
+        <span>PDF Upload Template Editor</span><span class="count">2</span>
+      </button>
+      <button class="category-btn" data-target="snippets">
+        <span>HubSpot Snippets</span><span class="count">2</span>
+      </button>
+      <button class="category-btn" data-target="workspace">
+        <span>HubSpot Workspace</span><span class="count">1</span>
+      </button>
+      <button class="category-btn" data-target="brand">
+        <span>Brand</span><span class="count">1</span>
+      </button>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="group" id="agentic">
+      <h2 class="section-title">Agentic Platform</h2>
+      <p class="section-count">11 prototypes</p>
+      <div class="grid">
+        <a class="card" href="agentic-platform-landing/index.html">
+          <h3>Marketing Landing Page</h3>
+          <p>A visual, story-led pitch for the agent platform &mdash; capabilities, how it works, skills, governance, and a demo CTA.</p>
+        </a>
+        <a class="card" href="industry-agent-templates/index.html">
+          <h3>Industry Agent Templates</h3>
+          <p>Prebuilt agents for Financial Services, Healthcare, Public Sector, and Legal Services &mdash; an admin just connects data sources and confirms downstream actions to turn one on.</p>
+        </a>
+        <a class="card" href="exec-briefing-deck/index.html">
+          <h3>Exec Briefing Deck</h3>
+          <p>A standalone 7-slide pitch deck for the agentic platform &mdash; the north star, the platform in action, and the investment ask, for a non-technical exec audience.</p>
+        </a>
+        <a class="card" href="sdocs-agent-builder/index.html">
+          <h3>Agent Builder</h3>
+          <p>Home dashboard of agent activity, errors, and human-in-the-loop confirmations, plus an NL-led or step-by-step wizard for building an agent.</p>
+        </a>
+        <a class="card" href="slack-agent-user/index.html">
+          <h3>Slack Agent User</h3>
+          <p>A user invoking the Claims Intake Agent from Slack: connecting via S-Docs, watching MCP tool calls run, and reviewing extracted results.</p>
+        </a>
+        <a class="card" href="claude-sales-proposal/index.html">
+          <h3>Claude Sales Proposal</h3>
+          <p>A rep asking Claude to draft a proposal: the S-Docs Proposal Agent disambiguates which opportunity, confirms sources &amp; content, then drafts a proposal with a linked execution audit.</p>
+        </a>
+        <a class="card" href="claude-investment-proposal/index.html">
+          <h3>Claude Investment Proposal</h3>
+          <p>An advisor asking Claude for a quarterly investment review: the agent disambiguates which client household, confirms sources &amp; sections, then drafts a chart-rich portfolio review with a linked execution audit.</p>
+        </a>
+        <a class="card" href="teams_proposal_autonomous/index.html">
+          <h3>Teams Proposal Agent (Autonomous)</h3>
+          <p>An agent that listens: it notices a customer emailed asking for a proposal, proactively pings the rep in Teams, confirms the details, then drafts the proposal with a linked execution audit.</p>
+        </a>
+        <a class="card" href="slack-autonomous-contract-review/index.html">
+          <h3>Slack Contract Review Agent (Autonomous)</h3>
+          <p>While the rep is heads-down in a channel, the agent notices a customer sent back redlines, then confirms before showing key changes and a playbook-driven risk score shift, plus a linked execution audit.</p>
+        </a>
+        <a class="card" href="contract-analyze/index.html">
+          <h3>Contract Playbook Review</h3>
+          <p>An "Analyze" task use case: reviewing a contract against a weighted playbook (IP protection, termination for convenience, etc.) with a risk score and drill-down citations.</p>
+        </a>
+        <a class="card" href="agent-end-user/index.html">
+          <h3>Agent Catalogue (End User)</h3>
+          <p>A non-builder's view: browse and run agents shared enterprise-wide, by your team, or your own &mdash; and clone one to customize if you have creator access.</p>
+        </a>
+        <a class="card" href="agent-admin-console/index.html">
+          <h3>Admin Console</h3>
+          <p>Governance for the agent platform: role-based permissions, a connector allowlist, an audit log, and policy alerts.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="identity">
+      <h2 class="section-title">Identity Verification</h2>
+      <p class="section-count">4 prototypes</p>
+      <div class="grid">
+        <a class="card" href="identity_verification/index.html">
+          <h3>Identity Verification</h3>
+          <p>Signer identity verification supporting Email, SMS, Single Sign-On (Okta), and ID + Selfie (Jumio).</p>
+        </a>
+        <a class="card" href="signature-request-flow/index.html">
+          <h3>Signature Request Flow</h3>
+          <p>Sender wizard for creating a signature request: documents, signers with per-recipient identity verification, fields, and review &amp; send.</p>
+        </a>
+        <a class="card" href="template_signer_profile/index.html">
+          <h3>Template Signer Profile</h3>
+          <p>Template editor's Signers settings panel: per-signer Identification toggle revealing an Email / Okta-CAC verification method dropdown.</p>
+        </a>
+        <a class="card" href="id_verification_settings/index.html">
+          <h3>Identity Verification Settings</h3>
+          <p>Admin E-Signature settings: enable identity verification and manage verification methods, including adding an OpenID Connect (Okta) provider with attribute mapping and a live Test Connection flow.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="delegated">
+      <h2 class="section-title">Delegated Signatures</h2>
+      <p class="section-count">2 prototypes</p>
+      <div class="grid">
+        <a class="card" href="delegated-signatures/index.html">
+          <h3>Delegated Signatures</h3>
+          <p>Signer consent flow with the ability to delegate signing authority to another recipient.</p>
+        </a>
+        <a class="card" href="esign-audit-trail/index.html">
+          <h3>E-Sign Audit Trail</h3>
+          <p>Sender-facing portal showing the audit trail for a signature request.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="editor">
+      <h2 class="section-title">Enhanced Editor</h2>
+      <p class="section-count">1 prototype</p>
+      <div class="grid">
+        <a class="card" href="apex_callable/index.html">
+          <h3>Apex Callable Editor</h3>
+          <p>Enhanced editor mockup for Apex-callable document generation.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="pdf-template">
+      <h2 class="section-title">Salesforce PDF Upload Template Editor</h2>
+      <p class="section-count">2 prototypes</p>
+      <div class="grid">
+        <a class="card" href="salesforce-hierarchy-navigator/index.html">
+          <h3>Salesforce Hierarchy Navigator</h3>
+          <p>Navigating and visualizing Salesforce org hierarchy relationships.</p>
+        </a>
+        <a class="card" href="pdf-canvas-draw-fields/index.html">
+          <h3>PDF Canvas Draw Fields</h3>
+          <p>Draw-to-add-fields editor for placing signature and form fields on a PDF canvas.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="snippets">
+      <h2 class="section-title">HubSpot Snippets</h2>
+      <p class="section-count">2 prototypes</p>
+      <div class="grid">
+        <a class="card" href="create-snippet/index.html">
+          <h3>Create Snippet</h3>
+          <p>Author a new snippet: Runtime &amp; custom variables, drag-and-drop or @-mention insertion into the content.</p>
+        </a>
+        <a class="card" href="snippet-library/index.html">
+          <h3>Snippet Library</h3>
+          <p>Insert reusable content snippets into a template and map their inputs to the primary data source.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="workspace">
+      <h2 class="section-title">HubSpot Workspace</h2>
+      <p class="section-count">1 prototype</p>
+      <div class="grid">
+        <a class="card" href="workspace-switcher/index.html">
+          <h3>Workspace Switcher</h3>
+          <p>Post-login workspace picker for emails linked to multiple customer records, plus switching workspaces from the account menu.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="group" id="brand">
+      <h2 class="section-title">Brand</h2>
+      <p class="section-count">1 prototype</p>
+      <div class="grid">
+        <a class="card" href="logo-animations/index.html">
+          <h3>Logo Animations</h3>
+          <p>Showcase of ways to animate the S-Docs logo: entrances, ambient loops, hover interactions, and loading states across sizes.</p>
+        </a>
+      </div>
+    </section>
 
     <footer>Internal design prototypes &mdash; not representative of final production UI.</footer>
-  </div>
+  </main>
+
+  <script>
+    const buttons = document.querySelectorAll('.category-btn');
+    const sections = document.querySelectorAll('section.group');
+
+    function activate(target) {
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.target === target));
+      sections.forEach(s => s.classList.toggle('active', s.id === target));
+      if (history.replaceState) history.replaceState(null, '', '#' + target);
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => activate(btn.dataset.target));
+    });
+
+    const initial = window.location.hash.replace('#', '');
+    const validTargets = Array.from(sections).map(s => s.id);
+    activate(validTargets.includes(initial) ? initial : 'identity');
+  </script>
 </body>
 </html>

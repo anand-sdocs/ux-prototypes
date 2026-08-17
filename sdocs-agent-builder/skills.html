@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills Library - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">Skills are seeded mock data &mdash; "used by" counts and descriptions are illustrative only.</span>
+  </div>
+
+  <header class="app-header">
+    <div class="brand"><svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg> S-Docs Agent Platform</div>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" href="index.html">Back to dashboard</a>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="dashboard-heading">
+      <div>
+        <h1>Skills library</h1>
+        <p>A skill packages a ready-made playbook, extraction schema, or document target so an Extract, Generate, or Analyze task can start from it instead of being authored from scratch &mdash; and an Analyze task can combine more than one.</p>
+      </div>
+    </div>
+
+    <div id="skills-sections"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="skills.js"></script>
+</body>
+</html>

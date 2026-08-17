@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit trail - S-Docs Proposal Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">Mock data only &mdash; no real agents, integrations, or AI calls are made in this prototype.</span>
+  </div>
+
+  <header class="app-header">
+    <div class="brand"><span class="brand-icon">SD</span> S-Docs Agent Platform</div>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" href="index.html">Back to Teams</a>
+      <div class="teams-rail-avatar" style="background:var(--teams-accent);">AN</div>
+    </div>
+  </header>
+
+  <main class="dashboard audit-page">
+
+    <a class="audit-back-link" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Teams
+    </a>
+
+    <div class="audit-heading card" id="audit-heading"></div>
+
+    <div class="audit-grid">
+      <div class="card audit-flow-card">
+        <div class="card-head">
+          <h3>Execution flow</h3>
+          <span class="card-sub">Click a step for details</span>
+        </div>
+        <div class="audit-flow-canvas" id="audit-flow-canvas"></div>
+      </div>
+
+      <div class="card audit-detail-card" id="audit-detail-card">
+        <!-- filled by audit.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Printable, full-detail render used only for the "Download PDF" flow (window.print). Hidden on screen. -->
+  <div id="audit-print-doc" class="audit-print-doc"></div>
+
+  <script src="schema.js"></script>
+  <script src="audit.js"></script>
+</body>
+</html>

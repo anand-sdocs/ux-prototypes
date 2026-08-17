@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-Docs Contract Review Agent in Slack - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">A simulated Slack workspace &mdash; no real Slack, S-Docs, or MCP tool calls are made.</span>
+  </div>
+
+  <div class="slack-app">
+    <aside class="slack-sidebar">
+      <div class="workspace-name">Acme Corp</div>
+
+      <div class="sidebar-section">Channels</div>
+      <div id="channel-list"></div>
+
+      <div class="sidebar-section">Apps</div>
+      <div id="app-list"></div>
+    </aside>
+
+    <main class="slack-main">
+      <header class="slack-thread-header" id="thread-header"></header>
+
+      <div class="slack-thread" id="thread"></div>
+
+      <div class="slack-composer">
+        <div class="composer-box is-disabled">
+          <div class="composer-input-row">
+            <input type="text" class="composer-input" placeholder="Message #deal-desk" disabled>
+          </div>
+        </div>
+        <div class="composer-hint">This agent responds to card actions above — replies here aren't wired up in this prototype.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="slack-toast-root" id="toast-root"></div>
+
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

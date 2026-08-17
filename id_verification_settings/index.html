@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Signature Settings - Identity Verification Methods Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="chrome-topbar"></div>
+  <header class="chrome-header">
+    <div class="chrome-header-left">
+      <div class="hamburger"><span></span><span></span><span></span></div>
+      <div class="org-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+        Scratch Org
+      </div>
+    </div>
+    <div class="chrome-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      Search...
+    </div>
+    <div class="chrome-header-right">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 8.5 22 9.5 17 14.5 18 21.5 12 18 6 21.5 7 14.5 2 9.5 9 8.5 12 2"></polygon></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 0-5 5v3a7 7 0 0 0-2 5v1h18v-1a7 7 0 0 0-2-5V7a5 5 0 0 0-5-5z"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <div class="chrome-avatar">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="chrome-tabs">
+    <div class="chrome-app-launcher">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+      S-Docs
+    </div>
+    <div class="tab active">S-Docs Settings <svg class="tab-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    <div class="tab">delegated signatu... <svg class="tab-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg><svg class="tab-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+    <div class="tab">new pdf upload t... <svg class="tab-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg><svg class="tab-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+  </div>
+
+  <div class="app-body">
+    <nav class="settings-sidebar">
+      <div class="sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path><path d="M12 2 2 7l10 5 10-5z"></path></svg>
+        Templates
+      </div>
+      <div class="sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
+        Styles
+      </div>
+      <div class="sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
+        E-Signature
+      </div>
+    </nav>
+
+    <main class="settings-main">
+      <h1 class="page-title">E-Signature</h1>
+
+      <div class="success-banner">
+        <div class="success-banner-left">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div>
+            <div class="success-title">E-Signature Configured Successfully</div>
+            <div class="success-sub">Completed by User User on 8/6/2026 06:50 PM</div>
+          </div>
+        </div>
+        <button class="btn btn-outline">Re-run Setup Wizard</button>
+      </div>
+
+      <!-- Identity Verification section -->
+      <div class="settings-section">
+        <div class="section-copy">
+          <h3>Identity Verification</h3>
+          <p>Require an additional security step before recipients can access their documents.</p>
+        </div>
+        <div class="section-control">
+          <div class="control-row">
+            <span class="control-label">
+              Require Identity Verification
+              <svg class="help-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </span>
+            <div class="segmented" id="require-verification-toggle">
+              <button type="button" data-value="yes" class="selected">Yes</button>
+              <button type="button" data-value="no">No</button>
+            </div>
+          </div>
+
+          <!-- Verification Methods sub-panel, shown when Require Identity Verification = Yes -->
+          <div class="verify-methods-panel" id="verify-methods-panel">
+            <div class="verify-methods-title">Verification Methods</div>
+            <p class="verify-methods-sub">Choose how signers confirm their identity before accessing documents. Email is always available; add more methods such as Single Sign-On via OpenID Connect.</p>
+
+            <div class="methods-list" id="methods-list">
+              <!-- Email row is static, additional methods are rendered by app.js -->
+              <div class="method-row" data-method-id="email">
+                <div class="method-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
+                </div>
+                <div class="method-info">
+                  <div class="method-name">Email <span class="method-badge">Built-in</span></div>
+                  <div class="method-sub">A one-time verification code is emailed to the signer.</div>
+                </div>
+                <div class="method-actions">
+                  <label class="switch" title="Email verification is always available and cannot be removed">
+                    <input type="checkbox" id="email-toggle" checked disabled>
+                    <span class="switch-track"></span>
+                  </label>
+                </div>
+              </div>
+              <!-- additional methods inserted here -->
+            </div>
+
+            <button type="button" class="add-method-btn" id="btn-add-method">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Method
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delegation section (context only, matches source settings screen) -->
+      <div class="settings-section">
+        <div class="section-copy">
+          <h3>Delegation</h3>
+          <p>Control delegation options for recipients.</p>
+        </div>
+        <div class="section-control">
+          <div class="control-row">
+            <span class="control-label">
+              Allow delegation
+              <svg class="help-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </span>
+            <div class="segmented">
+              <button type="button" class="selected">Yes</button>
+              <button type="button">No</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / Edit Verification Method Modal -->
+  <div class="modal-overlay" id="method-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Add Verification Method</div>
+        <div class="modal-step" id="modal-step-label">Step 1 of 2 &middot; Select a verification type</div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Step 1: select type -->
+        <div class="step active" id="step-select-type">
+          <div class="type-tile selected" id="tile-oidc" data-type="oidc">
+            <div class="type-tile-radio"></div>
+            <div class="type-tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div>
+              <div class="type-tile-name">OpenID Connect (OIDC)</div>
+              <div class="type-tile-desc">Delegate identity verification to an external identity provider (e.g. Okta) using the OpenID Connect protocol. The signer is redirected to the provider to authenticate, then returned to complete signing.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: configure -->
+        <div class="step" id="step-configure">
+          <div class="field-group" id="field-name">
+            <label class="field-label" for="input-name">Name <span class="req">*</span></label>
+            <input type="text" id="input-name" placeholder="e.g. Okta SSO">
+            <div class="field-error">Name is required.</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="input-api-name">API Name</label>
+            <input type="text" id="input-api-name" readonly>
+            <div class="field-hint">Automatically generated from Name. Spaces and non-alphabetic characters are replaced with "_".</div>
+          </div>
+
+          <div class="field-group" id="field-login-url">
+            <label class="field-label" for="input-login-url">Login URL <span class="req">*</span></label>
+            <input type="url" id="input-login-url" placeholder="https://your-org.okta.com/oauth2/default/v1/authorize">
+            <div class="field-error">Login URL must be a secure https:// URL.</div>
+          </div>
+
+          <div class="field-group" id="field-client-id">
+            <label class="field-label" for="input-client-id">Client ID <span class="req">*</span></label>
+            <input type="text" id="input-client-id" placeholder="0oa1b2c3d4e5f6g7h8i9">
+            <div class="field-error">Client ID is required.</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="scope-input">Okta Scope</label>
+            <div class="chip-input-wrap" id="scope-chip-wrap">
+              <input type="text" class="chip-input" id="scope-input" placeholder="Add scope and press Enter">
+            </div>
+            <div class="field-hint">Defaults to "profile email openid". Add additional scopes as needed.</div>
+          </div>
+
+          <div class="section-divider"></div>
+          <div class="subsection-title">Attribute Mapping</div>
+          <p class="subsection-sub">Map S-Docs attributes to the corresponding claim names returned by your identity provider.</p>
+
+          <div class="attr-table-head">
+            <div>S-Docs Attribute</div>
+            <div>Okta Attribute</div>
+            <div></div>
+          </div>
+          <div class="attr-table" id="attr-table"></div>
+          <button type="button" class="add-attr-btn" id="btn-add-attr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Attribute
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="footer-left" id="footer-left-actions">
+          <button type="button" class="btn btn-outline" id="btn-modal-back" style="display:none;">Back</button>
+          <button type="button" class="btn btn-secondary" id="btn-modal-test" style="display:none;">Test Connection</button>
+        </div>
+        <button type="button" class="btn btn-outline" id="btn-modal-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-modal-next">Next</button>
+        <button type="button" class="btn btn-primary" id="btn-modal-save" style="display:none;">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-text">Saved</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

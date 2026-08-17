@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industry Agent Templates - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <label for="access-select">Your access:</label>
+    <select id="access-select">
+      <option value="standard">Standard user &mdash; view only</option>
+      <option value="admin">Admin / creator &mdash; can activate</option>
+    </select>
+    <span class="proto-toolbar-hint">Templates, compliance tags, and "activation" are seeded mock data &mdash; nothing here is a real compliance claim, certification, or connection.</span>
+  </div>
+
+  <header class="app-header">
+    <div class="brand"><svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg> S-Docs Agent Platform</div>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" href="../agent-admin-console/index.html">Admin console &rarr;</a>
+      <a class="btn btn-outline btn-sm" href="../index.html">All prototypes</a>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="dashboard-heading">
+      <div>
+        <h1>Industry agent templates</h1>
+        <p>Prebuilt agents for regulated industries &mdash; the task chain, playbook, and suggested trigger are already defined. An admin just connects the data sources and confirms where results go.</p>
+      </div>
+    </div>
+
+    <div class="access-banner" id="access-banner"></div>
+
+    <div class="industry-tabs" id="industry-tabs"></div>
+
+    <div class="template-grid" id="template-grid"></div>
+
+    <div class="activated-section">
+      <div class="card-head" style="margin-bottom:14px;">
+        <h3>Activated in your org</h3>
+        <span class="card-sub" id="activated-count"></span>
+      </div>
+      <div class="list-rows" id="activated-list"></div>
+    </div>
+  </main>
+
+  <!-- Activation wizard -->
+  <div class="subflow-overlay" id="wizard-overlay">
+    <div class="subflow-panel" id="wizard-panel"></div>
+  </div>
+
+  <!-- Connector connect modal (mirrors sdocs-agent-builder's pattern) -->
+  <div class="modal-overlay" id="connector-modal">
+    <div class="modal-box">
+      <div class="modal-icon" id="connector-modal-icon"></div>
+      <h3 id="connector-modal-title">Connect</h3>
+      <p>Sign in with your own account to let this agent access <span id="connector-modal-name">this system</span> on your behalf. Simulated for the prototype &mdash; no real connection is made.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="connector-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="connector-modal-confirm">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

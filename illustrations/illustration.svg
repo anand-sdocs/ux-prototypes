@@ -1,0 +1,196 @@
+<svg viewBox="0 0 950 1150" xmlns="http://www.w3.org/2000/svg" font-family="'Courier New', monospace">
+  <defs>
+    <style>
+      .stroke { stroke: #1f3a3d; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    </style>
+  </defs>
+
+  <!-- ================= BACKGROUND FLOATING ELEMENTS ================= -->
+  <g id="floaters">
+    <!-- binary strings -->
+    <text x="185" y="185" font-size="20" fill="#2f5457" font-weight="bold">01100100101</text>
+    <text x="545" y="192" font-size="20" fill="#2f5457" font-weight="bold">0110101010010</text>
+    <text x="650" y="216" font-size="20" fill="#2f5457" font-weight="bold">1010100101010</text>
+    <text x="140" y="330" font-size="20" fill="#2f5457" font-weight="bold">101010010010</text>
+    <text x="60" y="428" font-size="20" fill="#2f5457" font-weight="bold">011001001011</text>
+    <text x="770" y="426" font-size="20" fill="#2f5457" font-weight="bold">011001001011</text>
+
+    <!-- stars -->
+    <g fill="#7fb8b3">
+      <path id="star" d="M0,-14 L3.5,-4 L14,-4 L5.5,3 L8.5,13 L0,7 L-8.5,13 L-5.5,3 L-14,-4 L-3.5,-4 Z"/>
+    </g>
+    <use href="#star" x="405" y="180" transform="scale(0.9)"/>
+    <use href="#star" x="118" y="205" transform="scale(0.7)"/>
+    <use href="#star" x="415" y="290" transform="scale(0.6)"/>
+    <use href="#star" x="835" y="345" transform="scale(0.7)"/>
+    <use href="#star" x="120" y="490" transform="scale(0.9)"/>
+    <use href="#star" x="795" y="480" transform="scale(0.9)"/>
+    <use href="#star" x="755" y="525" transform="scale(0.6)"/>
+
+    <!-- little spark near document -->
+    <g class="stroke" stroke-width="4">
+      <line x1="565" y1="325" x2="575" y2="335"/>
+      <line x1="575" y1="325" x2="565" y2="335"/>
+      <line x1="580" y1="310" x2="580" y2="322"/>
+    </g>
+
+    <!-- gears -->
+    <g id="gear-def">
+      <!-- built inline per instance below for varied sizes -->
+    </g>
+  </g>
+
+  <!-- gear template as a function-like group, reused via <use> with different transforms -->
+  <symbol id="gear" viewBox="-50 -50 100 100">
+    <g fill="none" stroke="#3d7570" stroke-width="7">
+      <path d="M0,-40 L7,-40 L9,-30 L18,-27 L26,-33 L31,-28 L25,-20 L28,-11 L38,-9 L38,-1 L28,2 L26,11 L33,19 L28,24 L20,18 L11,22 L9,32 L1,33 L-2,23 L-11,21 L-19,28 L-24,23 L-18,15 L-22,6 L-32,5 L-33,-3 L-23,-6 L-21,-15 L-28,-23 L-23,-28 L-15,-21 L-6,-25 L-4,-35 Z"/>
+      <circle cx="0" cy="-3" r="13"/>
+    </g>
+  </symbol>
+  <use id="gear-1" href="#gear" x="188" y="200" width="90" height="90"/>
+  <use id="gear-2" href="#gear" x="290" y="230" width="70" height="70"/>
+  <use id="gear-3" href="#gear" x="600" y="215" width="80" height="80"/>
+  <use id="gear-4" href="#gear" x="665" y="235" width="55" height="55"/>
+  <use id="gear-5" href="#gear" x="795" y="270" width="55" height="55"/>
+
+  <!-- ================= DOCUMENT ICON ================= -->
+  <g transform="translate(465,150)">
+    <path d="M0,0 H70 L92,22 V115 H0 Z" fill="#e8f2f1" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M70,0 V22 H92 Z" fill="#cfe4e2" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+    <line x1="16" y1="45" x2="76" y2="45" class="stroke" stroke-width="5"/>
+    <line x1="16" y1="60" x2="76" y2="60" class="stroke" stroke-width="5"/>
+    <line x1="16" y1="75" x2="55" y2="75" class="stroke" stroke-width="5"/>
+    <circle cx="70" cy="100" r="26" fill="#5fae8e" stroke="#1f3a3d" stroke-width="6"/>
+    <path id="doc-check" d="M58,100 L67,109 L84,90" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/>
+  </g>
+
+  <!-- ================= LEFT FILING CABINET STACK ================= -->
+  <g id="cabinet-left" transform="translate(80,545)">
+    <rect x="0" y="0" width="255" height="505" rx="6" fill="#5b9490" stroke="#1f3a3d" stroke-width="6"/>
+    <rect x="0" y="0" width="60" height="505" fill="#4a7f7c"/>
+    <!-- 4 drawers -->
+    <g stroke="#1f3a3d" stroke-width="5">
+      <g id="drawer-1"><rect x="70" y="18" width="170" height="105" rx="4" fill="#6ba7a2"/>
+      <rect x="95" y="45" width="55" height="14" rx="3" fill="#eaf3f2"/></g>
+
+      <g id="drawer-2"><rect x="70" y="140" width="170" height="105" rx="4" fill="#79b3ac"/>
+      <rect x="95" y="167" width="60" height="16" rx="3" fill="#eaf3f2"/>
+      <rect x="70" y="185" width="120" height="46" rx="4" fill="#5b9490"/></g>
+
+      <g id="drawer-3"><rect x="70" y="262" width="170" height="105" rx="4" fill="#6ba7a2"/>
+      <rect x="95" y="303" width="60" height="14" rx="3" fill="#eaf3f2"/></g>
+
+      <g id="drawer-4"><rect x="70" y="384" width="170" height="105" rx="4" fill="#6ba7a2"/>
+      <rect x="95" y="425" width="60" height="14" rx="3" fill="#eaf3f2"/></g>
+    </g>
+  </g>
+
+  <!-- ================= RIGHT FOLDER STACK ================= -->
+  <g id="cabinet-right" transform="translate(618,545)">
+    <!-- back folder stack -->
+    <g stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round">
+      <path d="M50,60 h150 l18,-18 h60 v40 h-228 Z" fill="#84c2b9"/>
+      <rect x="30" y="82" width="228" height="130" rx="4" fill="#79b8ae"/>
+
+      <path d="M0,120 h150 l18,-18 h60 v40 h-228 Z" fill="#8ecfc5"/>
+      <rect x="-20" y="142" width="228" height="140" rx="4" fill="#6fa8a3"/>
+
+      <!-- lower cabinet block -->
+      <rect x="-20" y="282" width="228" height="90" rx="4" fill="#5b9490"/>
+      <rect x="0" y="308" width="90" height="16" rx="3" fill="#eaf3f2"/>
+
+      <rect x="-20" y="372" width="228" height="90" rx="4" fill="#4a7f7c"/>
+
+      <!-- small folder tabs bottom -->
+      <path d="M-10,392 h130 l16,-16 h55 v40 h-201 Z" fill="#8ecfc5"/>
+      <rect x="-20" y="416" width="205" height="90" rx="4" fill="#6fa8a3"/>
+    </g>
+
+    <!-- document badge on the side -->
+    <g transform="translate(178,195)">
+      <path d="M0,0 H46 L60,14 V78 H0 Z" fill="#eef6f4" stroke="#1f3a3d" stroke-width="5" stroke-linejoin="round"/>
+      <line x1="10" y1="24" x2="48" y2="24" class="stroke" stroke-width="4"/>
+      <line x1="10" y1="36" x2="48" y2="36" class="stroke" stroke-width="4"/>
+      <line x1="10" y1="48" x2="34" y2="48" class="stroke" stroke-width="4"/>
+      <circle cx="45" cy="63" r="15" fill="#5fae8e" stroke="#1f3a3d" stroke-width="4"/>
+      <path d="M38,63 L43,68 L53,56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- ================= HELD FOLDERS ================= -->
+  <!-- left hand: folder with gear -->
+  <g id="folder-gear" transform="translate(222,300)">
+    <path d="M0,55 V15 Q0,0 18,0 H55 L70,18 H128 Q145,18 145,35 V90 Q145,105 128,105 H17 Q0,105 0,88 Z"
+          fill="#6fa8a3" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+    <use id="folder-gear-icon" href="#gear" x="45" y="30" width="60" height="60"/>
+  </g>
+
+  <!-- right hand: folder with cloud -->
+  <g id="folder-cloud" transform="translate(534,300)">
+    <path d="M0,55 V15 Q0,0 18,0 H55 L70,18 H128 Q145,18 145,35 V90 Q145,105 128,105 H17 Q0,105 0,88 Z"
+          fill="#84c2b9" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M40,70 a16,16 0 0 1 5,-31 a20,20 0 0 1 38,-4 a17,17 0 0 1 4,33 Z"
+          fill="#eef6f4" stroke="#1f3a3d" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ================= PERSON ================= -->
+  <g id="person" transform="translate(340,300)">
+    <!-- legs -->
+    <g stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M78,300 L70,420 Q69,434 82,435 H92 L96,420 L112,420 L114,435 H124 Q137,434 135,420 L127,300 Z" fill="#e0a75f"/>
+      <!-- shoes -->
+      <path d="M69,420 H97 L100,452 Q100,459 92,459 H56 Q50,459 52,451 Z" fill="#233b3e"/>
+      <path d="M114,420 H142 L148,451 Q150,459 142,459 H106 Q100,459 102,452 Z" fill="#233b3e"/>
+    </g>
+
+    <!-- torso / sweater -->
+    <path d="M52,132 Q40,140 35,165 Q28,190 38,205 L60,195
+             Q58,175 63,158
+             L58,300 Q58,313 72,313 H148 Q162,313 162,300
+             L157,158 Q162,175 160,195 L182,205 Q192,190 185,165
+             Q180,140 168,132 Q145,116 110,116 Q75,116 52,132 Z"
+          fill="#3f7570" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+    <!-- collar -->
+    <path d="M92,120 Q110,136 128,120 Q125,132 110,134 Q95,132 92,120 Z" fill="#2f5f5b" stroke="#1f3a3d" stroke-width="4" stroke-linejoin="round"/>
+
+    <!-- neck -->
+    <rect x="96" y="98" width="28" height="28" fill="#f2c18f"/>
+
+    <!-- arms raised outward, presenting -->
+    <g stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+      <path id="arm-left" d="M55,140 Q15,148 -10,155 Q-38,162 -42,140 Q-40,120 -12,122 Q25,124 62,120 Z" fill="#3f7570"/>
+      <path id="arm-right" d="M165,140 Q205,148 230,155 Q258,162 262,140 Q260,120 232,122 Q195,124 158,120 Z" fill="#3f7570"/>
+      <!-- hands -->
+      <ellipse cx="-46" cy="140" rx="17" ry="14" fill="#f2c18f"/>
+      <ellipse cx="266" cy="140" rx="17" ry="14" fill="#f2c18f"/>
+    </g>
+
+    <!-- head -->
+    <g id="head-group">
+      <circle cx="110" cy="63" r="50" fill="#f2c18f" stroke="#1f3a3d" stroke-width="6"/>
+      <!-- ears -->
+      <circle cx="61" cy="68" r="9" fill="#f2c18f" stroke="#1f3a3d" stroke-width="5"/>
+      <circle cx="159" cy="68" r="9" fill="#f2c18f" stroke="#1f3a3d" stroke-width="5"/>
+      <!-- hair -->
+      <path d="M60,58
+               C56,14 90,2 110,2
+               C130,2 164,14 160,58
+               C158,40 148,29 134,32
+               C140,44 133,54 120,54
+               C124,42 116,31 103,33
+               C107,44 99,52 87,50
+               C90,39 83,30 71,33
+               C62,36 59,46 60,58 Z"
+            fill="#22383b" stroke="#1f3a3d" stroke-width="6" stroke-linejoin="round"/>
+      <!-- face -->
+      <g stroke="#1f3a3d" stroke-linecap="round">
+        <circle cx="93" cy="63" r="4.5" fill="#1f3a3d" stroke="none"/>
+        <circle cx="129" cy="63" r="4.5" fill="#1f3a3d" stroke="none"/>
+        <path d="M90,84 Q111,100 132,84" fill="none" stroke-width="5"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- ground line -->
+  <line x1="60" y1="1057" x2="890" y2="1057" stroke="#1f3a3d" stroke-width="6" stroke-linecap="round"/>
+</svg>

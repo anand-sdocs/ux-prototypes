@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Agents - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <label for="access-select">Your access:</label>
+    <select id="access-select">
+      <option value="no">Standard user &mdash; no creator access</option>
+      <option value="yes">Standard user &mdash; creator access granted</option>
+    </select>
+    <span class="proto-toolbar-hint">Switches which parts of this page you'd see &mdash; no real backend or permissions system.</span>
+  </div>
+
+  <header class="app-header">
+    <div class="brand"><svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg> S-Docs Agent Platform</div>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" href="../industry-agent-templates/index.html">Industry templates</a>
+      <a class="btn btn-outline btn-sm" href="../sdocs-agent-builder/index.html">Power-user builder &rarr;</a>
+      <div class="avatar-circle">AN</div>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="dashboard-heading">
+      <div>
+        <h1>My agents</h1>
+        <p>Run agents your organization has published, agents your team has shared, or your own &mdash; without needing to know how any of them are wired up.</p>
+      </div>
+    </div>
+
+    <div id="access-banner"></div>
+
+    <div class="search-row">
+      <input type="text" class="search-input" id="search-input" placeholder="Search agents by name or description…">
+    </div>
+
+    <section class="catalogue-section">
+      <div class="catalogue-section-head">
+        <h2>My agents</h2>
+        <span class="section-sub">Created by you</span>
+      </div>
+      <div class="agent-grid" id="my-agents-grid"></div>
+    </section>
+
+    <section class="catalogue-section">
+      <div class="catalogue-section-head">
+        <h2>Shared with my team</h2>
+        <span class="section-sub" id="team-sub"></span>
+      </div>
+      <div class="agent-grid" id="team-agents-grid"></div>
+    </section>
+
+    <section class="catalogue-section">
+      <div class="catalogue-section-head">
+        <h2>Enterprise catalogue</h2>
+        <span class="section-sub">Published organization-wide</span>
+      </div>
+      <div class="agent-grid" id="enterprise-agents-grid"></div>
+    </section>
+  </main>
+
+  <!-- Run agent modal -->
+  <div class="modal-overlay" id="run-modal">
+    <div class="run-modal-box">
+      <div class="run-modal-header">
+        <h3 id="run-modal-title">Run agent</h3>
+        <button class="icon-btn" id="run-modal-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="run-modal-body" id="run-modal-body"></div>
+      <div class="run-modal-footer">
+        <button class="btn btn-outline btn-sm" id="run-modal-done">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-Docs Logo Animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color: #0176d3;
+    --bg-app: #f4f6f9;
+    --text-main: #181818;
+    --text-muted: #5e6670;
+    --border-color: #dddbda;
+    --logo-size: 96;
+    --stage-bg: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    padding: 40px 24px 80px;
+  }
+  .wrapper { max-width: 1180px; margin: 0 auto; }
+  .masthead { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .brand-logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
+  h1 { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 700; }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin: 6px 0 8px; max-width: 720px; line-height: 1.5; }
+  a.back-link { display: inline-block; font-size: 13px; color: var(--primary-color); text-decoration: none; margin-bottom: 24px; }
+  a.back-link:hover { text-decoration: underline; }
+
+  .controls {
+    position: sticky;
+    top: 12px;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .control-group { display: flex; align-items: center; gap: 10px; }
+  .control-group label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  select#categoryFilter {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 7px 30px 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%235e6670"/></svg>') no-repeat right 12px center;
+    -webkit-appearance: none;
+    appearance: none;
+    color: var(--text-main);
+    cursor: pointer;
+  }
+  input[type="range"] { width: 160px; accent-color: var(--primary-color); }
+  .size-readout { font-size: 12.5px; font-weight: 600; color: var(--text-main); min-width: 44px; }
+  .size-presets { display: flex; gap: 6px; }
+  .size-presets button {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .size-presets button:hover { border-color: var(--primary-color); color: var(--primary-color); }
+  .size-presets button.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+  .replay-all {
+    margin-left: auto;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-color);
+    background: #fff;
+    color: var(--primary-color);
+    cursor: pointer;
+  }
+  .replay-all:hover { background: var(--primary-color); color: #fff; }
+
+  section.group { margin-bottom: 40px; }
+  h2.section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .section-desc { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--stage-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 18px 16px 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .logo-stage {
+    width: calc(var(--logo-size) * 1px);
+    height: calc(var(--logo-size) * 1.2393px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    perspective: 600px;
+  }
+  .logo-stage svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .piece { transform-box: fill-box; transform-origin: center; }
+
+  .card h3 { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-bottom: 10px; min-height: 34px; }
+  .card .tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    background: #eaf3fc;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .replay-btn {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .replay-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+  .hover-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+  .card-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .copy-btn {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-color);
+    background: #fff;
+    color: var(--primary-color);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .copy-btn:hover { background: var(--primary-color); color: #fff; }
+  .copy-btn.copied { background: #2e844a; border-color: #2e844a; color: #fff; }
+
+  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+  /* ============ ENTRANCE / BUILD-IN ============ */
+  @keyframes flyIn {
+    from { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity: 0; }
+    to   { transform: translate(0, 0) scale(1); opacity: 1; }
+  }
+  .anim-stagger-fly-in .piece {
+    animation: flyIn 0.85s cubic-bezier(.22,.85,.28,1.1) both;
+    animation-delay: calc(var(--i) * 0.11s);
+  }
+  .anim-stagger-fly-in .p-1 { --dx: -55px; --dy: 45px; }
+  .anim-stagger-fly-in .p-2 { --dx: -70px; --dy: -25px; }
+  .anim-stagger-fly-in .p-3 { --dx: 65px; --dy: -55px; }
+  .anim-stagger-fly-in .p-4 { --dx: 35px; --dy: 60px; }
+  .anim-stagger-fly-in .p-5 { --dx: -40px; --dy: -65px; }
+
+  @keyframes assembleCenter {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .anim-assemble-center .piece {
+    transform-box: view-box;
+    transform-origin: 58.5px 72.5px;
+    animation: assembleCenter 0.7s cubic-bezier(.34,1.56,.64,1) both;
+    animation-delay: calc(var(--i) * 0.09s);
+  }
+
+  @keyframes fadeScaleIn {
+    from { transform: scale(0.55); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .anim-fade-scale-whole svg {
+    animation: fadeScaleIn 0.8s cubic-bezier(.22,.85,.28,1.1) both;
+  }
+
+  @keyframes wipeReveal {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
+  }
+  .anim-wipe-reveal svg {
+    animation: wipeReveal 1s cubic-bezier(.4,0,.2,1) both;
+  }
+
+  /* ============ AMBIENT LOOPS ============ */
+  @keyframes floatBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .anim-float-bob svg { animation: floatBob 3s ease-in-out infinite; }
+
+  @keyframes breathePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .anim-breathe-pulse svg { animation: breathePulse 2.6s ease-in-out infinite; }
+
+  @keyframes shimmer {
+    0%, 100% { filter: brightness(1) saturate(1); }
+    50% { filter: brightness(1.35) saturate(1.4); }
+  }
+  .anim-color-shimmer .piece {
+    animation: shimmer 2.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.18s);
+  }
+
+  @keyframes slowSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .anim-slow-spin svg { animation: slowSpin 9s linear infinite; }
+
+  /* ============ HOVER / INTERACTIVE ============ */
+  .anim-hover-lift svg { transition: transform 0.35s cubic-bezier(.22,.85,.28,1.1), filter 0.35s ease; }
+  .anim-hover-lift:hover svg { transform: translateY(-8px) scale(1.08); filter: drop-shadow(0 12px 16px rgba(0,0,0,0.18)); }
+
+  .anim-hover-explode .piece { transition: transform 0.4s cubic-bezier(.22,.85,.28,1.1); }
+  .anim-hover-explode:hover .p-1 { transform: translate(-16px, 12px); }
+  .anim-hover-explode:hover .p-2 { transform: translate(-20px, -10px); }
+  .anim-hover-explode:hover .p-3 { transform: translate(18px, -16px); }
+  .anim-hover-explode:hover .p-4 { transform: translate(10px, 18px); }
+  .anim-hover-explode:hover .p-5 { transform: translate(-10px, -20px); }
+
+  .anim-hover-tilt svg { transition: transform 0.3s ease; transform-style: preserve-3d; }
+  .anim-hover-tilt:hover svg { transform: rotateX(18deg) rotateY(-22deg) scale(1.05); }
+
+  .anim-hover-color-pop .piece { transition: transform 0.3s ease, filter 0.3s ease; transition-delay: calc(var(--i) * 0.05s); }
+  .anim-hover-color-pop:hover .piece { transform: translateY(-6px); filter: saturate(1.6) brightness(1.12); }
+
+  /* ============ LOADING / SPINNER ============ */
+  @keyframes chasePulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .anim-chase-pulse .piece {
+    transform-box: fill-box;
+    animation: chasePulse 1.4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.16s);
+  }
+
+  @keyframes cometTrail {
+    0%   { opacity: 1; transform: scale(1.05); }
+    30%  { opacity: 0.5; transform: scale(0.98); }
+    60%  { opacity: 0.15; transform: scale(0.9); }
+    100% { opacity: 0.15; transform: scale(0.9); }
+  }
+  .anim-comet-chase .piece {
+    transform-box: fill-box;
+    animation: cometTrail 1.6s linear infinite;
+    animation-delay: calc(var(--i) * 0.14s);
+  }
+
+  @keyframes grayscaleSweep {
+    0%, 100% { filter: grayscale(1) brightness(0.9); opacity: 0.45; }
+    50% { filter: grayscale(0) brightness(1.08); opacity: 1; }
+  }
+  .anim-grayscale-sweep .piece {
+    animation: grayscaleSweep 1.6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.16s);
+  }
+
+  @keyframes bounceChase {
+    0%, 100% { transform: translateY(0) scale(0.95); opacity: 0.4; }
+    50% { transform: translateY(-14px) scale(1.05); opacity: 1; }
+  }
+  .anim-bounce-chase .piece {
+    transform-box: fill-box;
+    animation: bounceChase 1.4s cubic-bezier(.34,1.56,.64,1) infinite;
+    animation-delay: calc(var(--i) * 0.16s);
+  }
+
+  @keyframes pingpongP0 { 0%, 100% { opacity: 1; transform: scale(1.05); } 6%, 94% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 0.3; transform: scale(0.9); } }
+  @keyframes pingpongP1 { 0%, 8.5%, 83.5%, 100% { opacity: 0.3; transform: scale(0.9); } 12.5% { opacity: 1; transform: scale(1.05); } 16.5% { opacity: 0.3; transform: scale(0.9); } 87.5% { opacity: 1; transform: scale(1.05); } 91.5% { opacity: 0.3; transform: scale(0.9); } }
+  @keyframes pingpongP2 { 0%, 21%, 71%, 100% { opacity: 0.3; transform: scale(0.9); } 25% { opacity: 1; transform: scale(1.05); } 29% { opacity: 0.3; transform: scale(0.9); } 75% { opacity: 1; transform: scale(1.05); } 79% { opacity: 0.3; transform: scale(0.9); } }
+  @keyframes pingpongP3 { 0%, 33.5%, 58.5%, 100% { opacity: 0.3; transform: scale(0.9); } 37.5% { opacity: 1; transform: scale(1.05); } 41.5% { opacity: 0.3; transform: scale(0.9); } 62.5% { opacity: 1; transform: scale(1.05); } 66.5% { opacity: 0.3; transform: scale(0.9); } }
+  @keyframes pingpongP4 { 0%, 46%, 54%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.05); } }
+  .anim-pingpong-chase .piece { transform-box: fill-box; animation-duration: 3.2s; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .anim-pingpong-chase .p-1 { animation-name: pingpongP0; }
+  .anim-pingpong-chase .p-2 { animation-name: pingpongP1; }
+  .anim-pingpong-chase .p-3 { animation-name: pingpongP2; }
+  .anim-pingpong-chase .p-4 { animation-name: pingpongP3; }
+  .anim-pingpong-chase .p-5 { animation-name: pingpongP4; }
+
+  @keyframes glowChase {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(1,118,211,0)) brightness(0.95); opacity: 0.5; }
+    50% { filter: drop-shadow(0 0 8px rgba(1,118,211,0.65)) brightness(1.15); opacity: 1; }
+  }
+  .anim-glow-chase .piece {
+    animation: glowChase 1.5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.16s);
+  }
+
+  .anim-chase-fast .piece {
+    transform-box: fill-box;
+    animation: chasePulse 0.7s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.08s);
+  }
+
+  .anim-chase-slow .piece {
+    transform-box: fill-box;
+    animation: chasePulse 2.8s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.32s);
+  }
+
+  @keyframes fastSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .anim-fast-spin svg { animation: fastSpin 1.1s linear infinite; }
+
+  @keyframes buildLoop {
+    0%   { transform: scale(0); opacity: 0; }
+    35%  { transform: scale(1.08); opacity: 1; }
+    50%  { transform: scale(1); opacity: 1; }
+    80%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  .anim-build-loop .piece {
+    transform-box: view-box;
+    transform-origin: 58.5px 72.5px;
+    animation: buildLoop 2.4s cubic-bezier(.45,0,.55,1) infinite;
+    animation-delay: calc(var(--i) * 0.14s);
+  }
+
+  @keyframes sweepWipe {
+    0%   { clip-path: inset(0 100% 0 0); }
+    45%  { clip-path: inset(0 0 0 0); }
+    80%  { clip-path: inset(0 0 0 0); }
+    100% { clip-path: inset(0 0 0 100%); }
+  }
+  .anim-sweep-wipe svg { animation: sweepWipe 2.6s cubic-bezier(.4,0,.2,1) infinite; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <a class="back-link" href="../index.html">&larr; All prototypes</a>
+  <div class="masthead">
+    <svg class="brand-logo" viewBox="0 0 117 145" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 115.000 114.608 L 115.000 64.817 Q 115.000 61.485 111.936 62.793 L 49.336 89.520 Q 48.000 90.091 48.000 91.544 L 48.000 141.335 Q 48.000 144.666 51.064 143.358 L 113.664 116.631 Q 115.000 116.061 115.000 114.608 Z" fill="#98B780"/>
+      <path d="M 67.000 74.877 L 67.000 64.741 Q 67.000 61.409 63.936 62.717 L 1.336 89.444 Q 0.000 90.015 0.000 91.468 L 0.000 141.229 Q 0.000 144.560 3.064 143.252 L 41.664 126.772 Q 43.000 126.202 43.000 124.749 L 43.000 88.029 Q 43.000 86.577 44.336 86.006 L 65.664 76.900 Q 67.000 76.330 67.000 74.877 Z" fill="#61ADE9"/>
+      <path d="M 57.960 55.269 L 3.064 31.831 Q -0.000 30.523 -0.000 33.855 L 0.000 80.730 Q 0.000 84.062 3.064 82.754 L 57.960 59.316 Q 62.699 57.293 57.960 55.269 Z" fill="#908AD5"/>
+      <path d="M 66.968 29.446 L 66.968 3.091 Q 66.968 -0.241 63.904 1.068 L 8.949 24.530 Q 4.210 26.554 8.949 28.577 L 39.620 41.672 Q 42.684 42.980 42.684 39.648 L 42.684 25.741 Q 42.684 22.410 45.748 23.718 L 63.904 31.470 Q 66.968 32.778 66.968 29.446 Z" fill="#E86735"/>
+      <path d="M 106.326 55.363 L 51.064 31.769 Q 48.000 30.461 48.000 33.793 L 48.000 43.721 Q 48.000 45.173 49.336 45.744 L 70.664 54.850 Q 72.000 55.420 72.000 56.873 L 72.000 70.734 Q 72.000 74.065 75.064 72.757 L 106.326 59.410 Q 111.065 57.387 106.326 55.363 Z" fill="#F4BD4E"/>
+    </svg>
+    <h1>Logo Animations</h1>
+  </div>
+  <p class="subtitle">A showcase of ways to animate the S-Docs mark &mdash; entrances, ambient loops, hover interactions, and loading states &mdash; across sizes from favicon to hero.</p>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="categoryFilter">Style</label>
+      <select id="categoryFilter">
+        <option value="all">All styles</option>
+        <option value="entrance">Entrance &amp; build-in</option>
+        <option value="ambient">Continuous &amp; ambient loops</option>
+        <option value="hover">Hover &amp; interactive</option>
+        <option value="loading">Loading &amp; spinner</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="sizeSlider">Size</label>
+      <input type="range" id="sizeSlider" min="24" max="320" step="1" value="96">
+      <span class="size-readout" id="sizeReadout">96px</span>
+    </div>
+    <div class="size-presets" id="sizePresets">
+      <button type="button" data-size="16">16</button>
+      <button type="button" data-size="32">32</button>
+      <button type="button" data-size="64">64</button>
+      <button type="button" data-size="128" class="active">128</button>
+      <button type="button" data-size="256">256</button>
+      <button type="button" data-size="400">400</button>
+    </div>
+    <button class="replay-all" id="replayAll">&#8635; Replay entrances</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>Internal design prototype &mdash; not representative of final production UI.</footer>
+</div>
+
+<script>
+  const LOGO_SVG = (prefix) => `
+    <svg viewBox="0 0 117 145" xmlns="http://www.w3.org/2000/svg">
+      <path class="piece p-1" style="--i:0" d="M 115.000 114.608 L 115.000 64.817 Q 115.000 61.485 111.936 62.793 L 49.336 89.520 Q 48.000 90.091 48.000 91.544 L 48.000 141.335 Q 48.000 144.666 51.064 143.358 L 113.664 116.631 Q 115.000 116.061 115.000 114.608 Z" fill="#98B780"/>
+      <path class="piece p-2" style="--i:1" d="M 67.000 74.877 L 67.000 64.741 Q 67.000 61.409 63.936 62.717 L 1.336 89.444 Q 0.000 90.015 0.000 91.468 L 0.000 141.229 Q 0.000 144.560 3.064 143.252 L 41.664 126.772 Q 43.000 126.202 43.000 124.749 L 43.000 88.029 Q 43.000 86.577 44.336 86.006 L 65.664 76.900 Q 67.000 76.330 67.000 74.877 Z" fill="#61ADE9"/>
+      <path class="piece p-3" style="--i:2" d="M 57.960 55.269 L 3.064 31.831 Q -0.000 30.523 -0.000 33.855 L 0.000 80.730 Q 0.000 84.062 3.064 82.754 L 57.960 59.316 Q 62.699 57.293 57.960 55.269 Z" fill="#908AD5"/>
+      <path class="piece p-4" style="--i:3" d="M 66.968 29.446 L 66.968 3.091 Q 66.968 -0.241 63.904 1.068 L 8.949 24.530 Q 4.210 26.554 8.949 28.577 L 39.620 41.672 Q 42.684 42.980 42.684 39.648 L 42.684 25.741 Q 42.684 22.410 45.748 23.718 L 63.904 31.470 Q 66.968 32.778 66.968 29.446 Z" fill="#E86735"/>
+      <path class="piece p-5" style="--i:4" d="M 106.326 55.363 L 51.064 31.769 Q 48.000 30.461 48.000 33.793 L 48.000 43.721 Q 48.000 45.173 49.336 45.744 L 70.664 54.850 Q 72.000 55.420 72.000 56.873 L 72.000 70.734 Q 72.000 74.065 75.064 72.757 L 106.326 59.410 Q 111.065 57.387 106.326 55.363 Z" fill="#F4BD4E"/>
+    </svg>`;
+
+  const SECTIONS = [
+    {
+      key: 'entrance',
+      title: 'Entrance &amp; Build-in',
+      desc: 'One-shot animations for splash screens, page loads, or modal reveals. Use the replay button (or "Replay entrances" above) to re-trigger.',
+      items: [
+        { id: 'stagger-fly-in', cls: 'anim-stagger-fly-in', title: 'Staggered Fly-in', desc: 'Each piece flies in from a different direction and settles into place.', tag: 'Individual pieces', once: true },
+        { id: 'assemble-center', cls: 'anim-assemble-center', title: 'Assemble from Center', desc: 'Pieces scale up from the logo’s center point in a quick staggered burst.', tag: 'Individual pieces', once: true },
+        { id: 'fade-scale-whole', cls: 'anim-fade-scale-whole', title: 'Fade &amp; Scale In', desc: 'The whole mark fades and scales up as a single unit — simple and safe.', tag: 'Whole logo', once: true },
+        { id: 'wipe-reveal', cls: 'anim-wipe-reveal', title: 'Wipe Reveal', desc: 'A curtain-style clip-path wipe reveals the logo left to right.', tag: 'Whole logo', once: true },
+      ]
+    },
+    {
+      key: 'ambient',
+      title: 'Continuous &amp; Ambient Loops',
+      desc: 'Subtle, always-on motion for idle states, headers, or background branding — low amplitude so it doesn’t distract.',
+      items: [
+        { id: 'float-bob', cls: 'anim-float-bob', title: 'Gentle Float', desc: 'The mark bobs up and down slowly, like it’s resting on water.', tag: 'Whole logo', once: false },
+        { id: 'breathe-pulse', cls: 'anim-breathe-pulse', title: 'Breathing Pulse', desc: 'A slow, soft scale pulse suggests the logo is alive/idle.', tag: 'Whole logo', once: false },
+        { id: 'color-shimmer', cls: 'anim-color-shimmer', title: 'Color Shimmer', desc: 'Each piece brightens and saturates in a staggered wave.', tag: 'Individual pieces', once: false },
+        { id: 'slow-spin', cls: 'anim-slow-spin', title: 'Slow Rotation', desc: 'The full mark rotates continuously at an unhurried pace.', tag: 'Whole logo', once: false },
+      ]
+    },
+    {
+      key: 'hover',
+      title: 'Hover &amp; Interactive',
+      desc: 'Micro-interactions triggered by mouse hover — hover any card below to see the effect.',
+      items: [
+        { id: 'hover-lift', cls: 'anim-hover-lift', title: 'Lift &amp; Scale', desc: 'Logo lifts, scales up slightly, and gains a soft drop shadow.', tag: 'Whole logo', hover: true },
+        { id: 'hover-explode', cls: 'anim-hover-explode', title: 'Piece Separation', desc: 'The 5 pieces spread apart on hover, then snap back together.', tag: 'Individual pieces', hover: true },
+        { id: 'hover-tilt', cls: 'anim-hover-tilt', title: '3D Tilt', desc: 'A perspective tilt gives the flat mark a sense of depth on hover.', tag: 'Whole logo', hover: true },
+        { id: 'hover-color-pop', cls: 'anim-hover-color-pop', title: 'Color Pop', desc: 'Pieces lift and saturate individually with a light stagger.', tag: 'Individual pieces', hover: true },
+      ]
+    },
+    {
+      key: 'loading',
+      title: 'Loading &amp; Spinner',
+      desc: 'Repeating animations that communicate "processing" — useful for document generation, saves, or async actions.',
+      items: [
+        { id: 'chase-pulse', cls: 'anim-chase-pulse', title: 'Chase Pulse', desc: 'Pieces pulse in sequence, chasing around the mark like a loader.', tag: 'Individual pieces', once: false },
+        { id: 'comet-chase', cls: 'anim-comet-chase', title: 'Comet Trail', desc: 'A bright piece leads with a fading tail behind it, like a comet.', tag: 'Individual pieces', once: false },
+        { id: 'grayscale-sweep', cls: 'anim-grayscale-sweep', title: 'Grayscale Sweep', desc: 'Idle pieces sit desaturated; color switches on as the chase passes over.', tag: 'Individual pieces', once: false },
+        { id: 'bounce-chase', cls: 'anim-bounce-chase', title: 'Bounce Chase', desc: 'Pieces hop upward as they activate, for a more playful chase.', tag: 'Individual pieces', once: false },
+        { id: 'pingpong-chase', cls: 'anim-pingpong-chase', title: 'Ping-pong Chase', desc: 'The chase runs end to end and reverses direction, instead of resetting.', tag: 'Individual pieces', once: false },
+        { id: 'glow-chase', cls: 'anim-glow-chase', title: 'Glow Chase', desc: 'Each piece gets a soft glowing highlight as the chase passes over it.', tag: 'Individual pieces', once: false },
+        { id: 'chase-fast', cls: 'anim-chase-fast', title: 'Chase &mdash; Fast', desc: 'A quicker, more urgent version of the chase &mdash; good for active saving.', tag: 'Individual pieces', once: false },
+        { id: 'chase-slow', cls: 'anim-chase-slow', title: 'Chase &mdash; Slow', desc: 'A calmer, unhurried version of the chase &mdash; good for idle processing.', tag: 'Individual pieces', once: false },
+        { id: 'fast-spin', cls: 'anim-fast-spin', title: 'Spinner', desc: 'A fast continuous spin, doubling as a standard loading spinner.', tag: 'Whole logo', once: false },
+        { id: 'build-loop', cls: 'anim-build-loop', title: 'Build Loop', desc: 'The logo continuously assembles, holds, then resets — an endless build.', tag: 'Individual pieces', once: false },
+        { id: 'sweep-wipe', cls: 'anim-sweep-wipe', title: 'Sweep Wipe', desc: 'A wipe repeatedly reveals and hides the mark left to right.', tag: 'Whole logo', once: false },
+      ]
+    },
+  ];
+
+  const sectionsEl = document.getElementById('sections');
+  const ITEMS_BY_ID = {};
+  SECTIONS.forEach(sec => sec.items.forEach(item => { ITEMS_BY_ID[item.id] = item; }));
+
+  const BASE_CSS = `.logo-stage {
+  width: 128px;   /* set to whatever size you need */
+  height: 158px;  /* keep aspect ratio: height = width * 1.2393 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 600px; /* only required for the 3D Tilt effect */
+}
+.logo-stage svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.piece { transform-box: fill-box; transform-origin: center; }`;
+
+  const ANIM_CSS = {
+    'stagger-fly-in': `@keyframes flyIn {
+  from { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity: 0; }
+  to   { transform: translate(0, 0) scale(1); opacity: 1; }
+}
+.anim-stagger-fly-in .piece {
+  animation: flyIn 0.85s cubic-bezier(.22,.85,.28,1.1) both;
+  animation-delay: calc(var(--i) * 0.11s);
+}
+.anim-stagger-fly-in .p-1 { --dx: -55px; --dy: 45px; }
+.anim-stagger-fly-in .p-2 { --dx: -70px; --dy: -25px; }
+.anim-stagger-fly-in .p-3 { --dx: 65px; --dy: -55px; }
+.anim-stagger-fly-in .p-4 { --dx: 35px; --dy: 60px; }
+.anim-stagger-fly-in .p-5 { --dx: -40px; --dy: -65px; }`,
+
+    'assemble-center': `@keyframes assembleCenter {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.anim-assemble-center .piece {
+  transform-box: view-box;
+  transform-origin: 58.5px 72.5px;
+  animation: assembleCenter 0.7s cubic-bezier(.34,1.56,.64,1) both;
+  animation-delay: calc(var(--i) * 0.09s);
+}`,
+
+    'fade-scale-whole': `@keyframes fadeScaleIn {
+  from { transform: scale(0.55); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.anim-fade-scale-whole svg {
+  animation: fadeScaleIn 0.8s cubic-bezier(.22,.85,.28,1.1) both;
+}`,
+
+    'wipe-reveal': `@keyframes wipeReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+.anim-wipe-reveal svg {
+  animation: wipeReveal 1s cubic-bezier(.4,0,.2,1) both;
+}`,
+
+    'float-bob': `@keyframes floatBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.anim-float-bob svg { animation: floatBob 3s ease-in-out infinite; }`,
+
+    'breathe-pulse': `@keyframes breathePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+.anim-breathe-pulse svg { animation: breathePulse 2.6s ease-in-out infinite; }`,
+
+    'color-shimmer': `@keyframes shimmer {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50% { filter: brightness(1.35) saturate(1.4); }
+}
+.anim-color-shimmer .piece {
+  animation: shimmer 2.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.18s);
+}`,
+
+    'slow-spin': `@keyframes slowSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.anim-slow-spin svg { animation: slowSpin 9s linear infinite; }`,
+
+    'hover-lift': `.anim-hover-lift svg { transition: transform 0.35s cubic-bezier(.22,.85,.28,1.1), filter 0.35s ease; }
+.anim-hover-lift:hover svg { transform: translateY(-8px) scale(1.08); filter: drop-shadow(0 12px 16px rgba(0,0,0,0.18)); }`,
+
+    'hover-explode': `.anim-hover-explode .piece { transition: transform 0.4s cubic-bezier(.22,.85,.28,1.1); }
+.anim-hover-explode:hover .p-1 { transform: translate(-16px, 12px); }
+.anim-hover-explode:hover .p-2 { transform: translate(-20px, -10px); }
+.anim-hover-explode:hover .p-3 { transform: translate(18px, -16px); }
+.anim-hover-explode:hover .p-4 { transform: translate(10px, 18px); }
+.anim-hover-explode:hover .p-5 { transform: translate(-10px, -20px); }`,
+
+    'hover-tilt': `.anim-hover-tilt svg { transition: transform 0.3s ease; transform-style: preserve-3d; }
+.anim-hover-tilt:hover svg { transform: rotateX(18deg) rotateY(-22deg) scale(1.05); }`,
+
+    'hover-color-pop': `.anim-hover-color-pop .piece { transition: transform 0.3s ease, filter 0.3s ease; transition-delay: calc(var(--i) * 0.05s); }
+.anim-hover-color-pop:hover .piece { transform: translateY(-6px); filter: saturate(1.6) brightness(1.12); }`,
+
+    'chase-pulse': `@keyframes chasePulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.anim-chase-pulse .piece {
+  transform-box: fill-box;
+  animation: chasePulse 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.16s);
+}`,
+
+    'comet-chase': `@keyframes cometTrail {
+  0%   { opacity: 1; transform: scale(1.05); }
+  30%  { opacity: 0.5; transform: scale(0.98); }
+  60%  { opacity: 0.15; transform: scale(0.9); }
+  100% { opacity: 0.15; transform: scale(0.9); }
+}
+.anim-comet-chase .piece {
+  transform-box: fill-box;
+  animation: cometTrail 1.6s linear infinite;
+  animation-delay: calc(var(--i) * 0.14s);
+}`,
+
+    'grayscale-sweep': `@keyframes grayscaleSweep {
+  0%, 100% { filter: grayscale(1) brightness(0.9); opacity: 0.45; }
+  50% { filter: grayscale(0) brightness(1.08); opacity: 1; }
+}
+.anim-grayscale-sweep .piece {
+  animation: grayscaleSweep 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.16s);
+}`,
+
+    'bounce-chase': `@keyframes bounceChase {
+  0%, 100% { transform: translateY(0) scale(0.95); opacity: 0.4; }
+  50% { transform: translateY(-14px) scale(1.05); opacity: 1; }
+}
+.anim-bounce-chase .piece {
+  transform-box: fill-box;
+  animation: bounceChase 1.4s cubic-bezier(.34,1.56,.64,1) infinite;
+  animation-delay: calc(var(--i) * 0.16s);
+}`,
+
+    'pingpong-chase': `@keyframes pingpongP0 { 0%, 100% { opacity: 1; transform: scale(1.05); } 6%, 94% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 0.3; transform: scale(0.9); } }
+@keyframes pingpongP1 { 0%, 8.5%, 83.5%, 100% { opacity: 0.3; transform: scale(0.9); } 12.5% { opacity: 1; transform: scale(1.05); } 16.5% { opacity: 0.3; transform: scale(0.9); } 87.5% { opacity: 1; transform: scale(1.05); } 91.5% { opacity: 0.3; transform: scale(0.9); } }
+@keyframes pingpongP2 { 0%, 21%, 71%, 100% { opacity: 0.3; transform: scale(0.9); } 25% { opacity: 1; transform: scale(1.05); } 29% { opacity: 0.3; transform: scale(0.9); } 75% { opacity: 1; transform: scale(1.05); } 79% { opacity: 0.3; transform: scale(0.9); } }
+@keyframes pingpongP3 { 0%, 33.5%, 58.5%, 100% { opacity: 0.3; transform: scale(0.9); } 37.5% { opacity: 1; transform: scale(1.05); } 41.5% { opacity: 0.3; transform: scale(0.9); } 62.5% { opacity: 1; transform: scale(1.05); } 66.5% { opacity: 0.3; transform: scale(0.9); } }
+@keyframes pingpongP4 { 0%, 46%, 54%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.05); } }
+.anim-pingpong-chase .piece { transform-box: fill-box; animation-duration: 3.2s; animation-timing-function: linear; animation-iteration-count: infinite; }
+.anim-pingpong-chase .p-1 { animation-name: pingpongP0; }
+.anim-pingpong-chase .p-2 { animation-name: pingpongP1; }
+.anim-pingpong-chase .p-3 { animation-name: pingpongP2; }
+.anim-pingpong-chase .p-4 { animation-name: pingpongP3; }
+.anim-pingpong-chase .p-5 { animation-name: pingpongP4; }`,
+
+    'glow-chase': `@keyframes glowChase {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(1,118,211,0)) brightness(0.95); opacity: 0.5; }
+  50% { filter: drop-shadow(0 0 8px rgba(1,118,211,0.65)) brightness(1.15); opacity: 1; }
+}
+.anim-glow-chase .piece {
+  animation: glowChase 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.16s);
+}`,
+
+    'chase-fast': `@keyframes chasePulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.anim-chase-fast .piece {
+  transform-box: fill-box;
+  animation: chasePulse 0.7s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.08s);
+}`,
+
+    'chase-slow': `@keyframes chasePulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.anim-chase-slow .piece {
+  transform-box: fill-box;
+  animation: chasePulse 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.32s);
+}`,
+
+    'fast-spin': `@keyframes fastSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.anim-fast-spin svg { animation: fastSpin 1.1s linear infinite; }`,
+
+    'build-loop': `@keyframes buildLoop {
+  0%   { transform: scale(0); opacity: 0; }
+  35%  { transform: scale(1.08); opacity: 1; }
+  50%  { transform: scale(1); opacity: 1; }
+  80%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.anim-build-loop .piece {
+  transform-box: view-box;
+  transform-origin: 58.5px 72.5px;
+  animation: buildLoop 2.4s cubic-bezier(.45,0,.55,1) infinite;
+  animation-delay: calc(var(--i) * 0.14s);
+}`,
+
+    'sweep-wipe': `@keyframes sweepWipe {
+  0%   { clip-path: inset(0 100% 0 0); }
+  45%  { clip-path: inset(0 0 0 0); }
+  80%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+.anim-sweep-wipe svg { animation: sweepWipe 2.6s cubic-bezier(.4,0,.2,1) infinite; }`,
+  };
+
+  function buildSnippet(item) {
+    const html = `<div class="logo-stage ${item.cls}">
+  <svg viewBox="0 0 117 145" xmlns="http://www.w3.org/2000/svg">
+    <path class="piece p-1" style="--i:0" d="M 115.000 114.608 L 115.000 64.817 Q 115.000 61.485 111.936 62.793 L 49.336 89.520 Q 48.000 90.091 48.000 91.544 L 48.000 141.335 Q 48.000 144.666 51.064 143.358 L 113.664 116.631 Q 115.000 116.061 115.000 114.608 Z" fill="#98B780"/>
+    <path class="piece p-2" style="--i:1" d="M 67.000 74.877 L 67.000 64.741 Q 67.000 61.409 63.936 62.717 L 1.336 89.444 Q 0.000 90.015 0.000 91.468 L 0.000 141.229 Q 0.000 144.560 3.064 143.252 L 41.664 126.772 Q 43.000 126.202 43.000 124.749 L 43.000 88.029 Q 43.000 86.577 44.336 86.006 L 65.664 76.900 Q 67.000 76.330 67.000 74.877 Z" fill="#61ADE9"/>
+    <path class="piece p-3" style="--i:2" d="M 57.960 55.269 L 3.064 31.831 Q -0.000 30.523 -0.000 33.855 L 0.000 80.730 Q 0.000 84.062 3.064 82.754 L 57.960 59.316 Q 62.699 57.293 57.960 55.269 Z" fill="#908AD5"/>
+    <path class="piece p-4" style="--i:3" d="M 66.968 29.446 L 66.968 3.091 Q 66.968 -0.241 63.904 1.068 L 8.949 24.530 Q 4.210 26.554 8.949 28.577 L 39.620 41.672 Q 42.684 42.980 42.684 39.648 L 42.684 25.741 Q 42.684 22.410 45.748 23.718 L 63.904 31.470 Q 66.968 32.778 66.968 29.446 Z" fill="#E86735"/>
+    <path class="piece p-5" style="--i:4" d="M 106.326 55.363 L 51.064 31.769 Q 48.000 30.461 48.000 33.793 L 48.000 43.721 Q 48.000 45.173 49.336 45.744 L 70.664 54.850 Q 72.000 55.420 72.000 56.873 L 72.000 70.734 Q 72.000 74.065 75.064 72.757 L 106.326 59.410 Q 111.065 57.387 106.326 55.363 Z" fill="#F4BD4E"/>
+  </svg>
+</div>`;
+    const css = `${BASE_CSS}
+
+${ANIM_CSS[item.id] || '/* no additional CSS for this effect */'}`;
+    return `<!-- ${item.title} — HTML -->\n${html}\n\n/* ${item.title} — CSS */\n${css}\n`;
+  }
+
+  function cardHTML(item) {
+    const control = item.hover
+      ? `<span class="hover-hint">Hover to preview</span>`
+      : item.once
+        ? `<button class="replay-btn" data-target="${item.id}">&#8635; Replay</button>`
+        : `<span class="hover-hint">Looping</span>`;
+    return `
+      <div class="card" data-anim-id="${item.id}">
+        <div class="logo-stage ${item.cls}">${LOGO_SVG(item.id)}</div>
+        <span class="tag">${item.tag}</span>
+        <h3>${item.title}</h3>
+        <p>${item.desc}</p>
+        <div class="card-footer">
+          ${control}
+          <button class="copy-btn" data-copy-id="${item.id}">&#128203; Copy code</button>
+        </div>
+      </div>`;
+  }
+
+  function render() {
+    sectionsEl.innerHTML = SECTIONS.map(sec => `
+      <section class="group" data-section="${sec.key}">
+        <h2 class="section-title">${sec.title}</h2>
+        <p class="section-desc">${sec.desc}</p>
+        <div class="grid">
+          ${sec.items.map(cardHTML).join('')}
+        </div>
+      </section>
+    `).join('');
+  }
+  render();
+
+  function replayCard(stageEl) {
+    const cls = [...stageEl.classList].find(c => c.startsWith('anim-'));
+    stageEl.classList.remove(cls);
+    void stageEl.offsetWidth;
+    stageEl.classList.add(cls);
+  }
+
+  sectionsEl.addEventListener('click', (e) => {
+    const replayBtn = e.target.closest('.replay-btn');
+    if (replayBtn) {
+      const stage = replayBtn.closest('.card').querySelector('.logo-stage');
+      replayCard(stage);
+      return;
+    }
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn) {
+      const item = ITEMS_BY_ID[copyBtn.dataset.copyId];
+      const snippet = buildSnippet(item);
+      const onCopied = () => {
+        const original = '&#128203; Copy code';
+        copyBtn.innerHTML = '&#10003; Copied!';
+        copyBtn.classList.add('copied');
+        clearTimeout(copyBtn._resetTimer);
+        copyBtn._resetTimer = setTimeout(() => {
+          copyBtn.innerHTML = original;
+          copyBtn.classList.remove('copied');
+        }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(snippet).then(onCopied).catch(() => fallbackCopy(snippet, onCopied));
+      } else {
+        fallbackCopy(snippet, onCopied);
+      }
+    }
+  });
+
+  function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    cb();
+  }
+
+  document.getElementById('replayAll').addEventListener('click', () => {
+    document.querySelectorAll('.logo-stage').forEach(stage => {
+      const card = stage.closest('.card');
+      if (card.querySelector('.replay-btn')) replayCard(stage);
+    });
+  });
+
+  // Category filter
+  document.getElementById('categoryFilter').addEventListener('change', (e) => {
+    const val = e.target.value;
+    document.querySelectorAll('section.group').forEach(sec => {
+      sec.style.display = (val === 'all' || sec.dataset.section === val) ? '' : 'none';
+    });
+  });
+
+  // Size controls
+  const slider = document.getElementById('sizeSlider');
+  const readout = document.getElementById('sizeReadout');
+  const presetButtons = document.querySelectorAll('.size-presets button');
+
+  function setSize(px) {
+    document.documentElement.style.setProperty('--logo-size', px);
+    readout.textContent = px + 'px';
+    slider.value = px;
+    presetButtons.forEach(b => b.classList.toggle('active', Number(b.dataset.size) === Number(px)));
+  }
+
+  slider.addEventListener('input', (e) => setSize(e.target.value));
+  presetButtons.forEach(b => b.addEventListener('click', () => setSize(b.dataset.size)));
+
+  setSize(128);
+</script>
+</body>
+</html>

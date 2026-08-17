@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build with AI - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">The conversation is scripted for this demo &mdash; nothing here calls a real model or system.</span>
+  </div>
+
+  <header class="ai-header">
+    <div class="header-left">
+      <a class="back-link" id="btn-exit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Exit
+      </a>
+      <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg>
+      <span class="builder-title">Build with AI</span>
+      <span class="ai-badge">Conversational</span>
+    </div>
+    <div id="ai-create-header-slot"></div>
+  </header>
+
+  <div class="ai-shell">
+    <section class="ai-left-pane">
+      <h2>Your agent, as it's built</h2>
+      <p class="ai-left-sub">This updates live as you answer on the right. Click any step to fine-tune it directly.</p>
+      <div class="ai-summary-stack" id="ai-summary-stack"></div>
+      <div class="flow-canvas" id="flow-canvas"></div>
+    </section>
+
+    <section class="ai-right-pane">
+      <div class="ai-chat-thread" id="ai-chat-thread"></div>
+      <div class="ai-composer">
+        <textarea class="ai-composer-input" id="ai-composer-input" placeholder="Type a reply&hellip;" rows="1"></textarea>
+        <button class="ai-send-btn" id="ai-send-btn" title="Send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Connector fake-login modal (shared with the manual builder) -->
+  <div class="modal-overlay" id="connector-modal">
+    <div class="modal-box">
+      <div class="modal-icon" id="connector-modal-icon"></div>
+      <h3 id="connector-modal-title">Connect to Slack</h3>
+      <p>Sign in with your own account to let this agent access <span id="connector-modal-name">Slack</span> on your behalf.</p>
+      <div class="modal-user-row">
+        <div class="agent-avatar" style="border-radius:50%;">AN</div>
+        <div>
+          <div style="font-weight:700;">Anand Narasimhan</div>
+          <div style="color:var(--text-muted);">anarasimhan@sdocs.com</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="connector-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="connector-modal-confirm">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task type sub-flow overlay (shared with the manual builder) -->
+  <div class="subflow-overlay" id="subflow-overlay">
+    <div class="subflow-panel" id="subflow-panel"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="builder.js"></script>
+  <script src="ai-builder.js"></script>
+</body>
+</html>

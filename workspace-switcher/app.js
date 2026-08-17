@@ -42,17 +42,17 @@
     ddUserEmail.textContent = session.email;
 
     headerWsPill.innerHTML = `
-      <span class="ws-avatar" style="background:${ws.color};">${ws.orgName.charAt(0)}</span>
+      <span class="ws-avatar" style="background:${ws.color};">${workspaceInitial(ws)}</span>
       <span class="ws-pill-text">
-        <span class="ws-pill-org">${ws.orgName}</span>
+        <span class="ws-pill-org" title="${ws.domain}">${ws.domain}</span>
       </span>
       <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
     `;
 
     dropdownWsBlock.innerHTML = `
-      <span class="ws-avatar" style="background:${ws.color};">${ws.orgName.charAt(0)}</span>
+      <span class="ws-avatar" style="background:${ws.color};">${workspaceInitial(ws)}</span>
       <span>
-        <div class="dropdown-ws-org">${ws.orgName}</div>
+        <div class="dropdown-ws-org">${ws.domain}</div>
         <div class="dropdown-ws-role">${workspaceIdentifierLine(ws)}</div>
       </span>
     `;
@@ -87,10 +87,10 @@
       const card = document.createElement("button");
       card.className = "workspace-card" + (isCurrent ? " is-current" : "");
       card.innerHTML = `
-        <div class="ws-avatar" style="background:${ws.color};">${ws.orgName.charAt(0)}</div>
+        <div class="ws-avatar" style="background:${ws.color};">${workspaceInitial(ws)}</div>
         <div class="ws-info">
           <div class="ws-name-row">
-            <span class="ws-org-name">${ws.orgName}</span>
+            <span class="ws-domain-name">${ws.domain}</span>
           </div>
           <div class="ws-meta-row">
             <div class="ws-meta-line ws-account-id">${workspaceIdentifierLine(ws)}</div>
@@ -116,7 +116,7 @@
     closeSwitchModal();
     closeDropdown();
     const ws = getWorkspaceById(id);
-    showToast(`Switched to ${ws.orgName} (${ws.accountId})`);
+    showToast(`Switched to ${ws.domain}`);
   }
 
   function openDropdown() { userDropdown.classList.add("open"); }

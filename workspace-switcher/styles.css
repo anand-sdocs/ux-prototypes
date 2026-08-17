@@ -196,7 +196,7 @@ button, input { font-family: inherit; }
 
 .ws-info { flex: 1; min-width: 0; }
 .ws-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ws-org-name { font-size: 14px; font-weight: 700; color: var(--text-main); }
+.ws-domain-name { font-size: 13.5px; font-weight: 700; color: var(--text-main); word-break: break-all; }
 .ws-meta-row { margin-top: 3px; display: flex; flex-direction: column; gap: 2px; }
 .ws-meta-line { font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ws-meta-dot { opacity: 0.6; }
@@ -238,10 +238,13 @@ button, input { font-family: inherit; }
   transition: all var(--transition-speed) ease;
 }
 .header-ws-pill:hover { border-color: #b0adab; background: #f3f2f1; }
-.header-ws-pill .ws-avatar { width: 24px; height: 24px; border-radius: 6px; font-size: 10px; }
-.header-ws-pill .ws-pill-text { display: flex; flex-direction: column; line-height: 1.25; }
-.header-ws-pill .ws-pill-org { font-size: 11.5px; font-weight: 700; color: var(--text-main); }
-.header-ws-pill svg.chev { color: var(--text-muted); margin-left: 2px; }
+.header-ws-pill .ws-avatar { width: 24px; height: 24px; border-radius: 6px; font-size: 10px; flex-shrink: 0; }
+.header-ws-pill .ws-pill-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.header-ws-pill .ws-pill-org {
+  font-size: 11.5px; font-weight: 700; color: var(--text-main);
+  max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.header-ws-pill svg.chev { color: var(--text-muted); margin-left: 2px; flex-shrink: 0; }
 
 .main-nav { display: flex; align-items: center; gap: 4px; }
 .nav-link {
@@ -295,7 +298,7 @@ button, input { font-family: inherit; }
   border-radius: 6px; display: flex; align-items: center; gap: 10px;
 }
 .dropdown-ws-block .ws-avatar { width: 30px; height: 30px; font-size: 12px; border-radius: 6px; }
-.dropdown-ws-org { font-size: 12px; font-weight: 700; color: var(--text-main); }
+.dropdown-ws-org { font-size: 11px; font-weight: 700; color: var(--text-main); word-break: break-all; }
 .dropdown-ws-role { font-family: monospace; font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 
 .dropdown-divider { height: 1px; background: var(--border-color); margin: 4px 0; }

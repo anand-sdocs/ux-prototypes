@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-Docs Agent Platform — Agents that read, decide, and act on your documents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">A marketing concept for the agent platform &mdash; copy, logos, and "customers" are illustrative, not real.</span>
+  </div>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#top">
+        <img src="logo.png" alt="S-Docs" class="brand-logo-img">
+        <span>S-Docs <strong>Agents</strong></span>
+      </a>
+      <nav class="nav-links" id="nav-links">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#industries">Industries</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#skills">Skills</a>
+        <a href="#trust">Trust &amp; governance</a>
+        <a href="../sdocs-agent-builder/index.html" class="nav-demo-link">Live demo</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-ghost" href="../sdocs-agent-builder/index.html">See it in action</a>
+        <a class="btn btn-primary" href="#request-demo">Request a demo</a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="top">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-copy reveal">
+        <span class="hero-eyebrow">Introducing the S-Docs Agent Platform</span>
+        <h1>Agents that read, decide, and act&nbsp;&mdash;<br>right inside your documents.</h1>
+        <p class="hero-sub">Extract data from anything you receive, generate the documents you send, analyze against the playbooks your team already trusts, and save or notify wherever work happens next. One platform, orchestrated your way.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#request-demo">Request a demo</a>
+          <a class="btn btn-outline btn-lg" href="../sdocs-agent-builder/index.html">
+            Explore the live demo
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="hero-proof">
+          <div class="hero-proof-stat"><strong>5</strong><span>task types, one orchestration canvas</span></div>
+          <div class="hero-proof-stat"><strong>8+</strong><span>enterprise systems connected natively</span></div>
+          <div class="hero-proof-stat"><strong>100%</strong><span>governed by roles your admins define</span></div>
+        </div>
+      </div>
+      <div class="hero-visual reveal">
+        <div class="flow-mock">
+          <div class="flow-mock-row">
+            <div class="flow-mock-node trigger"><span class="fmn-dot">M</span>Manual</div>
+          </div>
+          <div class="flow-mock-line"></div>
+          <div class="flow-mock-row">
+            <div class="flow-mock-node extract"><span class="fmn-dot">E</span>Extract<small>Claim form &rarr; 6 fields</small></div>
+          </div>
+          <div class="flow-mock-line"></div>
+          <div class="flow-mock-row">
+            <div class="flow-mock-node analyze"><span class="fmn-dot">A</span>Analyze<small>Playbook &mdash; risk score 82</small></div>
+          </div>
+          <div class="flow-mock-line"></div>
+          <div class="flow-mock-row two-up">
+            <div class="flow-mock-node notify"><span class="fmn-dot">N</span>Notify<small>#legal&#8209;review</small></div>
+            <div class="flow-mock-node save"><span class="fmn-dot">S</span>Save<small>Salesforce</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LOGO STRIP ============ -->
+  <section class="logo-strip reveal">
+    <p>Piloted by teams managing agreements, claims, and approvals at</p>
+    <div class="logo-strip-row">
+      <span>Northwind Traders</span>
+      <span>Bramwell Insurance Group</span>
+      <span>Acme Logistics</span>
+      <span>Marigold Capital Partners</span>
+      <span>Northstar Analytics</span>
+    </div>
+  </section>
+
+  <!-- ============ CAPABILITIES ============ -->
+  <section class="section" id="capabilities">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="section-kicker">Capabilities</span>
+        <h2>Five task types. Every document workflow you run.</h2>
+        <p>Mix and match them into a single orchestrated agent &mdash; triggered manually, from Slack, on a schedule, by email, or by webhook.</p>
+      </div>
+      <div class="cap-grid">
+        <div class="cap-card extract reveal">
+          <div class="cap-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h3>Extract</h3>
+          <p>Pull structured fields out of claim forms, invoices, contracts &mdash; any document that lands in an inbox, drive, or channel.</p>
+        </div>
+        <div class="cap-card generate reveal">
+          <div class="cap-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
+          </div>
+          <h3>Generate</h3>
+          <p>Produce real S-Docs documents &mdash; proposals, scorecards, statements of work &mdash; sourced and prioritized across your systems.</p>
+        </div>
+        <div class="cap-card analyze reveal">
+          <div class="cap-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Analyze</h3>
+          <p>Check extracted data against thresholds, or run a weighted playbook &mdash; IP protection, termination for convenience &mdash; against a document.</p>
+        </div>
+        <div class="cap-card save reveal">
+          <div class="cap-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </div>
+          <h3>Save</h3>
+          <p>File results into Salesforce, HubSpot, ServiceNow, or a spreadsheet &mdash; mapped to the fields your downstream systems already use.</p>
+        </div>
+        <div class="cap-card notify reveal">
+          <div class="cap-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h3>Notify</h3>
+          <p>Alert the right channel or inbox &mdash; conditionally, only when it matters &mdash; over Slack, Teams, or email.</p>
+        </div>
+        <div class="cap-card highlight reveal">
+          <h3>Orchestrated, not scripted</h3>
+          <p>Chain any of the five into one flow, insert steps anywhere, and trigger the whole thing manually, from Slack, on a schedule, by email, or by webhook &mdash; visually, like a flow designer.</p>
+          <a class="cap-link" href="../sdocs-agent-builder/builder.html">See the flow canvas &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INDUSTRIES ============ -->
+  <section class="section" id="industries">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="section-kicker">Industries</span>
+        <h2>Prebuilt for regulated industries. Ready to turn on.</h2>
+        <p>Every agent below already has its task chain, playbook, and suggested trigger defined. An admin just connects the data sources and confirms where results go &mdash; no building from scratch.</p>
+      </div>
+      <div class="industry-grid">
+        <a class="industry-card reveal" href="../industry-agent-templates/index.html?industry=financial-services" style="--ind-color:#0176d3;">
+          <span class="industry-card-badge">Financial Services</span>
+          <h3>KYC/AML, underwriting, and regulatory reporting</h3>
+          <ul>
+            <li>KYC/AML Alert Triage Agent</li>
+            <li>Loan Document Underwriting Support Agent</li>
+            <li>Regulatory Reporting Assistant</li>
+          </ul>
+          <span class="industry-card-link">Browse templates &rarr;</span>
+        </a>
+        <a class="industry-card reveal" href="../industry-agent-templates/index.html?industry=healthcare" style="--ind-color:#2e7d32;">
+          <span class="industry-card-badge">Healthcare</span>
+          <h3>Prior auth, intake, and HIPAA-aware vendor review</h3>
+          <ul>
+            <li>Prior Authorization Review Agent</li>
+            <li>Patient Intake Extraction Agent</li>
+            <li>HIPAA BAA / Vendor Compliance Review Agent</li>
+          </ul>
+          <span class="industry-card-link">Browse templates &rarr;</span>
+        </a>
+        <a class="industry-card reveal" href="../industry-agent-templates/index.html?industry=public-sector" style="--ind-color:#7d3ac1;">
+          <span class="industry-card-badge">Public Sector</span>
+          <h3>Eligibility, records requests, and grant compliance</h3>
+          <ul>
+            <li>Benefits Eligibility Determination Agent</li>
+            <li>FOIA Request Triage Agent</li>
+            <li>Grant Compliance Review Agent</li>
+          </ul>
+          <span class="industry-card-link">Browse templates &rarr;</span>
+        </a>
+        <a class="industry-card reveal" href="../industry-agent-templates/index.html?industry=legal-services" style="--ind-color:#9c3848;">
+          <span class="industry-card-badge">Legal Services</span>
+          <h3>Case intake, immigration filings, and identity documents</h3>
+          <ul>
+            <li>Resume Extractor Agent</li>
+            <li>I-140 Preparation Agent</li>
+            <li>Passport Extractor Agent</li>
+          </ul>
+          <span class="industry-card-link">Browse templates &rarr;</span>
+        </a>
+      </div>
+      <p class="industries-footnote reveal">Don't see your use case? Every template opens in the same builder as an agent built from scratch &mdash; customize anything after activating.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section alt" id="how-it-works">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="section-kicker">How it works</span>
+        <h2>From a sentence to a running agent.</h2>
+        <p>Build it yourself, step by step &mdash; or describe it in plain language and watch it take shape.</p>
+      </div>
+      <div class="steps-row">
+        <div class="step-card reveal">
+          <div class="step-num">1</div>
+          <h3>Describe or design</h3>
+          <p>Type what you want automated in a sentence, or build it manually &mdash; name, role, guardrails, tone, and caution level.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">2</div>
+          <h3>Connect your systems</h3>
+          <p>Authenticate as yourself into Slack, email, Salesforce, HubSpot, Drive, Sheets &mdash; only the systems your org allows.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">3</div>
+          <h3>Orchestrate the tasks</h3>
+          <p>Chain Extract, Generate, Analyze, Save, and Notify on a visual canvas, and set the triggers that kick it off.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">4</div>
+          <h3>Run, watch, govern</h3>
+          <p>Monitor every run, step in when it asks, and let admins keep the whole thing inside policy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SKILLS ============ -->
+  <section class="section" id="skills">
+    <div class="section-inner skills-inner">
+      <div class="section-head reveal">
+        <span class="section-kicker">Skills</span>
+        <h2>Don't start from a blank page. Start from a skill.</h2>
+        <p>A skill packages a ready-made playbook, extraction schema, or document target that any agent's task can attach &mdash; and an Analyze task can combine more than one. Author once, reuse everywhere.</p>
+        <ul class="skills-list">
+          <li><strong>Contract Review Skill</strong> &mdash; IP protection, termination for convenience, weighted into a risk score.</li>
+          <li><strong>Invoice Extraction Skill</strong> &mdash; the standard fields off any vendor invoice.</li>
+          <li><strong>Sales Proposal Generation Skill</strong> &mdash; deal terms and differentiators, pulled from the CRM.</li>
+        </ul>
+      </div>
+      <div class="skill-preview-card reveal">
+        <div class="skill-preview-head">
+          <span class="skill-preview-icon">C</span>
+          <div>
+            <div class="skill-preview-name">Contract Review Skill</div>
+            <div class="skill-preview-meta">Analyze &middot; Used by 3 agents</div>
+          </div>
+        </div>
+        <div class="skill-preview-body">
+          <div class="skill-preview-row"><span>IP Protection</span><span class="skill-preview-tag">2 questions</span></div>
+          <div class="skill-preview-row"><span>Termination for Convenience</span><span class="skill-preview-tag">2 questions</span></div>
+          <div class="skill-preview-score">Weighted risk score on every run &mdash; drill into any answer's source clause.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRUST & GOVERNANCE ============ -->
+  <section class="section alt" id="trust">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <span class="section-kicker">Trust &amp; governance</span>
+        <h2>Creativity for your teams. Control for your admins.</h2>
+        <p>Every capability above ships with the governance a large organization actually needs to turn it on.</p>
+      </div>
+      <div class="trust-grid">
+        <div class="trust-card reveal">
+          <h3>Fine-grained RBAC</h3>
+          <p>Roles control who can build agents, manage connectors, publish to the catalogue, or just run what's shared with them.</p>
+        </div>
+        <div class="trust-card reveal">
+          <h3>Connector allowlists</h3>
+          <p>End users can only connect systems your admins have explicitly approved &mdash; enforced the same way for built-in and self-built agents.</p>
+        </div>
+        <div class="trust-card reveal">
+          <h3>Full audit trail</h3>
+          <p>Every role change, connector policy update, and new connection is logged &mdash; visible to whoever holds audit access.</p>
+        </div>
+        <div class="trust-card reveal">
+          <h3>Human-in-the-loop</h3>
+          <p>Agents can pause and ask before anything risky happens &mdash; confirmations queue up for a person to approve or reject.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section class="section testimonials">
+    <div class="section-inner">
+      <div class="quote-grid">
+        <div class="quote-card reveal">
+          <p>&ldquo;We went from a shared inbox full of claim PDFs to a triaged queue in a week. The playbook step is exactly how our reviewers already think about risk.&rdquo;</p>
+          <div class="quote-attr">Claims Operations Lead, Bramwell Insurance Group</div>
+        </div>
+        <div class="quote-card reveal">
+          <p>&ldquo;Our deal desk builds their own agents now. I just define what they're allowed to connect to.&rdquo;</p>
+          <div class="quote-attr">IT Governance Manager, Northstar Analytics</div>
+        </div>
+        <div class="quote-card reveal">
+          <p>&ldquo;The flow canvas is the first thing that made 'agentic' click for our legal team &mdash; they can see exactly what happens and when.&rdquo;</p>
+          <div class="quote-attr">Head of Legal Ops, Marigold Capital Partners</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta reveal" id="request-demo">
+    <div class="final-cta-inner">
+      <img src="logo.png" alt="S-Docs" class="final-cta-logo">
+      <h2>See what an agent could do with your documents.</h2>
+      <p>A 20-minute walkthrough, tailored to the workflow you'd automate first.</p>
+      <form class="demo-form" id="demo-form">
+        <input type="email" placeholder="you@company.com" required aria-label="Work email">
+        <button type="submit" class="btn btn-primary btn-lg">Request a demo</button>
+      </form>
+      <div class="demo-form-note" id="demo-form-note"></div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="logo.png" alt="S-Docs" class="brand-logo-img">
+        <span>S-Docs Agents</span>
+        <p>Agents that read, decide, and act &mdash; inside the documents your business already runs on.</p>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <h4>Product</h4>
+          <a href="#capabilities">Capabilities</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#skills">Skills</a>
+          <a href="../sdocs-agent-builder/index.html">Live demo</a>
+        </div>
+        <div>
+          <h4>Trust</h4>
+          <a href="#trust">Governance</a>
+          <a href="../agent-admin-console/index.html">Admin console</a>
+          <a href="../contract-analyze/index.html">Playbook review</a>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <a href="#request-demo">Request a demo</a>
+          <a href="../index.html">All prototypes</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">Internal design prototype &mdash; not representative of final production UI or real S-Docs offerings.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
