@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>In-App Support &mdash; Case Creation &amp; Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+
+<!-- ============ SALESFORCE GLOBAL HEADER ============ -->
+<header class="sf-global-header">
+  <div class="ghl">
+    <button class="gh-icon-btn" title="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="org-pill" id="org-pill">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      <span id="org-pill-label">Production</span>
+    </span>
+  </div>
+  <div class="ghc">
+    <div class="gh-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+      <input type="text" placeholder="Search..." aria-label="Search">
+    </div>
+  </div>
+  <div class="ghr">
+    <button class="gh-icon-btn" title="Favorites">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9.5 17,14.5 18.5,22 12,18 5.5,22 7,14.5 2,9.5 9,9"/></svg>
+    </button>
+    <button class="gh-icon-btn" title="New"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+    <button class="gh-icon-btn" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a3 3 0 0 1 5.6 1.2c0 2-2.8 2.4-2.8 4"/><circle cx="12" cy="17.3" r="0.9" fill="currentColor" stroke="none"/></svg></button>
+    <button class="gh-icon-btn" title="Setup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></button>
+    <button class="gh-icon-btn has-dot" title="Notifications" id="sf-bell">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <span class="bell-dot" id="bell-dot"></span>
+    </button>
+    <span class="avatar" id="gh-avatar">AN</span>
+  </div>
+</header>
+
+<!-- ============ APP NAV BAR ============ -->
+<div class="sf-app-nav">
+  <button class="waffle" title="App Launcher">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.5"/><circle cx="8" cy="2.5" r="1.5"/><circle cx="13.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="8" cy="13.5" r="1.5"/><circle cx="13.5" cy="13.5" r="1.5"/></svg>
+  </button>
+  <span class="app-name">S-Docs</span>
+  <div class="tabset">
+    <div class="nav-tab">Home</div>
+    <div class="nav-tab">S-Docs Templates</div>
+    <div class="nav-tab">S-Docs Jobs</div>
+    <div class="nav-tab active">S-Docs Support</div>
+    <button class="nav-tab-caret" id="tab-caret" title="Show more tabs">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="nav-dropdown" id="nav-dropdown" hidden>
+      <ul class="nd-list">
+        <li class="nd-item"><span class="nd-ico ico-green">&#9679;</span>Envelopes</li>
+        <li class="nd-item"><span class="nd-ico ico-orange">&#9679;</span>S-Docs E-Signature</li>
+        <li class="nd-item"><span class="nd-ico ico-red">&#9679;</span>S-Docs Setup</li>
+        <li class="nd-item"><span class="nd-ico ico-mint">&#9679;</span>S-Docs Settings</li>
+        <li class="nd-item"><span class="nd-ico ico-violet">&#9679;</span>Template Migration</li>
+        <li class="nd-item is-current"><span class="nd-ico ico-cyan">&#9679;</span>S-Docs Support<span class="nd-pill">New</span></li>
+        <li class="nd-item"><span class="nd-ico ico-gold">&#9679;</span>Opportunities</li>
+      </ul>
+      <div class="nd-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit</div>
+    </div>
+  </div>
+</div>
+<div class="nav-scrim" id="nav-scrim" hidden></div>
+
+<!-- ============ IFRAMED SUPPORT APP ============ -->
+<main class="sf-body">
+  <div class="iframe-frame">
+    <div class="iframe-strip">
+      <span class="if-lock"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+      <span class="if-url">support.s-docs.com/embedded</span>
+      <span class="if-note">Hosted by S-Docs &middot; context passed from your org</span>
+    </div>
+
+    <div class="app-inner">
+
+      <!-- ============ VIEW: CASE LIST ============ -->
+      <section id="view-list">
+        <div class="app-header">
+          <div class="ah-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M9 21a3 3 0 0 0 6 0"/><circle cx="18" cy="6" r="3.4" fill="#fff" stroke="none"/></svg>
+          </div>
+          <div class="ah-text">
+            <span class="ah-eyebrow">S-Docs Support</span>
+            <h1>Support cases</h1>
+            <p class="ah-sub" id="ah-sub">Open a case from inside your org &mdash; we capture your environment automatically.</p>
+          </div>
+          <div class="ah-actions">
+            <button class="btn btn-neutral" id="btn-preview-email">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="3 6 12 13 21 6"/></svg>
+              Notification preview
+            </button>
+            <button class="btn btn-brand" id="btn-new-case">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New case
+            </button>
+          </div>
+        </div>
+
+        <div id="awaiting-banner"></div>
+
+        <div class="card list-card">
+          <div class="list-top">
+            <div class="scope-switch" id="scope-switch"></div>
+            <div class="list-search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+              <input type="text" id="case-search" placeholder="Search cases, templates, case numbers...">
+            </div>
+          </div>
+          <div class="filter-row" id="filter-row"></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead id="case-thead"></thead>
+              <tbody id="case-tbody"></tbody>
+            </table>
+          </div>
+          <div class="list-foot" id="list-foot"></div>
+        </div>
+      </section>
+
+      <!-- ============ VIEW: NEW CASE ============ -->
+      <section id="view-new" hidden>
+        <button class="back-link" data-nav="list">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg> Support cases
+        </button>
+
+        <div class="wiz-head">
+          <h1 id="wiz-title">New support case</h1>
+          <div class="wiz-steps" id="wiz-steps"></div>
+        </div>
+
+        <!-- STEP 1: issue type -->
+        <div class="wiz-panel" id="wstep-1">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>What kind of issue are you seeing?</h2>
+                <p class="card-sub">This decides what we ask for next, so we get everything we need on the first pass.</p>
+              </div>
+            </div>
+            <div class="type-grid" id="type-grid"></div>
+          </div>
+        </div>
+
+        <!-- STEP 2: details -->
+        <div class="wiz-panel" id="wstep-2" hidden>
+          <div class="card ctx-card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ctx-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Detected from your org
+                </h2>
+                <p class="card-sub">Passed in from Salesforce when this tab loaded. You don&rsquo;t need to type any of it &mdash; and support never has to ask.</p>
+              </div>
+              <span class="auto-pill">Auto-detected</span>
+            </div>
+            <div class="ctx-grid" id="ctx-grid"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2 id="detail-heading">Tell us what happened</h2>
+                <p class="card-sub" id="detail-sub"></p>
+              </div>
+              <span class="type-chip" id="type-chip"></span>
+            </div>
+
+            <div class="form-grid">
+              <div class="field span-2" data-req="subject">
+                <label for="f-subject">Subject <b class="req">*</b></label>
+                <input type="text" id="f-subject" maxlength="120" placeholder="One line describing the problem">
+                <span class="field-err"></span>
+              </div>
+
+              <div class="field span-2" data-req="priority">
+                <label>Priority <b class="req">*</b></label>
+                <div class="prio-row" id="prio-row"></div>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: templates -->
+              <div class="field span-2 cond" data-cond="templates" data-req="templates">
+                <label>Affected template(s) <b class="req">*</b></label>
+                <p class="field-hint">Select one or more. We pull the template Id, format, and last-modified date with it.</p>
+                <div class="picker" data-picker="templates"></div>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: records -->
+              <div class="field span-2 cond" data-cond="records" data-req="records">
+                <label>Example record(s) <b class="req">*</b></label>
+                <p class="field-hint">A record the problem happens on. Support reproduces against these instead of guessing.</p>
+                <div class="picker" data-picker="records"></div>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: affected users -->
+              <div class="field span-2 cond" data-cond="users" data-req="users">
+                <label>Affected user(s) <b class="req">*</b></label>
+                <p class="field-hint">Who hit this? Often it&rsquo;s an end user, not you.</p>
+                <div class="picker" data-picker="users"></div>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: error text -->
+              <div class="field span-2 cond" data-cond="errortext">
+                <label for="f-error">Error message</label>
+                <p class="field-hint">Paste it verbatim, including any Id or exception code.</p>
+                <textarea id="f-error" class="mono" rows="3" placeholder="FIELD_INTEGRITY_EXCEPTION: ..."></textarea>
+              </div>
+
+              <!-- conditional: expected vs actual -->
+              <div class="field cond" data-cond="expected" data-req="expected">
+                <label for="f-expected">Expected output <b class="req">*</b></label>
+                <textarea id="f-expected" rows="3" placeholder="What the document should look like"></textarea>
+                <span class="field-err"></span>
+              </div>
+              <div class="field cond" data-cond="expected" data-req="actual">
+                <label for="f-actual">Actual output <b class="req">*</b></label>
+                <textarea id="f-actual" rows="3" placeholder="What you're getting instead"></textarea>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: signing stage -->
+              <div class="field cond" data-cond="esign" data-req="stage">
+                <label for="f-stage">Where does it break? <b class="req">*</b></label>
+                <div class="select-wrap">
+                  <select id="f-stage">
+                    <option value="">Select a step...</option>
+                    <option>Sending the signature request</option>
+                    <option>Signer never received the email</option>
+                    <option>Signer can&rsquo;t open the signing page</option>
+                    <option>Signing page renders incorrectly</option>
+                    <option>Signature applied but document not returned</option>
+                    <option>Completed document / certificate is wrong</option>
+                  </select>
+                </div>
+                <span class="field-err"></span>
+              </div>
+              <div class="field cond" data-cond="esign">
+                <label for="f-envelope">Envelope or signature request Id</label>
+                <input type="text" id="f-envelope" class="mono" placeholder="a1B8Z000000XyzA">
+              </div>
+
+              <!-- conditional: install -->
+              <div class="field cond" data-cond="install" data-req="targetver">
+                <label for="f-targetver">Version you&rsquo;re moving to <b class="req">*</b></label>
+                <div class="select-wrap">
+                  <select id="f-targetver">
+                    <option value="">Select a version...</option>
+                    <option>4.63.0 (latest)</option>
+                    <option>4.62.1</option>
+                    <option>4.61.4</option>
+                    <option>Not sure</option>
+                  </select>
+                </div>
+                <span class="field-err"></span>
+              </div>
+              <div class="field cond" data-cond="install">
+                <label for="f-installerr">Install / upgrade error</label>
+                <textarea id="f-installerr" class="mono" rows="3" placeholder="Paste the Salesforce install failure detail"></textarea>
+              </div>
+
+              <div class="field span-2" data-req="description">
+                <label for="f-desc">Description <b class="req">*</b></label>
+                <textarea id="f-desc" rows="4" placeholder="What's happening, and what it's blocking"></textarea>
+                <span class="field-err"></span>
+              </div>
+
+              <!-- conditional: steps to reproduce -->
+              <div class="field span-2 cond" data-cond="steps" data-req="steps">
+                <label for="f-steps">Steps to reproduce <b class="req">*</b></label>
+                <p class="field-hint">Numbered steps get to a fix fastest. Start from a clean page.</p>
+                <textarea id="f-steps" rows="4" placeholder="1. Open the opportunity&#10;2. Click Generate Document&#10;3. Select the MSA template&#10;4. ..."></textarea>
+                <span class="field-err"></span>
+              </div>
+            </div>
+
+            <!-- attachments -->
+            <div class="sub-block">
+              <span class="sub-legend">Screenshots &amp; recordings</span>
+              <p class="field-hint">A 30-second Loom or Jam.dev link is usually worth more than a paragraph.</p>
+              <div class="dropzone" id="dropzone" tabindex="0">
+                <svg class="dz-ico" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div class="dz-main">Drop screenshots or files here, or <b>browse</b></div>
+                <div class="dz-sub">PNG, JPG, PDF, TXT, ZIP &mdash; up to 25 MB each</div>
+              </div>
+              <div class="attach-list" id="attach-list"></div>
+              <div class="link-add">
+                <input type="url" id="f-loom" placeholder="https://www.loom.com/share/...  or  https://jam.dev/c/...">
+                <button class="btn btn-neutral btn-xs" id="btn-add-link">Add recording link</button>
+              </div>
+            </div>
+
+            <!-- grant login access -->
+            <div class="sub-block" id="gla-block"></div>
+
+            <!-- collaborators -->
+            <div class="sub-block">
+              <span class="sub-legend">Who else should be kept in the loop?</span>
+              <p class="field-hint">Collaborators see every update on this case and get notified. They can reply too.</p>
+              <div class="picker" data-picker="collaborators"></div>
+            </div>
+
+            <div class="wiz-actions">
+              <button class="btn btn-neutral" data-wiz="back">Back</button>
+              <button class="btn btn-brand" data-wiz="review">Review case</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: review -->
+        <div class="wiz-panel" id="wstep-3" hidden>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Review before you submit</h2>
+                <p class="card-sub">This is exactly what lands on the support engineer&rsquo;s screen.</p>
+              </div>
+            </div>
+            <div id="review-body"></div>
+            <div class="wiz-actions">
+              <button class="btn btn-neutral" data-wiz="back-2">Back to details</button>
+              <button class="btn btn-brand" id="btn-submit-case">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Submit case
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: submitted -->
+        <div class="wiz-panel" id="wstep-4" hidden>
+          <div class="card success-card" id="success-card"></div>
+        </div>
+      </section>
+
+      <!-- ============ VIEW: CASE DETAIL ============ -->
+      <section id="view-case" hidden>
+        <button class="back-link" data-nav="list">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg> Support cases
+        </button>
+        <div id="case-head"></div>
+        <div class="case-cols">
+          <div class="case-main">
+            <div id="case-alert"></div>
+            <div class="card timeline-card">
+              <div class="card-head">
+                <div><h2>Activity</h2><p class="card-sub" id="timeline-sub"></p></div>
+                <button class="link-btn" id="btn-toggle-order">Newest first</button>
+              </div>
+              <div class="timeline" id="timeline"></div>
+              <div class="composer" id="composer"></div>
+            </div>
+          </div>
+          <aside class="case-rail" id="case-rail"></aside>
+        </div>
+      </section>
+
+    </div><!-- /app-inner -->
+  </div><!-- /iframe-frame -->
+</main>
+
+<!-- ============ MODAL HOST ============ -->
+<div id="modal-host"></div>
+<div class="toast-region" id="toast-region"></div>
+
+<!-- ============ DEMO BAR ============ -->
+<div class="demo-bar collapsed" id="demo-bar">
+  <button class="demo-toggle" id="demo-toggle">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.9 2.9M16.9 16.9l2.9 2.9M1 12h4M19 12h4M4.2 19.8l2.9-2.9M16.9 7.1l2.9-2.9"/></svg>
+    Demo controls
+    <svg class="dt-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
+  <div class="demo-body">
+    <div class="demo-group">
+      <span class="demo-label">Signed-in user</span>
+      <div class="demo-options" id="demo-persona"></div>
+    </div>
+    <div class="demo-group">
+      <span class="demo-label">Org / instance context</span>
+      <div class="demo-options" id="demo-instance"></div>
+      <p class="demo-note" id="demo-instance-note"></p>
+    </div>
+    <div class="demo-group">
+      <span class="demo-label">Jump to</span>
+      <div class="demo-options" id="demo-jump"></div>
+    </div>
+    <div class="demo-group">
+      <button class="demo-reset" id="demo-reset">Reset prototype</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=2"></script>
+</body>
+</html>
