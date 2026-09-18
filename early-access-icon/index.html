@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Early Access Icon Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color: #0176d3;
+    --bg-app: #f4f6f9;
+    --text-main: #181818;
+    --text-muted: #5e6670;
+    --border-color: #dddbda;
+    --icon-h: 96;
+    --stage-bg: #ffffff;
+    --stage-fg: #181818;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    padding: 40px 24px 80px;
+  }
+  .wrapper { max-width: 1180px; margin: 0 auto; }
+  .masthead { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .brand-logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
+  h1 { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 700; }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin: 6px 0 8px; max-width: 760px; line-height: 1.5; }
+  a.back-link { display: inline-block; font-size: 13px; color: var(--primary-color); text-decoration: none; margin-bottom: 24px; }
+  a.back-link:hover { text-decoration: underline; }
+
+  .controls {
+    position: sticky; top: 12px; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+    background: #ffffff; border: 1px solid var(--border-color);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 32px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .control-group { display: flex; align-items: center; gap: 10px; }
+  .control-group label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  select {
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 7px 30px 7px 12px; border-radius: 6px; border: 1px solid var(--border-color);
+    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%235e6670"/></svg>') no-repeat right 12px center;
+    -webkit-appearance: none; appearance: none; color: var(--text-main); cursor: pointer;
+  }
+  input[type="range"] { width: 150px; accent-color: var(--primary-color); }
+  .size-readout { font-size: 12.5px; font-weight: 600; color: var(--text-main); min-width: 44px; }
+  .size-presets { display: flex; gap: 6px; }
+  .size-presets button, .bg-toggle button {
+    font-family: inherit; font-size: 11.5px; font-weight: 600;
+    padding: 5px 9px; border-radius: 5px; border: 1px solid var(--border-color);
+    background: #fff; color: var(--text-muted); cursor: pointer;
+  }
+  .size-presets button:hover, .bg-toggle button:hover { border-color: var(--primary-color); color: var(--primary-color); }
+  .size-presets button.active, .bg-toggle button.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+  .bg-toggle { display: flex; gap: 6px; }
+
+  section.group { margin-bottom: 44px; }
+  h2.section-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .section-desc { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; max-width: 760px; line-height: 1.5; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  .card {
+    background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+    padding: 18px 16px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .stage {
+    width: 100%; min-height: calc(var(--icon-h) * 1px + 36px);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px; padding: 14px 8px; border-radius: 8px;
+    background: var(--stage-bg);
+  }
+  .stage svg { height: calc(var(--icon-h) * 1px); width: auto; display: block; max-width: 100%; color: var(--stage-fg); }
+  .card h3 { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-bottom: 10px; min-height: 51px; }
+  .card .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--primary-color); background: #eaf3fc; padding: 3px 8px; border-radius: 20px; margin-bottom: 10px;
+  }
+  .card .tag.warn { color: #8c4b02; background: #fdf4e6; }
+  .copy-btn {
+    font-family: inherit; font-size: 11.5px; font-weight: 600;
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--primary-color);
+    background: #fff; color: var(--primary-color); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .copy-btn:hover { background: var(--primary-color); color: #fff; }
+  .copy-btn.copied { background: #2e844a; border-color: #2e844a; color: #fff; }
+
+  /* ---- in-context mocks ---- */
+  .context-panel {
+    background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+    padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .context-picker { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .context-picker label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+  .mock-row { display: flex; flex-wrap: wrap; gap: 20px; }
+  .mock {
+    border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;
+    flex: 1 1 320px; min-width: 300px; background: #fff;
+  }
+  .mock-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-muted); background: #f7f9fb; padding: 7px 12px; border-bottom: 1px solid var(--border-color);
+  }
+  .mock-body { padding: 14px 16px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    border-radius: 6px; font-size: 13.5px; font-weight: 500;
+  }
+  .nav-item.selected { background: #eaf3fc; color: var(--primary-color); font-weight: 600; }
+  .nav-item .slot { margin-left: auto; display: inline-flex; align-items: center; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #c9c7c5; flex-shrink: 0; }
+  .feature-head { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; }
+  .feature-head h4 { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; }
+  .feature-head .slot { display: inline-flex; align-items: center; }
+  .feature-body { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+  .setting-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .setting-row + .setting-row { border-top: 1px solid #eef0f2; }
+  .setting-row .name { font-size: 13px; font-weight: 500; }
+  .setting-row .slot { display: inline-flex; align-items: center; }
+  .setting-row .switch { margin-left: auto; width: 34px; height: 19px; border-radius: 12px; background: #c9c7c5; position: relative; flex-shrink: 0; }
+  .setting-row .switch.on { background: var(--primary-color); }
+  .setting-row .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; }
+  .setting-row .switch.on::after { left: auto; right: 2px; }
+  .slot svg { height: 18px; width: auto; display: block; }
+  .slot.lg svg { height: 22px; }
+
+  .notes { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+  .notes li { margin: 0 0 7px 18px; }
+  .notes strong { color: var(--text-main); }
+
+  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <a class="back-link" href="../index.html">&larr; All prototypes</a>
+  <div class="masthead">
+    <svg class="brand-logo" viewBox="0 0 117 145" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 115.000 114.608 L 115.000 64.817 Q 115.000 61.485 111.936 62.793 L 49.336 89.520 Q 48.000 90.091 48.000 91.544 L 48.000 141.335 Q 48.000 144.666 51.064 143.358 L 113.664 116.631 Q 115.000 116.061 115.000 114.608 Z" fill="#98B780"/>
+      <path d="M 67.000 74.877 L 67.000 64.741 Q 67.000 61.409 63.936 62.717 L 1.336 89.444 Q 0.000 90.015 0.000 91.468 L 0.000 141.229 Q 0.000 144.560 3.064 143.252 L 41.664 126.772 Q 43.000 126.202 43.000 124.749 L 43.000 88.029 Q 43.000 86.577 44.336 86.006 L 65.664 76.900 Q 67.000 76.330 67.000 74.877 Z" fill="#61ADE9"/>
+      <path d="M 57.960 55.269 L 3.064 31.831 Q -0.000 30.523 -0.000 33.855 L 0.000 80.730 Q 0.000 84.062 3.064 82.754 L 57.960 59.316 Q 62.699 57.293 57.960 55.269 Z" fill="#908AD5"/>
+      <path d="M 66.968 29.446 L 66.968 3.091 Q 66.968 -0.241 63.904 1.068 L 8.949 24.530 Q 4.210 26.554 8.949 28.577 L 39.620 41.672 Q 42.684 42.980 42.684 39.648 L 42.684 25.741 Q 42.684 22.410 45.748 23.718 L 63.904 31.470 Q 66.968 32.778 66.968 29.446 Z" fill="#E86735"/>
+      <path d="M 106.326 55.363 L 51.064 31.769 Q 48.000 30.461 48.000 33.793 L 48.000 43.721 Q 48.000 45.173 49.336 45.744 L 70.664 54.850 Q 72.000 55.420 72.000 56.873 L 72.000 70.734 Q 72.000 74.065 75.064 72.757 L 106.326 59.410 Q 111.065 57.387 106.326 55.363 Z" fill="#F4BD4E"/>
+    </svg>
+    <h1>Early Access Icon Concepts</h1>
+  </div>
+  <p class="subtitle">Twenty SVG directions for marking a feature as &ldquo;early access&rdquo; &mdash; some built from the S&#8209;Docs mark itself, some standalone glyphs that sit next to a feature name, some full badge lockups. Everything is pure SVG using the five logo colours, so it scales from a 16px list marker to a marketing hero.</p>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="categoryFilter">Family</label>
+      <select id="categoryFilter">
+        <option value="all">All concepts</option>
+        <option value="mark">Built from the logo</option>
+        <option value="glyph">Standalone glyphs</option>
+        <option value="lockup">Badges &amp; lockups</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="sizeSlider">Size</label>
+      <input type="range" id="sizeSlider" min="14" max="240" step="1" value="96">
+      <span class="size-readout" id="sizeReadout">96px</span>
+    </div>
+    <div class="size-presets" id="sizePresets">
+      <button type="button" data-size="16">16</button>
+      <button type="button" data-size="20">20</button>
+      <button type="button" data-size="32">32</button>
+      <button type="button" data-size="48">48</button>
+      <button type="button" data-size="96" class="active">96</button>
+      <button type="button" data-size="160">160</button>
+    </div>
+    <div class="bg-toggle" id="bgToggle">
+      <button type="button" data-bg="light" class="active">Light</button>
+      <button type="button" data-bg="grey">Grey</button>
+      <button type="button" data-bg="dark">Dark</button>
+    </div>
+  </div>
+
+  <div id="sections"></div>
+
+  <section class="group">
+    <h2 class="section-title">In context</h2>
+    <p class="section-desc">The real test is 16&ndash;22px next to a feature name. Pick a concept and see it in a nav item, a feature card header, and a settings row.</p>
+    <div class="context-panel">
+      <div class="context-picker">
+        <label for="contextPicker">Show concept</label>
+        <select id="contextPicker"></select>
+      </div>
+      <div class="mock-row">
+        <div class="mock">
+          <div class="mock-label">Left nav</div>
+          <div class="mock-body">
+            <div class="nav-item"><span class="dot"></span>Templates</div>
+            <div class="nav-item selected"><span class="dot"></span>Agent Builder<span class="slot" data-slot></span></div>
+            <div class="nav-item"><span class="dot"></span>Documents</div>
+          </div>
+        </div>
+        <div class="mock">
+          <div class="mock-label">Feature card</div>
+          <div class="mock-body">
+            <div class="feature-head"><h4>Autonomous Contract Review</h4><span class="slot lg" data-slot></span></div>
+            <p class="feature-body">Let the agent read an inbound redline, flag deviations from your playbook, and draft a response for approval.</p>
+          </div>
+        </div>
+        <div class="mock">
+          <div class="mock-label">Settings list</div>
+          <div class="mock-body">
+            <div class="setting-row"><span class="name">Delegated signatures</span><span class="switch on"></span></div>
+            <div class="setting-row"><span class="name">Identity verification</span><span class="slot" data-slot></span><span class="switch"></span></div>
+            <div class="setting-row"><span class="name">Audit trail export</span><span class="switch on"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="group">
+    <h2 class="section-title">Picking one</h2>
+    <div class="context-panel notes">
+      <ul>
+        <li><strong>If it has to work at 16px</strong> &mdash; the standalone glyphs and the monogram tile survive; anything that overlays a badge on the full logo turns to mush below about 32px. Check with the size presets above.</li>
+        <li><strong>If it sits next to a feature name</strong>, a glyph beats a pill: the pill repeats the words &ldquo;early access&rdquo; in a place where a tooltip would do the job, and it fights with the feature title for width.</li>
+        <li><strong>If it sits on a marketing page or a modal header</strong>, the lockups earn their space &mdash; there the words are the point.</li>
+        <li><strong>The logo-derived ideas</strong> (unfinished build, blueprint, progressive fade) read as &ldquo;S&#8209;Docs, not finished yet&rdquo; rather than as a generic beta stamp. The trade-off: they show a deliberately broken version of the brand mark, which brand review may not love. Worth putting both in front of them.</li>
+        <li><strong>Semantics differ.</strong> Flask and blueprint say <em>experimental, may change</em>. Key and ticket say <em>you were let in early</em>. Rocket and sparkle say <em>new and exciting</em>. Sprout says <em>immature, will grow</em>. Those set different expectations about stability &mdash; pick the one that matches the support commitment.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Internal design prototype &mdash; not representative of final production UI.</footer>
+</div>
+
+<script>
+  const C = { green:'#98B780', blue:'#61ADE9', purple:'#908AD5', orange:'#E86735', yellow:'#F4BD4E' };
+
+  const PIECES = [
+    { d:'M 115.000 114.608 L 115.000 64.817 Q 115.000 61.485 111.936 62.793 L 49.336 89.520 Q 48.000 90.091 48.000 91.544 L 48.000 141.335 Q 48.000 144.666 51.064 143.358 L 113.664 116.631 Q 115.000 116.061 115.000 114.608 Z', c: C.green },
+    { d:'M 67.000 74.877 L 67.000 64.741 Q 67.000 61.409 63.936 62.717 L 1.336 89.444 Q 0.000 90.015 0.000 91.468 L 0.000 141.229 Q 0.000 144.560 3.064 143.252 L 41.664 126.772 Q 43.000 126.202 43.000 124.749 L 43.000 88.029 Q 43.000 86.577 44.336 86.006 L 65.664 76.900 Q 67.000 76.330 67.000 74.877 Z', c: C.blue },
+    { d:'M 57.960 55.269 L 3.064 31.831 Q -0.000 30.523 -0.000 33.855 L 0.000 80.730 Q 0.000 84.062 3.064 82.754 L 57.960 59.316 Q 62.699 57.293 57.960 55.269 Z', c: C.purple },
+    { d:'M 66.968 29.446 L 66.968 3.091 Q 66.968 -0.241 63.904 1.068 L 8.949 24.530 Q 4.210 26.554 8.949 28.577 L 39.620 41.672 Q 42.684 42.980 42.684 39.648 L 42.684 25.741 Q 42.684 22.410 45.748 23.718 L 63.904 31.470 Q 66.968 32.778 66.968 29.446 Z', c: C.orange },
+    { d:'M 106.326 55.363 L 51.064 31.769 Q 48.000 30.461 48.000 33.793 L 48.000 43.721 Q 48.000 45.173 49.336 45.744 L 70.664 54.850 Q 72.000 55.420 72.000 56.873 L 72.000 70.734 Q 72.000 74.065 75.064 72.757 L 106.326 59.410 Q 111.065 57.387 106.326 55.363 Z', c: C.yellow },
+  ];
+  /* pieces in visual build order: orange, yellow, purple, blue, green */
+  const BUILD_ORDER = [3, 4, 2, 1, 0];
+
+  /* logo(attrFn) -> the 5 paths; attrFn(piece, index) returns the attribute string */
+  const logo = (attrFn) => PIECES.map((p, i) =>
+    '<path d="' + p.d + '" ' + (attrFn ? attrFn(p, i) : 'fill="' + p.c + '"') + '/>'
+  ).join('');
+
+  /* 4-point sparkle centred at cx,cy with radius r */
+  const spark = (cx, cy, r, fill, extra) => {
+    const k = 0.28, m = 0.1;
+    const p = [
+      'M', cx, cy - r,
+      'C', cx + r*m, cy - r*k, cx + r*k, cy - r*m, cx + r, cy,
+      'C', cx + r*k, cy + r*m, cx + r*m, cy + r*k, cx, cy + r,
+      'C', cx - r*m, cy + r*k, cx - r*k, cy + r*m, cx - r, cy,
+      'C', cx - r*k, cy - r*m, cx - r*m, cy - r*k, cx, cy - r, 'Z'
+    ].join(' ');
+    return '<path d="' + p + '" fill="' + fill + '"' + (extra || '') + '/>';
+  };
+
+  /* --- standalone glyph shapes, drawn in a 0 0 128 128 box --- */
+  const gFlask = (line, liquid, bubble) => ''
+    + '<path d="M50 17 H78" fill="none" stroke="' + line + '" stroke-width="9" stroke-linecap="round"/>'
+    + '<path d="M56 20 V54 L30 96 Q24 108 37 108 H91 Q104 108 98 96 L72 54 V20" fill="none" stroke="' + line + '" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>'
+    + '<path d="M41 78 H87 L95 91 Q100 103 89 103 H39 Q28 103 33 91 Z" fill="' + liquid + '"/>'
+    + '<circle cx="57" cy="88" r="5" fill="' + bubble + '"/>'
+    + '<circle cx="75" cy="95" r="4" fill="' + bubble + '"/>';
+
+  const gKey = (ring, shaft) => ''
+    + '<circle cx="42" cy="64" r="21" fill="none" stroke="' + ring + '" stroke-width="11"/>'
+    + '<path d="M63 64 H104" fill="none" stroke="' + shaft + '" stroke-width="11" stroke-linecap="round"/>'
+    + '<path d="M85 64 V82" fill="none" stroke="' + shaft + '" stroke-width="11" stroke-linecap="round"/>'
+    + '<path d="M104 64 V78" fill="none" stroke="' + shaft + '" stroke-width="11" stroke-linecap="round"/>';
+
+  const gRocket = (body, fin, win, flame) => ''
+    + '<path d="M56 100 L64 124 L72 100 Z" fill="' + flame + '"/>'
+    + '<path d="M40 68 L21 86 L23 101 L48 90 Z" fill="' + fin + '"/>'
+    + '<path d="M88 68 L107 86 L105 101 L80 90 Z" fill="' + fin + '"/>'
+    + '<path d="M64 10 C83 30 90 56 90 78 L79 92 H49 L38 78 C38 56 45 30 64 10 Z" fill="' + body + '"/>'
+    + '<circle cx="64" cy="52" r="13" fill="' + win + '"/>';
+
+  const gSeed = (stem, leafA, leafB) => ''
+    + '<path d="M64 118 V64" fill="none" stroke="' + stem + '" stroke-width="9" stroke-linecap="round"/>'
+    + '<path d="M62 84 C40 84 26 70 26 50 C50 46 62 62 62 84 Z" fill="' + leafA + '"/>'
+    + '<path d="M66 70 C86 70 100 56 100 36 C78 32 66 48 66 70 Z" fill="' + leafB + '"/>';
+
+  const gSparkles = (a, b, c) => spark(56, 62, 42, a) + spark(99, 28, 17, b) + spark(97, 100, 13, c);
+
+  const gBracket = (col, w) => ''
+    + '<path d="M8 34 V14 Q8 8 14 8 H34" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"/>'
+    + '<path d="M94 8 H114 Q120 8 120 14 V34" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"/>'
+    + '<path d="M120 94 V114 Q120 120 114 120 H94" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"/>'
+    + '<path d="M34 120 H14 Q8 120 8 114 V94" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"/>';
+
+  /* a circular badge in the bottom-right corner, holding a mono-white glyph */
+  const cornerBadge = (fill, glyphInner) => ''
+    + '<circle cx="94" cy="94" r="33" fill="#ffffff"/>'
+    + '<circle cx="94" cy="94" r="28" fill="' + fill + '"/>'
+    + '<g transform="translate(94 94) scale(0.30) translate(-64 -64)">' + glyphInner + '</g>';
+
+  const FONT = 'Inter, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif';
+
+  /* ---------------- concepts ---------------- */
+  const SECTIONS = [
+    {
+      key: 'mark',
+      title: 'Built from the logo',
+      desc: 'The mark itself carries the message &mdash; deliberately unfinished, provisional, or in preview. Strongly on-brand, but each of these shows a modified brand mark, so they need a brand sign-off.',
+      items: [
+        {
+          id: 'unfinished-build', title: 'Unfinished Build', tag: 'Logo &mdash; modified',
+          desc: 'Top three pieces are solid; the last two are dashed outlines. The mark is literally still under construction.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(22.5 12) scale(0.717)">'
+             + logo((p, i) => (i === 0 || i === 1)
+                 ? 'fill="none" stroke="' + p.c + '" stroke-width="6" stroke-dasharray="11 9" stroke-linejoin="round" opacity="0.95"'
+                 : 'fill="' + p.c + '"')
+             + '</g>'
+        },
+        {
+          id: 'progressive-fade', title: 'Progressive Fade', tag: 'Logo &mdash; modified',
+          desc: 'Opacity steps down along the build order, so the mark fades out toward the parts that are not there yet.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(22.5 12) scale(0.717)">'
+             + logo((p, i) => 'fill="' + p.c + '" opacity="' + [1, 0.85, 0.66, 0.45, 0.26][BUILD_ORDER.indexOf(i)] + '"')
+             + '</g>'
+        },
+        {
+          id: 'blueprint', title: 'Blueprint Outline', tag: 'Logo &mdash; modified',
+          desc: 'Drawn as construction lines over a faint grid, with one piece already filled in. Reads as &ldquo;design in progress&rdquo;.',
+          vb: '0 0 128 128',
+          svg: '<g stroke="' + C.purple + '" stroke-width="1" opacity="0.22">'
+             + [24, 48, 72, 96].map(v => '<path d="M' + v + ' 4 V124"/><path d="M4 ' + v + ' H124"/>').join('')
+             + '</g>'
+             + '<g transform="translate(22.5 12) scale(0.717)">'
+             + logo((p, i) => i === 3
+                 ? 'fill="' + p.c + '"'
+                 : 'fill="none" stroke="' + p.c + '" stroke-width="5" stroke-linejoin="round"')
+             + '</g>'
+        },
+        {
+          id: 'preview-brackets', title: 'Preview Brackets', tag: 'Logo &mdash; intact',
+          desc: 'Viewfinder corners frame an untouched mark &mdash; &ldquo;you are looking at a preview&rdquo; without altering the logo.',
+          vb: '0 0 128 128',
+          svg: gBracket(C.purple, 5)
+             + '<g transform="translate(38.5 30) scale(0.462)">' + logo() + '</g>'
+        },
+        {
+          id: 'dashed-enclosure', title: 'Dashed Enclosure', tag: 'Logo &mdash; intact',
+          desc: 'A dashed container &mdash; the same visual language as a draft or placeholder state elsewhere in the product.',
+          vb: '0 0 128 128',
+          svg: '<rect x="6" y="6" width="116" height="116" rx="28" fill="none" stroke="' + C.purple + '" stroke-width="4" stroke-dasharray="13 10"/>'
+             + '<g transform="translate(41.5 32) scale(0.428)">' + logo() + '</g>'
+        },
+        {
+          id: 'sparkle-mark', title: 'Sparkle Mark', tag: 'Logo &mdash; intact',
+          desc: 'The mark plus a sparkle cluster. The softest signal in the set: says &ldquo;new&rdquo; more than &ldquo;unstable&rdquo;.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(10 18) scale(0.641)">' + logo() + '</g>'
+             + spark(104, 26, 21, C.yellow) + spark(120, 54, 9, C.orange)
+        },
+        {
+          id: 'badge-flask', title: 'Lab Badge', tag: 'Logo + overlay',
+          desc: 'Mark with a flask badge clipped to the corner. The clearest &ldquo;this is an experiment&rdquo; read in the set.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(6 4) scale(0.6)">' + logo() + '</g>'
+             + cornerBadge(C.purple, gFlask('#ffffff', 'rgba(255,255,255,0.55)', '#ffffff'))
+        },
+        {
+          id: 'badge-key', title: 'Key Badge', tag: 'Logo + overlay',
+          desc: 'A key says &ldquo;you have been let in early&rdquo; &mdash; invitation rather than instability. Good for gated programmes.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(6 4) scale(0.6)">' + logo() + '</g>'
+             + cornerBadge(C.orange, gKey('#ffffff', '#ffffff'))
+        },
+        {
+          id: 'badge-rocket', title: 'Rocket Badge', tag: 'Logo + overlay',
+          desc: 'Launch framing. Energetic, but it sets an expectation of shipping rather than of a feature that might still change.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(6 4) scale(0.6)">' + logo() + '</g>'
+             + cornerBadge(C.blue, gRocket('#ffffff', 'rgba(255,255,255,0.7)', C.blue, 'rgba(255,255,255,0.85)'))
+        },
+        {
+          id: 'badge-ea', title: 'EA Monogram Badge', tag: 'Logo + overlay',
+          desc: 'Two letters do the work &mdash; unambiguous, and legible further down than any pictogram in this family.',
+          vb: '0 0 128 128',
+          svg: '<g transform="translate(6 4) scale(0.6)">' + logo() + '</g>'
+             + '<circle cx="94" cy="94" r="33" fill="#ffffff"/>'
+             + '<circle cx="94" cy="94" r="28" fill="' + C.purple + '"/>'
+             + '<text x="94" y="94" text-anchor="middle" dominant-baseline="central" font-family="' + FONT + '" font-size="25" font-weight="700" letter-spacing="0.5" fill="#ffffff">EA</text>'
+        },
+      ]
+    },
+    {
+      key: 'glyph',
+      title: 'Standalone glyphs',
+      desc: 'No logo &mdash; a small mark that sits beside a feature name, in a menu, or on a tab. These are the ones that still work at 16px.',
+      items: [
+        {
+          id: 'glyph-flask', title: 'Flask', tag: 'Experimental',
+          desc: 'The default meaning of &ldquo;we are still testing this&rdquo;. Colours come straight from the mark.',
+          vb: '0 0 128 128', svg: gFlask(C.purple, C.blue, C.yellow)
+        },
+        {
+          id: 'glyph-key', title: 'Key', tag: 'Invitation',
+          desc: 'Access granted rather than work in progress. Pairs well with a waitlist or an opt-in programme.',
+          vb: '0 0 128 128', svg: gKey(C.purple, C.blue)
+        },
+        {
+          id: 'glyph-sparkles', title: 'Sparkle Cluster', tag: 'New',
+          desc: 'Widely understood as &ldquo;new / AI&rdquo;. Cheapest to read, but the weakest at conveying &ldquo;may change&rdquo;.',
+          vb: '0 0 128 128', svg: gSparkles(C.yellow, C.orange, C.blue)
+        },
+        {
+          id: 'glyph-seedling', title: 'Sprout', tag: 'Growing',
+          desc: 'Immature but alive &mdash; a gentler framing than a lab flask, and it uses the mark&rsquo;s green.',
+          vb: '0 0 128 128', svg: gSeed(C.green, C.green, C.blue)
+        },
+        {
+          id: 'glyph-rocket', title: 'Rocket', tag: 'Launching',
+          desc: 'Momentum and launch. Loud at large sizes; check it at 16px before committing.',
+          vb: '0 0 128 128', svg: gRocket(C.orange, C.green, C.blue, C.yellow)
+        },
+        {
+          id: 'glyph-ea-tile', title: 'EA Tile', tag: 'Monogram',
+          desc: 'A rounded tile carrying the brand gradient. Holds its meaning at any size because it is literally the initials.',
+          vb: '0 0 128 128',
+          svg: '<defs><linearGradient id="eaGrad__UID__" x1="0" y1="0" x2="1" y2="1">'
+             + '<stop offset="0%" stop-color="' + C.orange + '"/><stop offset="45%" stop-color="' + C.purple + '"/><stop offset="100%" stop-color="' + C.blue + '"/>'
+             + '</linearGradient></defs>'
+             + '<rect x="4" y="4" width="120" height="120" rx="30" fill="url(#eaGrad__UID__)"/>'
+             + '<text x="64" y="66" text-anchor="middle" dominant-baseline="central" font-family="' + FONT + '" font-size="52" font-weight="700" letter-spacing="1" fill="#ffffff">EA</text>'
+        },
+        {
+          id: 'glyph-ticket', title: 'Early Pass', tag: 'Invitation',
+          desc: 'A ticket stub. Says &ldquo;admit one&rdquo; &mdash; useful when access is limited and you want that to feel like a perk.',
+          vb: '0 0 128 128',
+          svg: '<path d="M16 30 H112 Q118 30 118 36 V54 A12 12 0 0 0 118 74 V92 Q118 98 112 98 H16 Q10 98 10 92 V74 A12 12 0 0 0 10 54 V36 Q10 30 16 30 Z" fill="' + C.blue + '"/>'
+             + '<path d="M72 34 V44 M72 54 V74 M72 84 V94" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 14" opacity="0.85"/>'
+             + spark(95, 64, 15, '#ffffff')
+             + '<path d="M26 52 H58 M26 66 H58 M26 80 H46" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.9"/>'
+        },
+        {
+          id: 'glyph-dot', title: 'Status Dot', tag: 'Minimal',
+          desc: 'A ringed dot in the logo&rsquo;s orange. The quietest option &mdash; carries no meaning on its own, so it needs a tooltip or legend.',
+          vb: '0 0 128 128',
+          svg: '<circle cx="64" cy="64" r="46" fill="none" stroke="' + C.orange + '" stroke-width="7" opacity="0.35"/>'
+             + '<circle cx="64" cy="64" r="26" fill="' + C.orange + '"/>'
+        },
+      ]
+    },
+    {
+      key: 'lockup',
+      title: 'Badges &amp; lockups',
+      desc: 'Where there is room for words &mdash; modal headers, feature pages, release notes, marketing. These are wide, so judge them by height.',
+      items: [
+        {
+          id: 'pill-solid', title: 'Solid Pill', tag: 'Lockup',
+          desc: 'Filled pill with a sparkle. High contrast &mdash; use where the label needs to be noticed once, not on every row.',
+          vb: '0 0 226 56',
+          svg: '<rect x="0" y="0" width="226" height="56" rx="28" fill="' + C.purple + '"/>'
+             + spark(32, 28, 12, '#ffffff')
+             + '<text x="54" y="29" dominant-baseline="central" font-family="' + FONT + '" font-size="17" font-weight="700" letter-spacing="1.6" fill="#ffffff">EARLY ACCESS</text>'
+        },
+        {
+          id: 'pill-outline', title: 'Outline Chip', tag: 'Lockup',
+          desc: 'Quieter chip for repeated use in lists and tables, where a solid fill would shout.',
+          vb: '0 0 226 56',
+          svg: '<rect x="1.5" y="1.5" width="223" height="53" rx="26.5" fill="none" stroke="' + C.purple + '" stroke-width="3"/>'
+             + '<circle cx="32" cy="28" r="7" fill="' + C.orange + '"/>'
+             + '<text x="52" y="29" dominant-baseline="central" font-family="' + FONT + '" font-size="17" font-weight="700" letter-spacing="1.6" fill="' + C.purple + '">EARLY ACCESS</text>'
+        },
+        {
+          id: 'pill-gradient', title: 'Gradient Pill', tag: 'Lockup',
+          desc: 'The five logo colours run across the fill &mdash; the most branded of the lockups, best on a marketing surface.',
+          vb: '0 0 226 56',
+          svg: '<defs><linearGradient id="pillGrad__UID__" x1="0" y1="0" x2="1" y2="0">'
+             + '<stop offset="0%" stop-color="' + C.orange + '"/><stop offset="30%" stop-color="' + C.purple + '"/>'
+             + '<stop offset="62%" stop-color="' + C.blue + '"/><stop offset="100%" stop-color="' + C.green + '"/>'
+             + '</linearGradient></defs>'
+             + '<rect x="0" y="0" width="226" height="56" rx="28" fill="url(#pillGrad__UID__)"/>'
+             + spark(32, 28, 12, '#ffffff')
+             + '<text x="54" y="29" dominant-baseline="central" font-family="' + FONT + '" font-size="17" font-weight="700" letter-spacing="1.6" fill="#ffffff">EARLY ACCESS</text>'
+        },
+        {
+          id: 'pill-logo', title: 'Mark Lockup', tag: 'Lockup',
+          desc: 'The mark, a rule, then the words &mdash; for modal headers and release-note banners where the product name matters too.',
+          vb: '0 0 236 56',
+          svg: '<g transform="translate(10 5) scale(0.317)">' + logo() + '</g>'
+             + '<path d="M58 14 V42" stroke="#dddbda" stroke-width="2.5" stroke-linecap="round"/>'
+             + '<text x="74" y="21" dominant-baseline="central" font-family="' + FONT + '" font-size="16" font-weight="700" fill="currentColor">Early Access</text>'
+             + '<text x="74" y="40" dominant-baseline="central" font-family="' + FONT + '" font-size="12.5" font-weight="500" fill="#5e6670">Preview &mdash; may change</text>'
+        },
+        {
+          id: 'ribbon-corner', title: 'Corner Ribbon', tag: 'Lockup',
+          desc: 'A folded corner for feature cards and tiles. Costs no layout space, but only works on a rectangular container.',
+          vb: '0 0 128 128',
+          svg: '<rect x="2" y="2" width="124" height="124" rx="14" fill="#ffffff" stroke="#dddbda" stroke-width="2.5"/>'
+             + '<clipPath id="clip__UID__"><rect x="2" y="2" width="124" height="124" rx="14"/></clipPath>'
+             + '<g clip-path="url(#clip__UID__)"><path d="M60 2 H126 V68 Z" fill="' + C.orange + '"/>'
+             + '<text transform="translate(98 30) rotate(45)" text-anchor="middle" dominant-baseline="central" font-family="' + FONT + '" font-size="13" font-weight="700" letter-spacing="1" fill="#ffffff">EARLY</text></g>'
+             + '<g transform="translate(18 52) scale(0.3)">' + logo() + '</g>'
+             + '<path d="M18 100 H84 M18 114 H62" stroke="#dddbda" stroke-width="6" stroke-linecap="round"/>'
+        },
+        {
+          id: 'stamp', title: 'Round Stamp', tag: 'Lockup',
+          desc: 'Curved text around the mark, like a wax seal. Distinctive on a splash or an email header; too detailed for UI chrome.',
+          vb: '0 0 128 128',
+          svg: '<defs><path id="arcTop__UID__" d="M 64 64 m -46 0 a 46 46 0 1 1 92 0" fill="none"/>'
+             + '<path id="arcBot__UID__" d="M 64 64 m -44 0 a 44 44 0 0 0 88 0" fill="none"/></defs>'
+             + '<circle cx="64" cy="64" r="60" fill="none" stroke="' + C.purple + '" stroke-width="3"/>'
+             + '<circle cx="64" cy="64" r="52" fill="none" stroke="' + C.purple + '" stroke-width="1.5" stroke-dasharray="4 5"/>'
+             + '<text font-family="' + FONT + '" font-size="13" font-weight="700" letter-spacing="2.4" fill="' + C.purple + '">'
+             + '<textPath href="#arcTop__UID__" startOffset="50%" text-anchor="middle">EARLY ACCESS</textPath></text>'
+             + '<text font-family="' + FONT + '" font-size="10" font-weight="600" letter-spacing="2" fill="' + C.purple + '" opacity="0.75">'
+             + '<textPath href="#arcBot__UID__" startOffset="50%" text-anchor="middle">S-DOCS PREVIEW</textPath></text>'
+             + '<g transform="translate(48 44) scale(0.28)">' + logo() + '</g>'
+        },
+      ]
+    },
+  ];
+
+  /* ---------------- rendering ---------------- */
+  let uidCounter = 0;
+  const ITEMS_BY_ID = {};
+  SECTIONS.forEach(s => s.items.forEach(i => { ITEMS_BY_ID[i.id] = i; }));
+
+  function svgMarkup(item, opts) {
+    const uid = 'u' + (uidCounter++);
+    const inner = item.svg.split('__UID__').join(uid);
+    const attrs = (opts && opts.attrs) || '';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + item.vb + '"' + attrs + '>' + inner + '</svg>';
+  }
+
+  function snippet(item) {
+    const uid = item.id.replace(/[^a-z0-9]/gi, '');
+    const vb = item.vb.split(' ');
+    const w = +vb[2], h = +vb[3];
+    const height = 24;
+    const width = Math.round(w / h * height);
+    const inner = item.svg.split('__UID__').join(uid);
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + item.vb + '" width="' + width + '" height="' + height + '" role="img" aria-label="Early access">\n  '
+      + inner.replace(/></g, '>\n  <') + '\n</svg>';
+  }
+
+  const sectionsEl = document.getElementById('sections');
+  sectionsEl.innerHTML = SECTIONS.map(sec => ''
+    + '<section class="group" data-cat="' + sec.key + '">'
+    + '<h2 class="section-title">' + sec.title + '</h2>'
+    + '<p class="section-desc">' + sec.desc + '</p>'
+    + '<div class="grid">'
+    + sec.items.map(item => ''
+        + '<div class="card">'
+        + '<div class="stage">' + svgMarkup(item) + '</div>'
+        + '<h3>' + item.title + '</h3>'
+        + '<p>' + item.desc + '</p>'
+        + '<span class="tag">' + item.tag + '</span>'
+        + '<button class="copy-btn" data-copy-id="' + item.id + '">&#128203; Copy SVG</button>'
+        + '</div>').join('')
+    + '</div></section>').join('');
+
+  /* context picker */
+  const picker = document.getElementById('contextPicker');
+  picker.innerHTML = SECTIONS.map(sec =>
+    '<optgroup label="' + sec.title.replace(/&amp;/g, '&') + '">'
+    + sec.items.map(i => '<option value="' + i.id + '">' + i.title + '</option>').join('')
+    + '</optgroup>').join('');
+  picker.value = 'glyph-flask';
+
+  function paintContext() {
+    const item = ITEMS_BY_ID[picker.value];
+    document.querySelectorAll('[data-slot]').forEach(slot => { slot.innerHTML = svgMarkup(item); });
+  }
+  picker.addEventListener('change', paintContext);
+  paintContext();
+
+  /* copy */
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.copy-btn');
+    if (!btn) return;
+    const text = snippet(ITEMS_BY_ID[btn.dataset.copyId]);
+    const done = () => {
+      btn.classList.add('copied');
+      btn.innerHTML = '&#10003; Copied';
+      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#128203; Copy SVG'; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  });
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (err) { /* no-op */ }
+    document.body.removeChild(ta);
+  }
+
+  /* filter */
+  document.getElementById('categoryFilter').addEventListener('change', e => {
+    const val = e.target.value;
+    document.querySelectorAll('section.group[data-cat]').forEach(sec => {
+      sec.style.display = (val === 'all' || sec.dataset.cat === val) ? '' : 'none';
+    });
+  });
+
+  /* size */
+  const slider = document.getElementById('sizeSlider');
+  const readout = document.getElementById('sizeReadout');
+  const presets = document.querySelectorAll('#sizePresets button');
+  function setSize(px, fromPreset) {
+    document.documentElement.style.setProperty('--icon-h', px);
+    readout.textContent = px + 'px';
+    slider.value = px;
+    presets.forEach(b => b.classList.toggle('active', fromPreset && +b.dataset.size === +px));
+  }
+  slider.addEventListener('input', e => setSize(+e.target.value, false));
+  presets.forEach(b => b.addEventListener('click', () => setSize(+b.dataset.size, true)));
+
+  /* stage background */
+  const BGS = { light: ['#ffffff', '#181818'], grey: ['#f4f6f9', '#181818'], dark: ['#12161c', '#ffffff'] };
+  document.querySelectorAll('#bgToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#bgToggle button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const [bg, fg] = BGS[b.dataset.bg];
+      document.documentElement.style.setProperty('--stage-bg', bg);
+      document.documentElement.style.setProperty('--stage-fg', fg);
+    });
+  });
+</script>
+</body>
+</html>

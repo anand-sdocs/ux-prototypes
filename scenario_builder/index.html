@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Scenarios &mdash; S-Docs AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<!-- ============ SALESFORCE GLOBAL HEADER ============ -->
+<header class="sf-global-header">
+  <div class="ghl">
+    <button class="gh-icon-btn" title="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="org-pill">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      Scratch Org
+    </span>
+  </div>
+  <div class="ghc">
+    <div class="gh-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+      <input type="text" placeholder="Search..." aria-label="Search">
+    </div>
+  </div>
+  <div class="ghr">
+    <button class="gh-icon-btn" title="Setup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></button>
+    <button class="gh-icon-btn" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a3 3 0 0 1 5.6 1.2c0 2-2.8 2.4-2.8 4"/><circle cx="12" cy="17.3" r="0.9" fill="currentColor" stroke="none"/></svg></button>
+    <span class="avatar"></span>
+  </div>
+</header>
+
+<!-- ============ APP NAV BAR ============ -->
+<div class="sf-app-nav">
+  <button class="waffle" title="App Launcher">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.5"/><circle cx="8" cy="2.5" r="1.5"/><circle cx="13.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="8" cy="13.5" r="1.5"/><circle cx="13.5" cy="13.5" r="1.5"/></svg>
+  </button>
+  <span class="app-name">S-Docs</span>
+  <div class="tabset">
+    <div class="nav-tab">S-Docs Templates</div>
+    <div class="nav-tab active">Document Scenarios</div>
+    <div class="nav-tab">S-Docs Jobs</div>
+    <div class="nav-tab">S-Docs Settings</div>
+  </div>
+</div>
+
+<main class="sf-body">
+
+  <div class="page-header">
+    <div class="ph-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><circle cx="18" cy="16" r="3"/><path d="m20.2 18.2 1.8 1.8"/></svg>
+    </div>
+    <div class="ph-text">
+      <span class="ph-eyebrow">S-Docs AI</span>
+      <h1>Document Scenarios</h1>
+      <p class="ph-sub">Define which records get which document &mdash; and the phrasings that mean it. No deployment.</p>
+    </div>
+    <div class="ph-actions">
+      <button class="btn btn-neutral" id="btn-docs">How scenarios work</button>
+      <button class="btn btn-brand" id="btn-new">New Scenario</button>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="list" role="tab">Scenarios</button>
+    <button class="tab" data-tab="builder" role="tab">Builder</button>
+    <button class="tab" data-tab="tester" role="tab">Tester</button>
+  </div>
+
+  <!-- ---------------- SCENARIOS LIST ---------------- -->
+  <section class="tab-panel active" id="panel-list">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Active scenarios</h2>
+          <p class="card-sub">Each scenario is two or three records. Creating one needs no Apex, no widget and no deploy &mdash; the MCP tools pick it up immediately.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="scenario-table">
+          <thead>
+            <tr>
+              <th>Scenario</th><th>Object</th><th>Template</th><th>Selection</th>
+              <th class="num">Columns</th><th class="num">Prompts</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="scenario-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- BUILDER ---------------- -->
+  <section class="tab-panel" id="panel-builder">
+    <div class="split">
+
+      <div class="split-main">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2 id="builder-title">Renewals this month</h2>
+              <p class="card-sub">Everything here is configuration. The preview on the right is the card a user sees in Claude or Slack.</p>
+            </div>
+            <div class="picker-row">
+              <div class="lv-picker">
+                <label for="scenario-select">Editing</label>
+                <div class="select-wrap"><select id="scenario-select"></select></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BASICS -->
+          <section class="fset">
+            <h3 class="fset-title">Basics</h3>
+            <div class="grid-2">
+              <div class="field"><label for="f-name">Scenario Name</label><input id="f-name" type="text"></div>
+              <div class="field">
+                <label for="f-active">Status</label>
+                <label class="switch-row">
+                  <input id="f-active" type="checkbox">
+                  <span class="switch"></span><span class="switch-label">Active</span>
+                </label>
+              </div>
+            </div>
+            <div class="field"><label for="f-desc">Description<span class="hint">One line. Returned in the discovery catalogue.</span></label><input id="f-desc" type="text"></div>
+            <div class="field">
+              <label for="f-guidance">Guidance for the model
+                <span class="help-dot" title="This text reaches the model's context. Treat it as descriptive content, and gate edit access to administrators.">?</span>
+                <span class="hint">How the model should interpret this scenario.</span>
+              </label>
+              <textarea id="f-guidance" rows="2"></textarea>
+              <p class="warn-inline">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                Reaches the model context &mdash; administrators only.
+              </p>
+            </div>
+          </section>
+
+          <!-- WHICH RECORDS -->
+          <section class="fset">
+            <h3 class="fset-title">Which records</h3>
+            <div class="grid-2">
+              <div class="field"><label for="f-object">Object</label><div class="select-wrap"><select id="f-object"></select></div></div>
+              <div class="field"><label for="f-template">Template</label><div class="select-wrap"><select id="f-template"></select></div></div>
+            </div>
+            <div class="grid-3">
+              <div class="field"><label for="f-datefield">Date Field<span class="hint">Optional</span></label><div class="select-wrap"><select id="f-datefield"></select></div></div>
+              <div class="field"><label for="f-window">Default Window</label><div class="select-wrap"><select id="f-window"></select></div></div>
+              <div class="field">
+                <label for="f-override">Window override</label>
+                <label class="switch-row">
+                  <input id="f-override" type="checkbox">
+                  <span class="switch"></span><span class="switch-label">A prompt may change it</span>
+                </label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="f-filter">Extra Filter
+                <span class="help-dot" title="Executable SOQL. Administrator-authored and therefore trusted, but anyone who can edit a scenario can write an arbitrary predicate.">?</span>
+                <span class="hint">The state half of the filter. SOQL predicate.</span>
+              </label>
+              <input id="f-filter" type="text" class="mono" placeholder="Pilot_Status__c = 'Accepted'">
+              <p class="warn-inline danger">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                Executable SOQL &mdash; permission-gate this object to administrators.
+              </p>
+            </div>
+            <div class="grid-3">
+              <div class="field"><label for="f-resolver">Resolver Class<span class="hint">Tier 2 escape hatch</span></label><input id="f-resolver" type="text" class="mono" placeholder="None — declarative"></div>
+              <div class="field"><label for="f-sort">Sort Field</label><div class="select-wrap"><select id="f-sort"></select></div></div>
+              <div class="field"><label for="f-max">Max Records</label><input id="f-max" type="number" min="1" max="500"></div>
+            </div>
+            <div class="callout-inline" id="resolver-note" hidden>
+              <b>Tier 2.</b> This scenario selects records with Apex, not a filter. The resolver returns ids only &mdash; the column mapping below still builds the card.
+            </div>
+          </section>
+
+          <!-- ROW CONTRACT -->
+          <section class="fset">
+            <h3 class="fset-title">How each row reads
+              <span class="fset-note">Headers are never typed &mdash; they come from each field's label.</span>
+            </h3>
+            <div class="slots" id="slots"></div>
+            <p class="fset-foot">
+              Eight slots, shared by every scenario on every object. Slot 1 is the row's primary label
+              &mdash; not assumed to be <code>Name</code>, because Case uses <code>CaseNumber</code>.
+              Leave a slot blank to drop the column entirely.
+            </p>
+          </section>
+
+          <!-- THE CARD -->
+          <section class="fset">
+            <h3 class="fset-title">The card</h3>
+            <div class="grid-2">
+              <div class="field"><label for="f-cardtitle">Card Title</label><input id="f-cardtitle" type="text" placeholder="Defaults to the scenario name"></div>
+              <div class="field"><label for="f-confirm">Confirm Button Label</label><input id="f-confirm" type="text" placeholder="Generate all 12"></div>
+            </div>
+            <div class="field"><label for="f-empty">Empty State Message</label><input id="f-empty" type="text" placeholder="Generated automatically"></div>
+            <div class="field">
+              <label>Blocks to render</label>
+              <div class="chip-toggles" id="block-toggles">
+                <label class="chip-toggle"><input type="checkbox" data-block="callout"><span>Summary callout</span></label>
+                <label class="chip-toggle"><input type="checkbox" data-block="stats"><span>Stat row</span></label>
+                <label class="chip-toggle"><input type="checkbox" data-block="table"><span>Results table</span></label>
+                <label class="chip-toggle"><input type="checkbox" data-block="button"><span>Confirm button</span></label>
+              </div>
+            </div>
+          </section>
+
+          <!-- PROMPTS -->
+          <section class="fset">
+            <h3 class="fset-title">Prompts
+              <span class="fset-note">Child records. Each carries its own parameter preset.</span>
+            </h3>
+            <div id="prompt-list"></div>
+            <button class="btn btn-neutral btn-xs" id="btn-add-prompt">+ Add prompt</button>
+            <p class="fset-foot">
+              Prompts do two jobs: they are few-shot examples in the catalogue the model reads,
+              and they render as buttons whose payload is the exact phrasing you authored.
+              The user presses rather than types.
+            </p>
+          </section>
+
+          <div class="form-actions">
+            <button class="btn btn-neutral">Cancel</button>
+            <button class="btn btn-brand" id="btn-save">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="split-side">
+        <div class="preview-sticky">
+          <div class="preview-head">
+            <span class="preview-label">Live preview</span>
+            <div class="seg" id="surface-seg">
+              <button class="seg-btn active" data-surface="claude">Claude</button>
+              <button class="seg-btn" data-surface="slack">Slack</button>
+            </div>
+          </div>
+          <div class="chat-frame" id="chat-frame">
+            <div class="chat-msg user" id="chat-user"></div>
+            <div class="mcp-card" id="mcp-card"></div>
+          </div>
+          <div class="preview-foot" id="preview-foot"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ---------------- TESTER ---------------- -->
+  <section class="tab-panel" id="panel-tester">
+    <div class="split">
+      <div class="split-main">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>Test a request</h2>
+              <p class="card-sub">Type what a user would say. This runs the same matching the run tool uses &mdash; so you can see which scenario wins, and why, before anyone asks in Slack.</p>
+            </div>
+          </div>
+
+          <div class="tester-input">
+            <input id="t-request" type="text" placeholder="e.g. send the pilot paperwork out" autocomplete="off">
+            <button class="btn btn-brand" id="btn-run">Run</button>
+          </div>
+          <div class="try-row">
+            <span class="try-label">Try:</span>
+            <button class="try-chip" data-q="generate invoices for opportunities renewing this month">renewals this month</button>
+            <button class="try-chip" data-q="send the pilot paperwork out">pilot paperwork</button>
+            <button class="try-chip" data-q="case summaries for cases closed this week">case summaries</button>
+            <button class="try-chip" data-q="quarterly statements for active customers">statements</button>
+            <button class="try-chip" data-q="do the thing with the stuff">an ambiguous one</button>
+          </div>
+
+          <div id="match-report"></div>
+        </div>
+      </div>
+
+      <aside class="split-side">
+        <div class="preview-sticky">
+          <div class="preview-head">
+            <span class="preview-label">What the user sees</span>
+            <div class="seg" id="t-stage-seg">
+              <button class="seg-btn active" data-stage="review">Review</button>
+              <button class="seg-btn" data-stage="running">Running</button>
+              <button class="seg-btn" data-stage="done">Done</button>
+            </div>
+          </div>
+          <div class="chat-frame">
+            <div class="chat-msg user" id="t-chat-user"></div>
+            <div class="mcp-card" id="t-mcp-card"></div>
+          </div>
+          <div class="preview-foot">
+            One card, three states. <code>run</code> and <code>check</code> return the same payload shape,
+            so the card advances rather than being replaced.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+</main>
+
+<div class="drawer-scrim" id="drawer-scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden>
+  <div class="drawer-head">
+    <h2>How scenarios work</h2>
+    <button class="icon-x" id="drawer-close" title="Close">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <h4>The tools are fixed. The scenarios are data.</h4>
+    <p>An MCP tool description is static metadata, fixed when the server definition deploys.
+       Scenarios are records you create at any time, so a tool can never describe, in its own
+       definition, which scenarios exist.</p>
+    <p>So the relationship inverts: the org publishes its catalogue outward, and the model does
+       the structuring. Adding a scenario never changes an MCP definition, never requires a
+       deploy, and never requires the client to refresh tools.</p>
+    <h4>Three tools</h4>
+    <ul class="drawer-list">
+      <li><b>discover</b> &mdash; returns the shortlisted catalogue with parameters, legal values and your example prompts.</li>
+      <li><b>run</b> &mdash; resolves to records and returns a reviewable list. Only with confirmation does it generate.</li>
+      <li><b>check</b> &mdash; polls a run, then returns the finished documents.</li>
+    </ul>
+    <h4>Two tiers of selection</h4>
+    <p>Most scenarios are an object, a filter, a template and a field mapping &mdash; no code.
+       A few cannot be expressed as a <code>WHERE</code> clause: &ldquo;accounts with no signed NDA
+       in twelve months&rdquo; is an anti-join against generated documents. Those name an Apex class.</p>
+    <p>A resolver returns <b>ids only</b>. Display stays declarative, so presentation can change
+       later without breaking a single resolver in the field.</p>
+    <h4>What stays out</h4>
+    <p>A scenario stops at selection. What happens to each document once it exists &mdash; email it,
+       e-sign it, combine it &mdash; is already an S-Docs document action. A scenario points at one;
+       it does not grow a parallel delivery path.</p>
+  </div>
+</aside>
+
+<script src="schema.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
