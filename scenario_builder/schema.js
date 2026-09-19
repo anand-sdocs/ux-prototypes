@@ -10,7 +10,8 @@ const ORG = {
       label: 'Opportunity', labelPlural: 'Opportunities',
       fields: {
         Name:            { label: 'Opportunity Name', type: 'text' },
-        StageName:       { label: 'Stage', type: 'picklist' },
+        StageName:       { label: 'Stage', type: 'picklist',
+                           values: ['Prospecting','Qualification','Proposal','Negotiation','Closed Won','Closed Lost'] },
         Amount:          { label: 'Amount', type: 'currency' },
         CloseDate:       { label: 'Close Date', type: 'date' },
         Renewal_Date__c: { label: 'Renewal Date', type: 'date' },
@@ -23,11 +24,14 @@ const ORG = {
       label: 'Account', labelPlural: 'Accounts',
       fields: {
         Name:           { label: 'Account Name', type: 'text' },
-        Type:           { label: 'Account Type', type: 'picklist' },
-        Industry:       { label: 'Industry', type: 'picklist' },
+        Type:           { label: 'Account Type', type: 'picklist',
+                          values: ['Customer','Prospect','Partner','Reseller'] },
+        Industry:       { label: 'Industry', type: 'picklist',
+                          values: ['Manufacturing','Technology','Healthcare','Finance','Retail'] },
         AnnualRevenue:  { label: 'Annual Revenue', type: 'currency' },
         BillingCity:    { label: 'Billing City', type: 'text' },
-        Pilot_Status__c:{ label: 'Pilot Status', type: 'picklist' },
+        Pilot_Status__c:{ label: 'Pilot Status', type: 'picklist',
+                          values: ['Not started','Pending','Accepted','Declined'] },
         Pilot_Accepted_Date__c: { label: 'Pilot Accepted Date', type: 'date' },
         Active__c:      { label: 'Active', type: 'boolean' },
         'Owner.Alias':  { label: 'Alias', type: 'text' }
@@ -38,8 +42,10 @@ const ORG = {
       fields: {
         CaseNumber:  { label: 'Case Number', type: 'text' },
         Subject:     { label: 'Subject', type: 'text' },
-        Status:      { label: 'Status', type: 'picklist' },
-        Priority:    { label: 'Priority', type: 'picklist' },
+        Status:      { label: 'Status', type: 'picklist',
+                       values: ['New','Working','Escalated','Closed'] },
+        Priority:    { label: 'Priority', type: 'picklist',
+                       values: ['Low','Medium','High','Critical'] },
         ClosedDate:  { label: 'Closed Date', type: 'datetime' },
         'Account.Name': { label: 'Account Name', type: 'text' },
         'Contact.Name': { label: 'Full Name', type: 'text' }
@@ -74,6 +80,26 @@ const ORG = {
     'THIS_YEAR','LAST_YEAR','NEXT_YEAR','LAST_7_DAYS','LAST_30_DAYS','LAST_90_DAYS',
     'NEXT_7_DAYS','NEXT_30_DAYS','NEXT_90_DAYS'
   ],
+
+  /* Friendly labels for the date literals. The whitelist is unchanged - this
+     is only how it reads in the UI. */
+  windowLabels: {
+    TODAY:'Today', YESTERDAY:'Yesterday', TOMORROW:'Tomorrow',
+    THIS_WEEK:'This week', LAST_WEEK:'Last week', NEXT_WEEK:'Next week',
+    THIS_MONTH:'This month', LAST_MONTH:'Last month', NEXT_MONTH:'Next month',
+    THIS_QUARTER:'This quarter', LAST_QUARTER:'Last quarter', NEXT_QUARTER:'Next quarter',
+    THIS_YEAR:'This year', LAST_YEAR:'Last year', NEXT_YEAR:'Next year',
+    LAST_7_DAYS:'In the last 7 days', LAST_30_DAYS:'In the last 30 days',
+    LAST_90_DAYS:'In the last 90 days', NEXT_7_DAYS:'In the next 7 days',
+    NEXT_30_DAYS:'In the next 30 days', NEXT_90_DAYS:'In the next 90 days'
+  },
+
+  objectMeta: {
+    Opportunity: { icon:'briefcase', colour:'#fcb95b', desc:'Deals and renewals' },
+    Account:     { icon:'building',  colour:'#7f8de1', desc:'Companies you do business with' },
+    Case:        { icon:'lifebuoy',  colour:'#f88962', desc:'Support requests' },
+    Contact:     { icon:'user',      colour:'#a094ed', desc:'People at your accounts' }
+  },
 
   documentActions: [
     { id: '', name: '— None —' },
@@ -116,6 +142,7 @@ const SCENARIOS = [
     guidance:'Use for renewals, expiring contracts or "what is up for renewal". The window may be changed to next month.',
     object:'Opportunity', templateIds:['a0H01','a0H02'],
     dateField:'Renewal_Date__c', window:'THIS_MONTH', allowOverride:true,
+    conditions:[], findBy:'date',
     extraFilter:'', resolverClass:'', sortField:'Renewal_Date__c', maxRecords:50, maxDocuments:200,
     documentAction:'',
     slots:['Name','Account.Name','Renewal_Date__c','Amount','StageName','','',''],
@@ -132,6 +159,7 @@ const SCENARIOS = [
     guidance:'Use for pilot paperwork, NDAs or onboarding documents for new pilot customers.',
     object:'Account', templateIds:['a0H03','a0H05'],
     dateField:'Pilot_Accepted_Date__c', window:'THIS_WEEK', allowOverride:true,
+    conditions:[{field:'Pilot_Status__c', op:'is', value:'Accepted'}], findBy:'both',
     extraFilter:"Pilot_Status__c = 'Accepted'", resolverClass:'', sortField:'', maxRecords:25, maxDocuments:200,
     documentAction:'act2',
     slots:['Name','Industry','Pilot_Accepted_Date__c','AnnualRevenue','Type','','',''],
@@ -147,6 +175,7 @@ const SCENARIOS = [
     guidance:'Use for case summaries, closure reports or support wrap-ups. Note Case has no Name field.',
     object:'Case', templateIds:['a0H06'],
     dateField:'ClosedDate', window:'THIS_WEEK', allowOverride:true,
+    conditions:[{field:'Status', op:'is', value:'Closed'}], findBy:'both',
     extraFilter:"Status = 'Closed'", resolverClass:'', sortField:'', maxRecords:50, maxDocuments:200,
     documentAction:'',
     slots:['CaseNumber','Subject','ClosedDate','Priority','Status','Account.Name','',''],
@@ -162,6 +191,7 @@ const SCENARIOS = [
     guidance:'Use for statements or account summaries. This scenario has no date window at all.',
     object:'Account', templateIds:['a0H04'],
     dateField:'', window:'', allowOverride:false,
+    conditions:[{field:'Type', op:'is', value:'Customer'},{field:'Active__c', op:'is true', value:''}], findBy:'fields',
     extraFilter:"Type = 'Customer' AND Active__c = true", resolverClass:'', sortField:'Name', maxRecords:100, maxDocuments:200,
     documentAction:'',
     slots:['Name','Type','Industry','AnnualRevenue','BillingCity','','',''],
@@ -177,6 +207,7 @@ const SCENARIOS = [
     guidance:'An anti-join against generated documents. Cannot be expressed as a filter, so it uses Apex.',
     object:'Account', templateIds:['a0H05'],
     dateField:'', window:'', allowOverride:false,
+    conditions:[], findBy:'apex',
     extraFilter:'', resolverClass:'UnsignedNdaResolver', sortField:'Name', maxRecords:50, maxDocuments:200,
     documentAction:'act2',
     slots:['Name','Industry','','AnnualRevenue','Type','','',''],

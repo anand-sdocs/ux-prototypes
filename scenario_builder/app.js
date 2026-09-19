@@ -89,7 +89,7 @@ function criteriaOf(s) {
 
 /* ------------------------------------------------------------ the MCP card */
 
-function renderCard(s, stage = 'review') {
+function renderCard(s, stage = 'review', opts = {}) {
   const rows = resolve(s);
   const cols = columnsOf(s);
   const n = rows.length;
@@ -117,7 +117,7 @@ function renderCard(s, stage = 'review') {
       <div class="mc-sub">${esc(headline)}</div></div>
       <span class="mc-badge ${badge[0]}">${badge[1]}</span></div>`);
 
-  if (stage === 'review' && n === 0) {
+  if (stage === 'review' && n === 0 && !opts.designing) {
     out.push(callout('warning', 'Nothing to generate',
       s.emptyMessage || `No ${s.object} matched: ${crit}.`));
     return out.join('');
@@ -149,13 +149,15 @@ function renderCard(s, stage = 'review') {
       `<div class="mc-stat"><span>${esc(l)}</span><b>${esc(String(v))}</b></div>`).join('')}</div>`);
   }
 
-  if (s.blocks.table && stage === 'review' && n) {
+  if (s.blocks.table && stage === 'review' && (n || opts.designing)) {
+    const bodyRows = n
+      ? rows.map(r => `<tr>${cols.map(c =>
+          `<td class="${c.align}">${esc(fmt(r[c.path], typeOf(s.object, c.path)))}</td>`).join('')}</tr>`).join('')
+      : `<tr><td class="mc-empty" colspan="${cols.length || 1}">Nothing matches right now —
+           the columns below are still what people will see when something does.</td></tr>`;
     out.push(`<div class="mc-table-wrap"><table class="mc-table"><thead><tr>${
       cols.map(c => `<th class="${c.align}">${esc(c.header)}</th>`).join('')
-    }</tr></thead><tbody>${
-      rows.map(r => `<tr>${cols.map(c =>
-        `<td class="${c.align}">${esc(fmt(r[c.path], typeOf(s.object, c.path)))}</td>`).join('')}</tr>`).join('')
-    }</tbody></table></div>`);
+    }</tr></thead><tbody>${bodyRows}</tbody></table></div>`);
   }
 
   if (stage === 'done') {
@@ -216,174 +218,15 @@ function renderList() {
   }).join('');
 
   $$('[data-open]').forEach(a => a.onclick = () => {
-    current = scenarios.find(x => x.id === a.dataset.open);
-    showTab('builder');
-    loadBuilder();
+    openWizard(scenarios.find(x => x.id === a.dataset.open));
   });
 }
 
-/* ---------------------------------------------------------------- builder */
+/* ------------------------------------------------------------ shared bits */
 
+/* Used by both the list screen and the wizard. */
 function opt(v, label, sel) {
   return `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(label)}</option>`;
-}
-
-function loadBuilder() {
-  const s = current;
-  $('#builder-title').textContent = s.name;
-  $('#scenario-select').innerHTML = scenarios.map(x => opt(x.id, x.name, s.id)).join('');
-  $('#f-name').value = s.name;
-  $('#f-desc').value = s.description;
-  $('#f-guidance').value = s.guidance;
-  $('#f-active').checked = s.active;
-  $('#f-filter').value = s.extraFilter;
-  $('#f-resolver').value = s.resolverClass;
-  $('#f-max').value = s.maxRecords;
-  $('#f-maxdocs').value = s.maxDocuments;
-  $('#f-cardtitle').value = s.cardTitle;
-  $('#f-confirm').value = s.confirmLabel;
-  $('#f-empty').value = s.emptyMessage;
-  $('#f-override').checked = s.allowOverride;
-
-  $('#f-object').innerHTML = Object.keys(ORG.objects).map(o => opt(o, o, s.object)).join('');
-  renderTemplates();
-
-  const dateFields = Object.entries(fieldsFor(s.object))
-    .filter(([, f]) => f.type === 'date' || f.type === 'datetime');
-  $('#f-datefield').innerHTML = opt('', '— none —', s.dateField)
-    + dateFields.map(([p, f]) => opt(p, f.label, s.dateField)).join('');
-  $('#f-window').innerHTML = opt('', '— none —', s.window)
-    + ORG.windows.map(w => opt(w, windowWords(w), s.window)).join('');
-  $('#f-sort').innerHTML = opt('', '— default —', s.sortField)
-    + Object.entries(fieldsFor(s.object)).map(([p, f]) => opt(p, f.label, s.sortField)).join('');
-
-  $$('#block-toggles input').forEach(i => i.checked = !!s.blocks[i.dataset.block]);
-  $('#resolver-note').hidden = !s.resolverClass;
-
-  renderSlots();
-  renderPrompts();
-  renderPreview();
-}
-
-/* Templates are a SET, in order. A scenario usually produces a pack of
-   documents per record rather than one, and the order is the reading order. */
-function renderTemplates() {
-  const s = current;
-  const host = $('#template-list');
-  const attached = tplsOf(s);
-
-  host.innerHTML = attached.length ? attached.map((t, i) => `
-    <div class="tpl-row">
-      <div class="tpl-order">${i + 1}</div>
-      <div><div class="tpl-name">${esc(t.name)}</div>
-           <div class="tpl-format">${esc(t.format)} · ${esc(t.object)}</div></div>
-      <div>${i > 0 ? `<button class="btn btn-xs btn-neutral" data-up="${i}">↑ Move up</button>` : ''}</div>
-      <button class="icon-x" data-rmtpl="${i}" title="Remove">&times;</button>
-    </div>`).join('')
-    : `<p class="tpl-empty">No templates attached. A scenario with no template can be
-       previewed but not generated.</p>`;
-
-  const available = ORG.templates.filter(t =>
-    t.object === s.object && !(s.templateIds || []).includes(t.id));
-  $('#f-add-template').innerHTML = available.length
-    ? available.map(t => opt(t.id, `${t.name}  ·  ${t.format}`, '')).join('')
-    : opt('', '— none left on this object —', '');
-  $('#btn-add-template').disabled = !available.length;
-
-  $$('[data-rmtpl]', host).forEach(b => b.onclick = () => {
-    s.templateIds.splice(+b.dataset.rmtpl, 1);
-    renderTemplates(); renderBudget(); renderPreview();
-  });
-  $$('[data-up]', host).forEach(b => b.onclick = () => {
-    const i = +b.dataset.up;
-    [s.templateIds[i-1], s.templateIds[i]] = [s.templateIds[i], s.templateIds[i-1]];
-    renderTemplates(); renderPreview();
-  });
-  renderBudget();
-}
-
-/* Makes the multiplication visible while the admin is still choosing. */
-function renderBudget() {
-  const s = current;
-  const n = resolve(s).length;
-  const t = Math.max(1, tplsOf(s).length);
-  const docs = n * t;
-  const ceiling = s.maxDocuments || 200;
-  const worst = (s.maxRecords || 50) * t;
-  $('#budget').innerHTML = `<b>${n}</b> records × <b>${t}</b> template${t === 1 ? '' : 's'}
-    = <b>${docs}</b> document${docs === 1 ? '' : 's'} now.
-    At the record cap that is <span class="${worst > ceiling ? 'over' : ''}">${worst}</span>,
-    capped at ${ceiling}.`;
-}
-
-function renderSlots() {
-  const s = current;
-  const paths = Object.keys(fieldsFor(s.object));
-  $('#slots').innerHTML = Array.from({ length: SLOTS }, (_, i) => {
-    const path = s.slots[i] || '';
-    const title = i === 0;
-    return `<div class="slot ${title ? 'is-title' : ''} ${path ? '' : 'is-empty'}">
-      <div><div class="slot-n">${title ? 'Title' : 'Col ' + (i+1)}</div>
-           <div class="slot-api">${title ? 'title' : 'cell' + (i+1)}</div></div>
-      <div class="select-wrap">
-        <select data-slot="${i}">
-          ${opt('', title ? '— required —' : '— not used —', path)}
-          ${paths.map(p => opt(p, p, path)).join('')}
-        </select>
-      </div>
-      <div class="slot-header">
-        ${path
-          ? `<b>${esc(labelOf(s.object, path))}</b>
-             <em class="derived">↳ from field label</em>`
-          : `<em>column not rendered</em>`}
-      </div>
-    </div>`;
-  }).join('');
-
-  $$('#slots select').forEach(sel => sel.onchange = () => {
-    current.slots[+sel.dataset.slot] = sel.value;
-    renderSlots(); renderPreview();
-  });
-}
-
-function renderPrompts() {
-  const s = current;
-  const host = $('#prompt-list');
-  if (!s.prompts.length) {
-    host.innerHTML = `<p class="prompt-empty">No prompts yet. Without them the scenario is still
-      discoverable, but the model has no curated phrasing to learn from and the card has no chips.</p>`;
-    return;
-  }
-  host.innerHTML = s.prompts.map((p, i) => `
-    <div class="prompt-row">
-      <input type="text" data-p="${i}" data-k="label" value="${esc(p.label)}" placeholder="Chip label">
-      <input type="text" data-p="${i}" data-k="text" value="${esc(p.text)}" placeholder="The phrasing a user would say">
-      <div class="select-wrap"><select data-p="${i}" data-k="window">
-        ${opt('', '— scenario default —', p.window)}
-        ${ORG.windows.map(w => opt(w, windowWords(w), p.window)).join('')}
-      </select></div>
-      <button class="icon-x" data-del="${i}" title="Remove">&times;</button>
-    </div>`).join('');
-
-  $$('[data-p]', host).forEach(el => el.oninput = el.onchange = () => {
-    current.prompts[+el.dataset.p][el.dataset.k] = el.value;
-    renderPreview();
-  });
-  $$('[data-del]', host).forEach(b => b.onclick = () => {
-    current.prompts.splice(+b.dataset.del, 1); renderPrompts(); renderPreview();
-  });
-}
-
-function renderPreview() {
-  const s = current;
-  const stage = $('.seg-btn.active', $('#surface-seg')) ? 'review' : 'review';
-  const lead = s.prompts[0] ? s.prompts[0].text : `Run the ${s.name} scenario`;
-  $('#chat-user').textContent = lead;
-  $('#mcp-card').innerHTML = renderCard(s, stage);
-  const cols = columnsOf(s);
-  $('#preview-foot').innerHTML =
-    `${cols.length} of 8 slots mapped. Headers derive from field labels, so relabelling a field
-     in Setup keeps this card correct without touching the scenario.`;
 }
 
 /* ----------------------------------------------------------------- tester */
@@ -512,72 +355,14 @@ function showTab(name) {
 
 $$('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
 
-$('#scenario-select').onchange = e => {
-  current = scenarios.find(s => s.id === e.target.value);
-  loadBuilder();
-};
-
-const bind = (sel, key, prop = 'value') => {
-  const el = $(sel);
-  if (!el) return;          // a control that is not on the page must not break the page
-  el.oninput = el.onchange = e => {
-    current[key] = prop === 'checked' ? e.target.checked
-                 : (e.target.type === 'number' ? +e.target.value : e.target.value);
-    if (key === 'object') {
-      current.slots = Array(SLOTS).fill('');
-      current.dateField = ''; current.window = ''; current.extraFilter = '';
-      const t = ORG.templates.find(x => x.object === current.object);
-      current.templateIds = t ? [t.id] : [];
-      loadBuilder();
-      return;
-    }
-    if (key === 'name') $('#builder-title').textContent = e.target.value;
-    if (key === 'resolverClass') $('#resolver-note').hidden = !e.target.value;
-    if (['maxRecords','maxDocuments','extraFilter','dateField','window'].includes(key)) renderBudget();
-    renderPreview();
-  };
-};
-bind('#f-name','name'); bind('#f-desc','description'); bind('#f-guidance','guidance');
-bind('#f-active','active','checked'); bind('#f-object','object');
-bind('#f-datefield','dateField'); bind('#f-window','window');
-bind('#f-override','allowOverride','checked'); bind('#f-filter','extraFilter');
-bind('#f-resolver','resolverClass'); bind('#f-sort','sortField'); bind('#f-max','maxRecords');
-bind('#f-maxdocs','maxDocuments');
-bind('#f-cardtitle','cardTitle'); bind('#f-confirm','confirmLabel'); bind('#f-empty','emptyMessage');
-
-$$('#block-toggles input').forEach(i => i.onchange = () => {
-  current.blocks[i.dataset.block] = i.checked;
-  renderPreview();
-});
-
-$('#btn-add-template').onclick = () => {
-  const id = $('#f-add-template').value;
-  if (!id) return;
-  (current.templateIds = current.templateIds || []).push(id);
-  renderTemplates(); renderPreview();
-};
-
-$('#btn-add-prompt').onclick = () => {
-  current.prompts.push({ label:'New prompt', text:'', window:'' });
-  renderPrompts(); renderPreview();
-};
-
-$('#btn-save').onclick = () => { renderList(); showTab('list'); };
 $('#btn-new').onclick = () => {
-  const s = { id:'a0S' + (scenarios.length+1), name:'New Scenario', active:false,
-    description:'', guidance:'', object:'Opportunity', templateIds:['a0H01'],
-    dateField:'', window:'', allowOverride:true, extraFilter:'', resolverClass:'',
-    sortField:'', maxRecords:50, maxDocuments:200, documentAction:'',
-    slots:['Name','','','','','','',''], cardTitle:'', confirmLabel:'', emptyMessage:'',
-    blocks:{callout:true,stats:true,table:true,button:true}, prompts:[] };
-  scenarios.push(s); current = s; showTab('builder'); loadBuilder();
+  openWizard({ id:'a0S' + (scenarios.length + 1), name:'New Scenario', active:false,
+    description:'', guidance:'', object:'', templateIds:[],
+    dateField:'', window:'', allowOverride:true, findBy:'fields', conditions:[],
+    extraFilter:'', resolverClass:'', sortField:'', maxRecords:50, maxDocuments:200,
+    documentAction:'', slots:Array(SLOTS).fill(''), cardTitle:'', confirmLabel:'',
+    emptyMessage:'', blocks:{callout:true,stats:true,table:true,button:true}, prompts:[] });
 };
-
-$$('#surface-seg .seg-btn').forEach(b => b.onclick = () => {
-  $$('#surface-seg .seg-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  $('#chat-frame').classList.toggle('slack', b.dataset.surface === 'slack');
-});
 
 $$('#t-stage-seg .seg-btn').forEach(b => b.onclick = () => {
   $$('#t-stage-seg .seg-btn').forEach(x => x.classList.remove('active'));
@@ -597,6 +382,5 @@ $('#drawer-close').onclick = closeDrawer;
 $('#drawer-scrim').onclick = closeDrawer;
 
 renderList();
-loadBuilder();
 $('#t-request').value = 'generate invoices for opportunities renewing this month';
 runTest($('#t-request').value);

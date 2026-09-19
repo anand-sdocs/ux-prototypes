@@ -95,177 +95,171 @@
     </div>
   </section>
 
-  <!-- ---------------- BUILDER ---------------- -->
+  <!-- ---------------- WIZARD ---------------- -->
   <section class="tab-panel" id="panel-builder">
-    <div class="split">
+    <div class="wiz">
 
-      <div class="split-main">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2 id="builder-title">Renewals this month</h2>
-              <p class="card-sub">Everything here is configuration. The preview on the right is the card a user sees in Claude or Slack.</p>
+      <nav class="wiz-rail" id="wiz-rail"></nav>
+
+      <div class="wiz-main">
+        <div class="card wiz-card">
+          <header class="wiz-head">
+            <span class="wiz-step-of" id="wiz-step-of"></span>
+            <h2 id="wiz-title"></h2>
+            <p class="card-sub" id="wiz-blurb"></p>
+          </header>
+
+          <!-- 1. NAME -->
+          <div class="wiz-step" data-step="name">
+            <div class="field big">
+              <label for="w-name">What should this be called?</label>
+              <input id="w-name" type="text" placeholder="Renewals this month">
+              <p class="field-help">People will see this name when they pick a scenario.</p>
             </div>
-            <div class="picker-row">
-              <div class="lv-picker">
-                <label for="scenario-select">Editing</label>
-                <div class="select-wrap"><select id="scenario-select"></select></div>
+            <div class="field">
+              <label for="w-desc">In one line, what does it do?</label>
+              <input id="w-desc" type="text" placeholder="Invoices for opportunities renewing this month">
+              <p class="field-help">Shown underneath the name.</p>
+            </div>
+          </div>
+
+          <!-- 2. RECORDS -->
+          <div class="wiz-step" data-step="records" hidden>
+            <h3 class="wiz-sub">Which kind of record?</h3>
+            <div class="obj-grid" id="w-objects"></div>
+
+            <div id="w-find-wrap" hidden>
+              <h3 class="wiz-sub">How should we find them?</h3>
+              <div class="choice-grid" id="w-findby"></div>
+
+              <div class="filter-block" id="w-date-block" hidden>
+                <h4 class="filter-legend">By date</h4>
+                <div class="cond-row">
+                  <div class="select-wrap grow"><select id="w-datefield"></select></div>
+                  <span class="cond-op">is within</span>
+                  <div class="select-wrap grow"><select id="w-window"></select></div>
+                </div>
+                <label class="switch-row">
+                  <input id="w-override" type="checkbox">
+                  <span class="switch"></span>
+                  <span class="switch-label">Let people ask for a different time period</span>
+                </label>
+                <p class="field-help">With this on, someone can say &ldquo;next month&rdquo; and get next month.</p>
+              </div>
+
+              <div class="filter-block" id="w-cond-block" hidden>
+                <h4 class="filter-legend">By field values</h4>
+                <div id="w-conditions"></div>
+                <button class="btn btn-neutral btn-xs" id="w-add-cond">+ Add condition</button>
+                <p class="field-help">All conditions must be true for a record to be included.</p>
+              </div>
+
+              <div class="filter-block" id="w-apex-block" hidden>
+                <h4 class="filter-legend">Apex</h4>
+                <div class="field">
+                  <label for="w-resolver">Apex class name</label>
+                  <input id="w-resolver" type="text" class="mono" placeholder="UnsignedNdaResolver">
+                  <p class="field-help">For record sets a filter cannot express &mdash; for example
+                    &ldquo;accounts with no signed NDA in twelve months&rdquo;, which compares against
+                    documents rather than fields on the account. A developer writes this once.</p>
+                </div>
+              </div>
+
+              <details class="peek" id="w-soql-peek">
+                <summary>Show me the query this builds</summary>
+                <div class="soql-box" id="w-soql"></div>
+              </details>
+            </div>
+          </div>
+
+          <!-- 3. DOCUMENTS -->
+          <div class="wiz-step" data-step="docs" hidden>
+            <h3 class="wiz-sub">Which documents should each record get?</h3>
+            <div id="w-tpl-chosen"></div>
+            <div class="tpl-pick" id="w-tpl-available"></div>
+            <div class="budget-banner" id="w-budget"></div>
+            <div class="field narrow">
+              <label for="w-maxdocs">Never generate more than</label>
+              <div class="inline-num">
+                <input id="w-maxdocs" type="number" min="1" max="1000">
+                <span>documents in a single run</span>
+              </div>
+              <p class="field-help">A safety net. If a run would exceed this, it stops and says so.</p>
+            </div>
+          </div>
+
+          <!-- 4. CARD -->
+          <div class="wiz-step" data-step="card" hidden>
+            <p class="wiz-lead">This is what people will see before anything is generated.
+               Click a column to change it.</p>
+            <div class="designer">
+              <div class="mcp-card designer-card" id="w-card"></div>
+              <div class="designer-side">
+                <h4 class="filter-legend">Show on the card</h4>
+                <div class="block-list" id="w-blocks"></div>
+                <div class="field">
+                  <label for="w-cardtitle">Card heading</label>
+                  <input id="w-cardtitle" type="text" placeholder="Defaults to the scenario name">
+                </div>
+                <div class="field">
+                  <label for="w-confirm">Button wording</label>
+                  <input id="w-confirm" type="text" placeholder="Generate 8 documents">
+                </div>
+                <p class="field-help" id="w-colcount"></p>
               </div>
             </div>
           </div>
 
-          <!-- BASICS -->
-          <section class="fset">
-            <h3 class="fset-title">Basics</h3>
-            <div class="grid-2">
-              <div class="field"><label for="f-name">Scenario Name</label><input id="f-name" type="text"></div>
-              <div class="field">
-                <label for="f-active">Status</label>
-                <label class="switch-row">
-                  <input id="f-active" type="checkbox">
-                  <span class="switch"></span><span class="switch-label">Active</span>
-                </label>
-              </div>
-            </div>
-            <div class="field"><label for="f-desc">Description<span class="hint">One line. Returned in the discovery catalogue.</span></label><input id="f-desc" type="text"></div>
+          <!-- 5. WORDS -->
+          <div class="wiz-step" data-step="words" hidden>
             <div class="field">
-              <label for="f-guidance">Guidance for the model
-                <span class="help-dot" title="This text reaches the model's context. Treat it as descriptive content, and gate edit access to administrators.">?</span>
-                <span class="hint">How the model should interpret this scenario.</span>
-              </label>
-              <textarea id="f-guidance" rows="2"></textarea>
-              <p class="warn-inline">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
-                Reaches the model context &mdash; administrators only.
-              </p>
+              <label for="w-guidance">When should the assistant use this scenario?</label>
+              <textarea id="w-guidance" rows="3"
+                placeholder="Use for renewals, expiring contracts or anything about what is coming up for renewal."></textarea>
+              <p class="field-help">Written for the assistant, in plain language. Mention the words
+                people actually use &mdash; synonyms help it pick the right scenario.</p>
             </div>
-          </section>
-
-          <!-- WHICH RECORDS -->
-          <section class="fset">
-            <h3 class="fset-title">Which records</h3>
-            <div class="field"><label for="f-object">Object</label><div class="select-wrap"><select id="f-object"></select></div></div>
-            <div class="field">
-              <label>Templates
-                <span class="hint">One document per template, per record. Order is generation order.</span>
-              </label>
-              <div id="template-list"></div>
-              <div class="add-row">
-                <div class="select-wrap"><select id="f-add-template"></select></div>
-                <button class="btn btn-neutral btn-xs" id="btn-add-template">+ Add template</button>
-              </div>
-            </div>
-            <div class="grid-3">
-              <div class="field"><label for="f-datefield">Date Field<span class="hint">Optional</span></label><div class="select-wrap"><select id="f-datefield"></select></div></div>
-              <div class="field"><label for="f-window">Default Window</label><div class="select-wrap"><select id="f-window"></select></div></div>
-              <div class="field">
-                <label for="f-override">Window override</label>
-                <label class="switch-row">
-                  <input id="f-override" type="checkbox">
-                  <span class="switch"></span><span class="switch-label">A prompt may change it</span>
-                </label>
-              </div>
-            </div>
-            <div class="field">
-              <label for="f-filter">Extra Filter
-                <span class="help-dot" title="Executable SOQL. Administrator-authored and therefore trusted, but anyone who can edit a scenario can write an arbitrary predicate.">?</span>
-                <span class="hint">The state half of the filter. SOQL predicate.</span>
-              </label>
-              <input id="f-filter" type="text" class="mono" placeholder="Pilot_Status__c = 'Accepted'">
-              <p class="warn-inline danger">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
-                Executable SOQL &mdash; permission-gate this object to administrators.
-              </p>
-            </div>
-            <div class="grid-3">
-              <div class="field"><label for="f-resolver">Resolver Class<span class="hint">Tier 2 escape hatch</span></label><input id="f-resolver" type="text" class="mono" placeholder="None — declarative"></div>
-              <div class="field"><label for="f-sort">Sort Field</label><div class="select-wrap"><select id="f-sort"></select></div></div>
-              <div class="field"><label for="f-max">Max Records</label><input id="f-max" type="number" min="1" max="500"></div>
-            </div>
-            <div class="grid-3">
-              <div class="field">
-                <label for="f-maxdocs">Max Documents
-                  <span class="help-dot" title="Records x templates. The ceiling that actually maps to runtime and licence consumption.">?</span>
-                </label>
-                <input id="f-maxdocs" type="number" min="1" max="1000">
-              </div>
-              <div class="field budget-field">
-                <label>This scenario generates</label>
-                <div class="budget" id="budget"></div>
-              </div>
-            </div>
-            <div class="callout-inline" id="resolver-note" hidden>
-              <b>Tier 2.</b> This scenario selects records with Apex, not a filter. The resolver returns ids only &mdash; the column mapping below still builds the card.
-            </div>
-          </section>
-
-          <!-- ROW CONTRACT -->
-          <section class="fset">
-            <h3 class="fset-title">How each row reads
-              <span class="fset-note">Headers are never typed &mdash; they come from each field's label.</span>
-            </h3>
-            <div class="slots" id="slots"></div>
-            <p class="fset-foot">
-              Eight slots, shared by every scenario on every object. Slot 1 is the row's primary label
-              &mdash; not assumed to be <code>Name</code>, because Case uses <code>CaseNumber</code>.
-              Leave a slot blank to drop the column entirely.
-            </p>
-          </section>
-
-          <!-- THE CARD -->
-          <section class="fset">
-            <h3 class="fset-title">The card</h3>
-            <div class="grid-2">
-              <div class="field"><label for="f-cardtitle">Card Title</label><input id="f-cardtitle" type="text" placeholder="Defaults to the scenario name"></div>
-              <div class="field"><label for="f-confirm">Confirm Button Label</label><input id="f-confirm" type="text" placeholder="Generate all 12"></div>
-            </div>
-            <div class="field"><label for="f-empty">Empty State Message</label><input id="f-empty" type="text" placeholder="Generated automatically"></div>
-            <div class="field">
-              <label>Blocks to render</label>
-              <div class="chip-toggles" id="block-toggles">
-                <label class="chip-toggle"><input type="checkbox" data-block="callout"><span>Summary callout</span></label>
-                <label class="chip-toggle"><input type="checkbox" data-block="stats"><span>Stat row</span></label>
-                <label class="chip-toggle"><input type="checkbox" data-block="table"><span>Results table</span></label>
-                <label class="chip-toggle"><input type="checkbox" data-block="button"><span>Confirm button</span></label>
-              </div>
-            </div>
-          </section>
-
-          <!-- PROMPTS -->
-          <section class="fset">
-            <h3 class="fset-title">Prompts
-              <span class="fset-note">Child records. Each carries its own parameter preset.</span>
-            </h3>
-            <div id="prompt-list"></div>
-            <button class="btn btn-neutral btn-xs" id="btn-add-prompt">+ Add prompt</button>
-            <p class="fset-foot">
-              Prompts do two jobs: they are few-shot examples in the catalogue the model reads,
-              and they render as buttons whose payload is the exact phrasing you authored.
-              The user presses rather than types.
-            </p>
-          </section>
-
-          <div class="form-actions">
-            <button class="btn btn-neutral">Cancel</button>
-            <button class="btn btn-brand" id="btn-save">Save</button>
+            <h3 class="wiz-sub">Example phrasings</h3>
+            <p class="wiz-lead">Ways someone might ask for this. They become one-click buttons,
+               and teach the assistant how people phrase it.</p>
+            <div id="w-prompts"></div>
+            <button class="btn btn-neutral btn-xs" id="w-add-prompt">+ Add a phrasing</button>
           </div>
+
+          <!-- 6. REVIEW -->
+          <div class="wiz-step" data-step="review" hidden>
+            <div class="summary" id="w-summary"></div>
+            <div class="try-block">
+              <h4 class="filter-legend">Try it</h4>
+              <div class="tester-input">
+                <input id="w-try" type="text" placeholder="Type what someone might ask...">
+                <button class="btn btn-neutral" id="w-try-run">Try</button>
+              </div>
+              <div id="w-try-out"></div>
+            </div>
+            <label class="switch-row activate-row">
+              <input id="w-active" type="checkbox">
+              <span class="switch"></span>
+              <span class="switch-label"><b>Activate this scenario</b> &mdash; people can use it straight away, with no deployment.</span>
+            </label>
+          </div>
+
+          <footer class="wiz-foot">
+            <button class="btn btn-neutral" id="wiz-back">Back</button>
+            <div class="wiz-foot-right">
+              <button class="btn btn-neutral" id="wiz-cancel">Cancel</button>
+              <button class="btn btn-brand" id="wiz-next">Next</button>
+            </div>
+          </footer>
         </div>
       </div>
 
-      <aside class="split-side">
+      <aside class="wiz-side">
         <div class="preview-sticky">
           <div class="preview-head">
-            <span class="preview-label">Live preview</span>
-            <div class="seg" id="surface-seg">
-              <button class="seg-btn active" data-surface="claude">Claude</button>
-              <button class="seg-btn" data-surface="slack">Slack</button>
-            </div>
+            <span class="preview-label" id="wiz-side-label">Matching now</span>
           </div>
-          <div class="chat-frame" id="chat-frame">
-            <div class="chat-msg user" id="chat-user"></div>
-            <div class="mcp-card" id="mcp-card"></div>
-          </div>
-          <div class="preview-foot" id="preview-foot"></div>
+          <div id="wiz-side-body"></div>
         </div>
       </aside>
     </div>
@@ -360,5 +354,6 @@
 
 <script src="schema.js"></script>
 <script src="app.js"></script>
+<script src="wizard.js"></script>
 </body>
 </html>
