@@ -617,20 +617,6 @@ function renderAgentPanel(el) {
     '<div class="fc-field"><label>Role &amp; description</label>' +
       '<textarea id="a-role" rows="4" placeholder="What is it responsible for, and when should it act?">' + esc(a.role) + '</textarea></div>' +
 
-    '<div class="fc-insp-section-label">Guardrails</div>' +
-    '<div class="fc-field"><label>Tone</label><div class="fc-chips">' +
-      tones.map(t => '<button class="fc-chip' + (a.tone === t ? ' on' : '') + '" data-tone="' + esc(t) + '">' + esc(t) + '</button>').join('') +
-    '</div></div>' +
-    '<div class="fc-field"><label>Voice</label><div class="fc-chips">' +
-      voices.map(v => '<button class="fc-chip' + (a.voice === v ? ' on' : '') + '" data-voice="' + esc(v) + '">' + esc(v.split(' (')[0]) + '</button>').join('') +
-    '</div></div>' +
-    '<div class="fc-field"><label>Caution level</label><div class="fc-slider-row">' +
-      '<input type="range" id="a-caution" min="0" max="2" step="1" value="' + a.caution + '">' +
-      '<span class="fc-slider-value" id="a-caution-val">' + CAUTION_LABELS[a.caution] + '</span></div>' +
-      '<div class="fc-hint">How often it should stop and ask you before acting.</div></div>' +
-    '<div class="fc-field"><label>Additional guardrails</label>' +
-      '<textarea id="a-guard" rows="3" placeholder="Anything it should never do.">' + esc(a.guardrails) + '</textarea></div>' +
-
     '<div class="fc-insp-section-label">Model</div>' +
     '<div class="fc-field"><select id="a-model">' +
       modelProviders().map(function (prov) {
@@ -646,6 +632,20 @@ function renderAgentPanel(el) {
       ? '<div class="fc-hint">' + esc(model.description) + ' · ' + esc(model.contextWindow) + ' context.</div>'
       : '') +
     '</div>' +
+
+    '<div class="fc-insp-section-label">Guardrails</div>' +
+    '<div class="fc-field"><label>Tone</label><div class="fc-chips">' +
+      tones.map(t => '<button class="fc-chip' + (a.tone === t ? ' on' : '') + '" data-tone="' + esc(t) + '">' + esc(t) + '</button>').join('') +
+    '</div></div>' +
+    '<div class="fc-field"><label>Voice</label><div class="fc-chips">' +
+      voices.map(v => '<button class="fc-chip' + (a.voice === v ? ' on' : '') + '" data-voice="' + esc(v) + '">' + esc(v.split(' (')[0]) + '</button>').join('') +
+    '</div></div>' +
+    '<div class="fc-field"><label>Caution level</label><div class="fc-slider-row">' +
+      '<input type="range" id="a-caution" min="0" max="2" step="1" value="' + a.caution + '">' +
+      '<span class="fc-slider-value" id="a-caution-val">' + CAUTION_LABELS[a.caution] + '</span></div>' +
+      '<div class="fc-hint">How often it should stop and ask you before acting.</div></div>' +
+    '<div class="fc-field"><label>Additional guardrails</label>' +
+      '<textarea id="a-guard" rows="3" placeholder="Anything it should never do.">' + esc(a.guardrails) + '</textarea></div>' +
 
     '<div class="fc-insp-section-label">Connected sources</div>' +
     (sources.length
