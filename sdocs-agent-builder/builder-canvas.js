@@ -25,6 +25,7 @@ const DECISION_KINDS = {
 const CAUTION_LABELS = ['Act freely', 'Balanced', 'Always ask'];
 
 let nodeSeq = 1;
+let edgeSeq = 1;
 const nid = (p) => p + (nodeSeq++);
 
 let state = {
@@ -367,7 +368,23 @@ function buildCells() {
     cells.push(c);
   });
 
-  state.edges.forEach(e => cells.push(edgeLink(e.from, e.to, e.label)));
+  // Give every edge a stable id so an unfilled branch can be addressed.
+  state.edges.forEach(function (e) { if (!e.id) e.id = 'e' + (edgeSeq++); });
+
+  state.edges.forEach(function (e) {
+    if (e.to) { cells.push(edgeLink(e.from, e.to, e.label)); return; }
+    // an unfilled branch: terminate it in its own "Add a step" so it's
+    // obvious which path a click extends
+    const gid = 'open:' + e.id;
+    const g = new GhostNode({ id: gid, size: { width: 200, height: 52 } });
+    g.attr('fo', { x: 8, y: 0, width: 184, height: 52 });
+    g.attr('content/html',
+      '<div class="fc-addtrigger-inner"><span style="width:14px;height:14px;display:flex;">' +
+      PLUS_ICON + '</span>Add a step</div>');
+    g.set('fcRef', { type: 'addEdge', id: e.id });
+    cells.push(g);
+    cells.push(edgeLink(e.from, gid, e.label, true));
+  });
 
   // --- a dashed "add a step" after every leaf, or the flow dead-ends ---
   state.nodes.forEach(n => {
@@ -414,7 +431,11 @@ function edgeLink(from, to, label, ghost) {
   });
   if (label) {
     link.labels([{
-      position: { distance: 0.45 },
+      // Negative = measured back from the TARGET. Branches share a vertical
+      // stub just below the fork, so a label placed near the source lands on
+      // top of its sibling; at the target end the paths have diverged and each
+      // chip sits over the node it actually leads to.
+      position: { distance: -30 },
       markup: [{ tagName: 'rect', selector: 'labelBody' }, { tagName: 'text', selector: 'labelText' }],
       attrs: {
         labelText: { text: label, fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif',
@@ -535,6 +556,7 @@ paper.on('element:pointerclick', (view) => {
   if (ref.type === 'addTrigger') return openTriggerMenu(view);
   if (ref.type === 'addFirst') return openInsertMenuAt(view, null);
   if (ref.type === 'addAfter') return openInsertMenuAt(view, ref.id);
+  if (ref.type === 'addEdge') return openInsertMenuOnEdge(view, ref.id);
   select(ref);
 });
 
@@ -918,11 +940,12 @@ function renderDecisionPanel(el, node) {
 
   body += '<div class="fc-insp-section-label">Outgoing paths (' + outgoing.length + ')</div>' +
     outgoing.map((e, i) => {
-      const target = findNode(e.to);
-      return '<div class="fc-path-row">' +
+      const target = e.to ? findNode(e.to) : null;
+      const where = target ? target.title : (e.to ? 'End' : 'not set yet');
+      return '<div class="fc-path-row' + (e.to ? '' : ' is-open') + '">' +
         '<span class="fc-branch-dot" style="background:' + k.color + '"></span>' +
         '<input data-edge="' + i + '" value="' + esc(e.label || '') + '" placeholder="Label">' +
-        '<span class="fc-path-target">→ ' + esc(target ? target.title : 'End') + '</span></div>';
+        '<span class="fc-path-target">→ ' + esc(where) + '</span></div>';
     }).join('') +
     '<button class="fc-deep-link fc-danger" id="d-delete" style="margin-top:20px;">Delete this decision</button>';
 
@@ -1007,6 +1030,18 @@ function openInsertMenu(evt, link) {
     d => insertNode(INSERT_OPTIONS[+d.i]));
 }
 
+// Fill in a branch that has no target yet.
+function openInsertMenuOnEdge(view, edgeId) {
+  insertCtx = { edgeId: edgeId };
+  const rect = view.el.getBoundingClientRect();
+  const edge = state.edges.find(function (e) { return e.id === edgeId; });
+  showMenu('insert-menu', rect.left, rect.bottom + 6,
+    '<div class="fc-insert-menu-head">' +
+      (edge && edge.label ? esc(edge.label) + ' → add' : 'Add a step') +
+    '</div>' + INSERT_OPTIONS.map(menuOptionHtml).join(''),
+    function (d) { insertNode(INSERT_OPTIONS[+d.i]); });
+}
+
 // afterId === null means "this is the first step"; otherwise append after it.
 function openInsertMenuAt(view, afterId) {
   insertCtx = afterId ? { after: afterId } : null;
@@ -1073,6 +1108,9 @@ function insertNode(option) {
 
   if (!insertCtx) {
     // first step in an empty flow — nothing to rewire
+  } else if (insertCtx.edgeId) {
+    const edge = state.edges.find(function (e) { return e.id === insertCtx.edgeId; });
+    if (edge) edge.to = node.id;
   } else if (insertCtx.after) {
     state.edges.push({ from: insertCtx.after, to: node.id });
   } else {
@@ -1090,13 +1128,16 @@ function insertNode(option) {
   }
 
   if (isDecision(node.kind)) {
-    // a decision needs at least two paths — give the second one an End
-    const endId = nid('end');
-    state.nodes.push({ id: endId, kind: 'end', title: 'End', config: {} });
-    const outs = state.edges.filter(e => e.from === node.id);
-    if (outs.length) outs[0].label = node.kind === 'approval' ? 'Approved' : 'Yes';
-    else state.edges.push({ from: node.id, to: endId, label: node.kind === 'approval' ? 'Approved' : 'Yes' });
-    state.edges.push({ from: node.id, to: endId, label: node.kind === 'approval' ? 'Rejected' : 'No' });
+    // A decision needs at least two paths, and they must be DISTINCT edges.
+    // Pointing both at one End made dagre stack them on top of each other,
+    // which read as a single branch. `to: null` marks a path that hasn't been
+    // filled in yet; buildCells gives each one its own "Add a step".
+    const yes = node.kind === 'approval' ? 'Approved' : 'Yes';
+    const no = node.kind === 'approval' ? 'Rejected' : 'No';
+    const outs = state.edges.filter(function (e) { return e.from === node.id; });
+    if (outs.length) outs[0].label = yes;
+    else state.edges.push({ from: node.id, to: null, label: yes });
+    state.edges.push({ from: node.id, to: null, label: no });
   }
 
   closeMenus();
@@ -1108,11 +1149,14 @@ function deleteNode(id) {
   const node = findNode(id);
   if (!node) return;
   snapshot();
-  const incoming = state.edges.filter(e => e.to === id);
-  const outgoing = state.edges.filter(e => e.from === id);
-  state.edges = state.edges.filter(e => e.from !== id && e.to !== id);
+  const incoming = state.edges.filter(function (e) { return e.to === id; });
+  const outgoing = state.edges.filter(function (e) { return e.from === id; });
+  state.edges = state.edges.filter(function (e) { return e.from !== id && e.to !== id; });
   if (incoming.length && outgoing.length) {
     state.edges.push({ from: incoming[0].from, to: outgoing[0].to, label: incoming[0].label });
+  } else if (incoming.length) {
+    // nothing downstream — leave each branch open so it shows "Add a step"
+    incoming.forEach(function (e) { state.edges.push({ from: e.from, to: null, label: e.label }); });
   }
   state.nodes = state.nodes.filter(n => n.id !== id);
   // drop End nodes nothing points at any more
