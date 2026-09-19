@@ -241,16 +241,40 @@ function renderConditions() {
     </div>`;
   }).join('') || `<p class="field-help">No conditions yet — every ${esc(s.object)} would match.</p>`;
 
-  $$('[data-c]', host).forEach(el => el.onchange = el.oninput = () => {
-    const c = s.conditions[+el.dataset.c];
-    c[el.dataset.k] = el.value;
-    if (el.dataset.k === 'field') {
-      const t = typeOf(s.object, c.field);
-      if (!opsFor(t).includes(c.op)) c.op = opsFor(t)[0];
-      const fv = (fieldsFor(s.object)[c.field] || {}).values;
-      c.value = fv ? fv[0] : '';
+  // Everything downstream of a condition, WITHOUT touching the row itself.
+  // Re-rendering the row on every keystroke destroys the input being typed into
+  // and throws away focus after each character.
+  const refresh = () => {
+    syncScenario(s);
+    wizSide();
+    if (!$('#w-soql-peek').hidden) $('#w-soql').innerHTML = buildSoqlPreview(s);
+  };
+
+  $$('[data-c]', host).forEach(el => {
+    const c = () => s.conditions[+el.dataset.c];
+    const key = el.dataset.k;
+
+    if (key === 'value') {
+      // Plain edit: the row's shape cannot change, so leave the DOM alone.
+      el.oninput = el.onchange = () => { c().value = el.value; refresh(); };
+      return;
     }
-    syncScenario(s); renderConditions(); wizSide(); $('#w-soql').innerHTML = buildSoqlPreview(s);
+
+    // Field and operator DO change the row's shape — a picklist swaps the value
+    // box for a dropdown, and "is true" removes it entirely — so these rebuild.
+    el.onchange = () => {
+      const cond = c();
+      cond[key] = el.value;
+      if (key === 'field') {
+        const t = typeOf(s.object, cond.field);
+        if (!opsFor(t).includes(cond.op)) cond.op = opsFor(t)[0];
+        const fv = (fieldsFor(s.object)[cond.field] || {}).values;
+        cond.value = fv ? fv[0] : '';
+      }
+      if (key === 'op' && !needsValue(cond.op)) cond.value = '';
+      refresh();
+      renderConditions();
+    };
   });
   $$('[data-delc]', host).forEach(b => b.onclick = () => {
     s.conditions.splice(+b.dataset.delc, 1);
@@ -309,18 +333,15 @@ function stepDocs() {
     stepDocs();
   });
 
-  const n = resolve(s).length, t = Math.max(1, chosen.length), docs = n * t;
+  renderBudgetBanner();
   const ceiling = s.maxDocuments || 200;
-  const worst = (s.maxRecords || 50) * t;
-  $('#w-budget').className = 'budget-banner' + (worst > ceiling ? ' warn' : '');
-  $('#w-budget').innerHTML = chosen.length
-    ? `Right now that is <b>${n}</b> record${n===1?'':'s'} × <b>${t}</b> template${t===1?'':'s'}
-       = <b>${docs}</b> document${docs===1?'':'s'}.
-       ${worst > ceiling ? `If the list grew to its limit that would be ${worst}, above your cap of ${ceiling}.`
-                         : `At most it could be ${worst}.`}`
-    : 'Pick a template to see how many documents this would produce.';
-  $('#w-maxdocs').value = ceiling;
-  $('#w-maxdocs').oninput = e => { s.maxDocuments = +e.target.value; stepDocs(); };
+  const maxEl = $('#w-maxdocs');
+  if (maxEl.value !== String(ceiling)) maxEl.value = ceiling;   // don't move the caret
+  maxEl.oninput = e => {
+    s.maxDocuments = +e.target.value;
+    renderTemplateExtras();     // the warning depends on it
+    renderBudgetBanner();       // ...and so does the arithmetic
+  };
 }
 
 function defaultBulkLabel(s) {
@@ -377,6 +398,21 @@ function renderTemplateExtras() {
   host.innerHTML = blocks.join('');
   const sel = $('#w-signer');
   if (sel) sel.onchange = e => { s.signerField = e.target.value; renderTemplateExtras(); };
+}
+
+function renderBudgetBanner() {
+  const s = wiz.s;
+  const chosen = tplsOf(s);
+  const n = resolve(s).length, t = Math.max(1, chosen.length), docs = n * t;
+  const ceiling = s.maxDocuments || 200;
+  const worst = (s.maxRecords || 50) * t;
+  $('#w-budget').className = 'budget-banner' + (worst > ceiling ? ' warn' : '');
+  $('#w-budget').innerHTML = chosen.length
+    ? `Right now that is <b>${n}</b> record${n===1?'':'s'} × <b>${t}</b> template${t===1?'':'s'}
+       = <b>${docs}</b> document${docs===1?'':'s'}.
+       ${worst > ceiling ? `If the list grew to its limit that would be ${worst}, above your cap of ${ceiling}.`
+                         : `At most it could be ${worst}.`}`
+    : 'Pick a template to see how many documents this would produce.';
 }
 
 /* 4 ------------------------------------------------------------------- card */
