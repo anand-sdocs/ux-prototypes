@@ -113,6 +113,7 @@ function renderCard(s, stage = 'review', opts = {}) {
     ? (n === 1 ? ORG.objects[s.object].label : ORG.objects[s.object].labelPlural) : s.object;
   const out = [];
 
+  const signing = tpls.filter(t => t.esign);
   const badge = stage === 'running' ? ['info','Running']
               : stage === 'done'    ? ['success','Completed']
               : n === 0             ? ['warning','Nothing to generate']
@@ -141,19 +142,25 @@ function renderCard(s, stage = 'review', opts = {}) {
     out.push(callout('info', 'In progress', 'Still running. Call the check tool again in a few seconds.'));
   }
 
-  const signing = tpls.filter(t => t.esign);
   if (signing.length && stage === 'review' && n) {
+    const who = esc(s.signerField || 'a recipient you have not chosen yet');
     out.push(`<div class="mc-callout warning"><b>Goes out for signature</b>
-      ${esc(signing.map(t => t.name).join(', '))} will be sent to
-      <b>${esc(s.signerField || 'a recipient you have not chosen yet')}</b> on each of the
-      ${n} record${n===1?'':'s'} below. This cannot be recalled.</div>`);
+      ${esc(signing.map(t => t.name).join(', '))} ${s.allowBulk
+        ? `will be sent to <b>${who}</b> on each of the ${n} record${n===1?'':'s'} below`
+        : `${signing.length === 1 ? 'is' : 'are'} sent to <b>${who}</b> for whichever row you choose`}.
+      This cannot be recalled.</div>`);
   }
 
   if (s.blocks.callout && stage === 'review') {
-    // Nobody should approve 36 documents believing they approved 12.
-    out.push(callout('info', 'About to generate', multi
-      ? `${n} records × ${tpls.length} templates = ${docs} documents (${tplName}). Review the list, then confirm.`
-      : `${n} × ${tplName}. Review the list, then confirm.`));
+    const verb = signing.length ? 'send' : 'generate';
+    const each = multi ? `its ${tpls.length} documents (${tplName})` : `its ${tplName}`;
+    out.push(s.allowBulk
+      // Nobody should approve 36 documents believing they approved 12.
+      ? callout('info', `About to ${verb}`, multi
+          ? `${n} records × ${tpls.length} templates = ${docs} documents (${tplName}). Review the list, then confirm.`
+          : `${n} × ${tplName}. Review the list, then confirm.`)
+      : callout('info', 'Ready when you are',
+          `Choose a row to ${verb} ${each}. Nothing happens until you do.`));
   }
   if (stage === 'done') {
     out.push(callout('success', 'Done', `${tplName} — ${crit}`));
