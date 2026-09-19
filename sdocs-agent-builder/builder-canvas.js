@@ -593,8 +593,17 @@ function bind(id, evt, fn) {
 }
 
 // --- agent -------------------------------------------------------------
+// Providers in the order they first appear, so the dropdown groups stay
+// stable if LLM_MODELS grows.
+function modelProviders() {
+  const out = [];
+  LLM_MODELS.forEach(function (m) { if (out.indexOf(m.provider) === -1) out.push(m.provider); });
+  return out;
+}
+
 function renderAgentPanel(el) {
   const a = state.agent;
+  const model = LLM_MODELS.find(function (m) { return m.id === a.modelId; });
   const chip = '<div class="fc-agent-avatar" style="width:34px;height:34px;border-radius:10px;font-size:12px;">' +
     esc(initials(a.name)) + '</div>';
 
@@ -623,13 +632,20 @@ function renderAgentPanel(el) {
       '<textarea id="a-guard" rows="3" placeholder="Anything it should never do.">' + esc(a.guardrails) + '</textarea></div>' +
 
     '<div class="fc-insp-section-label">Model</div>' +
-    LLM_MODELS.map(m =>
-      '<button class="fc-option' + (a.modelId === m.id ? ' on' : '') + (m.enabled ? '' : ' disabled') + '"' +
-        (m.enabled ? ' data-model="' + m.id + '"' : ' disabled') + '>' +
-        '<div class="fc-option-logo">' + esc(m.provider.slice(0, 2).toUpperCase()) + '</div>' +
-        '<div class="fc-option-body"><div class="fc-option-title">' + esc(m.name) + '</div>' +
-          '<div class="fc-option-desc">' + esc(m.description) + '</div></div>' +
-      '</button>').join('') +
+    '<div class="fc-field"><select id="a-model">' +
+      modelProviders().map(function (prov) {
+        return '<optgroup label="' + esc(prov) + '">' +
+          LLM_MODELS.filter(function (m) { return m.provider === prov; }).map(function (m) {
+            return '<option value="' + m.id + '"' +
+              (a.modelId === m.id ? ' selected' : '') + (m.enabled ? '' : ' disabled') + '>' +
+              esc(m.name) + (m.enabled ? '' : ' — disabled by your admin') + '</option>';
+          }).join('') + '</optgroup>';
+      }).join('') +
+    '</select>' +
+    (model
+      ? '<div class="fc-hint">' + esc(model.description) + ' · ' + esc(model.contextWindow) + ' context.</div>'
+      : '') +
+    '</div>' +
 
     '<div class="fc-insp-section-label">Connected sources</div>' +
     (sources.length
@@ -652,8 +668,8 @@ function renderAgentPanel(el) {
   });
   el.querySelectorAll('[data-tone]').forEach(b => b.onclick = () => { snapshot(); state.agent.tone = b.dataset.tone; renderInspector(); });
   el.querySelectorAll('[data-voice]').forEach(b => b.onclick = () => { snapshot(); state.agent.voice = b.dataset.voice; renderInspector(); });
-  el.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {
-    snapshot(); state.agent.modelId = b.dataset.model; renderInspector(); softRefresh('agent');
+  bind('a-model', 'change', function (e) {
+    snapshot(); state.agent.modelId = e.target.value; renderInspector(); softRefresh('agent');
   });
 }
 
