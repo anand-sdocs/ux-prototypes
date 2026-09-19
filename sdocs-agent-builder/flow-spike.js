@@ -16,9 +16,9 @@
 const NODE_KINDS = {
   trigger:  { label: 'Trigger',         color: '#5e6670' },
   task:     { label: 'Task',            color: '#0176d3' },
-  rule:     { label: 'Rule condition',  color: '#b8860b' },
-  agent:    { label: 'Agent decision',  color: '#7d3ac1' },
-  approval: { label: 'Human approval',  color: '#c62828' },
+  rule:     { label: 'Rule condition',  color: '#b8860b', tint: '#fff8e1' },
+  agent:    { label: 'Agent decision',  color: '#7d3ac1', tint: '#f4edfb' },
+  approval: { label: 'Human approval',  color: '#c62828', tint: '#fdecea' },
   end:      { label: 'End',             color: '#5e6670' },
 };
 
@@ -88,29 +88,59 @@ const TaskNode = joint.dia.Element.define('agent.Task', {
   }],
 });
 
-// --- Decision diamond (rule / agent / approval) -----------------------
-const DecisionNode = joint.dia.Element.define('agent.Decision', {
-  size: { width: 230, height: 116 },
+// --- Decision hexagon (rule / agent / approval) -----------------------
+// A flat-ended hexagon with softened corners rather than the conventional
+// sharp diamond: same "this is a fork" read, but it sits on the same
+// horizontal baseline and width as the task cards instead of fighting them.
+const HEX_W = 330, HEX_H = 78, HEX_NOTCH = 30, HEX_RADIUS = 11;
+
+// Rounds every vertex of a polygon with a quadratic curve, clamping the
+// radius so a short edge can't collapse the shape.
+function roundedPolyPath(pts, r) {
+  const n = pts.length;
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const prev = pts[(i - 1 + n) % n];
+    const cur  = pts[i];
+    const next = pts[(i + 1) % n];
+    const inLen  = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+    const outLen = Math.hypot(next.x - cur.x, next.y - cur.y);
+    const rr = Math.min(r, inLen / 2, outLen / 2);
+    const p1 = { x: cur.x + (prev.x - cur.x) / inLen  * rr, y: cur.y + (prev.y - cur.y) / inLen  * rr };
+    const p2 = { x: cur.x + (next.x - cur.x) / outLen * rr, y: cur.y + (next.y - cur.y) / outLen * rr };
+    d += (i === 0 ? 'M ' : ' L ') + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2);
+    d += ' Q ' + cur.x.toFixed(2) + ' ' + cur.y.toFixed(2) + ' ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
+  }
+  return d + ' Z';
+}
+
+function hexPath(w, h, notch, r) {
+  return roundedPolyPath([
+    { x: notch,     y: 0     },
+    { x: w - notch, y: 0     },
+    { x: w,         y: h / 2 },
+    { x: w - notch, y: h     },
+    { x: notch,     y: h     },
+    { x: 0,         y: h / 2 },
+  ], r);
+}
+
+const HexNode = joint.dia.Element.define('agent.Hex', {
+  size: { width: HEX_W, height: HEX_H },
   attrs: {
     body: {
-      refPoints: '0,10 10,0 20,10 10,20',
-      fill: '#ffffff', stroke: '#b8860b', strokeWidth: 1.5,
+      d: hexPath(HEX_W, HEX_H, HEX_NOTCH, HEX_RADIUS),
+      fill: '#ffffff', stroke: '#dddbda', strokeWidth: 1.5,
+      filter: { name: 'dropShadow', args: { dx: 0, dy: 2, blur: 3, color: 'rgba(0,0,0,0.07)' } },
     },
-    glyph: {
-      x: 'calc(w/2)', y: 'calc(h/2-15)', textAnchor: 'middle', textVerticalAnchor: 'middle',
-      fontSize: 13, fill: '#b8860b',
-    },
-    label: {
-      x: 'calc(w/2)', y: 'calc(h/2+8)', textAnchor: 'middle', textVerticalAnchor: 'middle',
-      fontSize: 12.5, fontWeight: 700, fontFamily: 'Inter, sans-serif', fill: '#181818',
-      textWrap: { width: 120, height: 34, ellipsis: true },
-    },
+    fo: { x: 24, y: 0, width: HEX_W - 48, height: HEX_H, overflow: 'visible' },
+    content: { html: '' },
   },
 }, {
   markup: [
-    { tagName: 'polygon', selector: 'body' },
-    { tagName: 'text', selector: 'glyph' },
-    { tagName: 'text', selector: 'label' },
+    { tagName: 'path', selector: 'body' },
+    { tagName: 'foreignObject', selector: 'fo',
+      children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content' }] },
   ],
 });
 
@@ -176,7 +206,31 @@ function esc(s) {
   });
 }
 
-const DECISION_GLYPH = { rule: '◆', agent: '✦', approval: '●' };
+// Feather-style icons, matching the stroke weight used elsewhere in the prototype.
+function ico(inner) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+}
+const DECISION_ICON = {
+  rule:     ico('<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>'),
+  agent:    ico('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>'),
+  approval: ico('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>'),
+};
+
+function isDecision(kind) { return kind === 'rule' || kind === 'agent' || kind === 'approval'; }
+
+// Hexagon contents: icon chip + kicker + title, same rhythm as a task card.
+function hexNodeHtml(node) {
+  const k = NODE_KINDS[node.kind];
+  return '<div class="spike-hex-inner">' +
+      '<div class="spike-hex-icon" style="background:' + k.tint + ';color:' + k.color + '">' +
+        DECISION_ICON[node.kind] + '</div>' +
+      '<div class="spike-node-body">' +
+        '<div class="spike-hex-kicker" style="color:' + k.color + '">' + k.label + '</div>' +
+        '<div class="spike-node-title">' + esc(node.title) + '</div>' +
+      '</div>' +
+    '</div>';
+}
 
 function makeCell(node) {
   if (node.kind === 'task') {
@@ -195,21 +249,13 @@ function makeCell(node) {
       },
     });
   }
-  // rule | agent | approval — same diamond, different accent + glyph
-  const accent = NODE_KINDS[node.kind].color;
+  // rule | agent | approval — same hexagon, different accent + icon
   const isSel = node.id === selectedId;
-  return new DecisionNode({
-    id: node.id,
-    attrs: {
-      body: {
-        stroke: accent,
-        strokeWidth: isSel ? 3 : 1.5,
-        fill: isSel ? '#fbfcfd' : '#ffffff',
-      },
-      glyph: { text: DECISION_GLYPH[node.kind] || '◆', fill: accent },
-      label: { text: node.title },
-    },
-  });
+  const cell = new HexNode({ id: node.id });
+  cell.attr('body/stroke', isSel ? NODE_KINDS[node.kind].color : '#dddbda');
+  cell.attr('body/strokeWidth', isSel ? 2.5 : 1.5);
+  cell.attr('content/html', hexNodeHtml(node));
+  return cell;
 }
 
 function makeLink(edge) {
@@ -377,10 +423,10 @@ function select(id) {
     if (!node || !cell) return;
     if (node.kind === 'task') {
       cell.attr('content/html', taskCardHtml(node));
-    } else if (node.kind === 'rule' || node.kind === 'agent' || node.kind === 'approval') {
+    } else if (isDecision(node.kind)) {
       const on = nid === selectedId;
-      cell.attr('body/strokeWidth', on ? 3 : 1.5);
-      cell.attr('body/fill', on ? '#fbfcfd' : '#ffffff');
+      cell.attr('body/stroke', on ? NODE_KINDS[node.kind].color : '#dddbda');
+      cell.attr('body/strokeWidth', on ? 2.5 : 1.5);
     }
   });
   renderInspector();
@@ -402,9 +448,11 @@ function renderInspector() {
 
   let html =
     '<div class="spike-inspector-head">' +
-      '<div class="spike-node-icon" style="background:' + accent + '">' +
-        (node.kind === 'task' ? (TASK_TYPES[node.type] || { label: '?' }).label[0] : (DECISION_GLYPH[node.kind] || '●')) +
-      '</div>' +
+      (node.kind === 'task'
+        ? '<div class="spike-node-icon" style="background:' + accent + '">' +
+            (TASK_TYPES[node.type] || { label: '?' }).label[0] + '</div>'
+        : '<div class="spike-hex-icon" style="background:' + (kind.tint || '#eef0f2') + ';color:' + accent + '">' +
+            (DECISION_ICON[node.kind] || '') + '</div>') +
       '<h3>' + esc(node.title) + '</h3>' +
     '</div>' +
     '<div class="spike-inspector-kind">' + kind.label + '</div>' +
@@ -471,7 +519,7 @@ function refreshNode(node) {
   const cell = graph.getCell(node.id);
   if (!cell) return;
   if (node.kind === 'task') cell.attr('content/html', taskCardHtml(node));
-  else if (node.kind === 'trigger' || node.kind === 'end') cell.attr('label/text', node.title);
+  else if (isDecision(node.kind)) cell.attr('content/html', hexNodeHtml(node));
   else cell.attr('label/text', node.title);
 }
 
@@ -526,9 +574,11 @@ function openInsertMenu(evt, link) {
   menu.innerHTML = '<div class="spike-insert-menu-head">Insert here</div>' +
     INSERT_OPTIONS.map(function (o, i) {
       const color = o.kind === 'task' ? TASK_TYPES[o.type].color : NODE_KINDS[o.kind].color;
-      const glyph = o.kind === 'task' ? o.label[0] : (DECISION_GLYPH[o.kind] || '◆');
-      return '<div class="spike-insert-option" data-i="' + i + '">' +
-        '<div class="spike-node-icon" style="background:' + color + '">' + glyph + '</div>' + o.label + '</div>';
+      const chip = o.kind === 'task'
+        ? '<div class="spike-node-icon" style="background:' + color + '">' + o.label[0] + '</div>'
+        : '<div class="spike-hex-icon" style="background:' + NODE_KINDS[o.kind].tint + ';color:' + color + '">' +
+            DECISION_ICON[o.kind] + '</div>';
+      return '<div class="spike-insert-option" data-i="' + i + '">' + chip + o.label + '</div>';
     }).join('');
 
   menu.style.left = Math.min(evt.clientX, window.innerWidth - 230) + 'px';
@@ -626,9 +676,9 @@ document.getElementById('btn-undo').onclick = function () {
 // ---------------------------------------------------------------------
 document.getElementById('legend').innerHTML = [
   { c: '#0176d3', label: 'Step', shape: '' },
-  { c: '#b8860b', label: 'Rule condition', shape: 'diamond' },
-  { c: '#7d3ac1', label: 'Agent decision', shape: 'diamond' },
-  { c: '#c62828', label: 'Human approval', shape: 'diamond' },
+  { c: '#b8860b', label: 'Rule condition', shape: 'hex' },
+  { c: '#7d3ac1', label: 'Agent decision', shape: 'hex' },
+  { c: '#c62828', label: 'Human approval', shape: 'hex' },
 ].map(function (r) {
   return '<div class="spike-legend-row"><span class="spike-legend-swatch ' + r.shape +
     '" style="background:' + r.c + '"></span>' + r.label + '</div>';
