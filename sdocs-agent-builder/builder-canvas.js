@@ -13,6 +13,12 @@
 // Built on the free @joint/core (MPL-2.0) + @joint/layout-directed-graph.
 // =====================================================================
 
+// The wizard (builder.js) is loaded alongside this file so the canvas can open
+// its real task sub-flows. Both scripts declare a top-level `state`, which in
+// classic scripts share one lexical scope, so everything here lives inside an
+// IIFE: no renaming, no collisions, and the wizard's globals stay reachable.
+(function () {
+
 // ---------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------
@@ -88,8 +94,17 @@ function stepSummary(node) {
       return 'From "' + c.fileName + '" — ' + (n ? n + ' field' + (n === 1 ? '' : 's') : 'no schema yet');
     }
     case 'generate': {
-      const t = DOCUMENT_TEMPLATES.find(x => x.id === c.templateId);
-      return t ? t.label + ' template' : 'Pick a document template';
+      if (!c.templateId) return 'Choose a document type';
+      // ops-library templates aren't in DOCUMENT_TEMPLATES; the wizard's
+      // resolver looks in both, plus the custom case
+      const tpl = window.getTemplateForConfig ? window.getTemplateForConfig(c) : null;
+      const label = c.templateId === 'custom'
+        ? (c.customLabel || 'Custom document')
+        : (tpl || {}).label;
+      const els = Object.values(c.dataElements || {}).filter(function (x) { return x.included; }).length;
+      const vz = Object.values(c.visualizations || {}).filter(function (x) { return x.included; }).length;
+      return (label || 'Document') + (els ? ' — ' + els + ' data element' + (els === 1 ? '' : 's') : '') +
+        (vz ? ', ' + vz + ' chart' + (vz === 1 ? '' : 's') : '');
     }
     case 'analyze':
       if (c.mode === 'playbook') return 'Playbook — ' + (c.playbookName || 'not chosen yet');
@@ -807,11 +822,26 @@ function renderStepPanel(el, node) {
     }
 
   } else if (node.type === 'generate') {
-    body += '<div class="fc-insp-section-label">Document template</div>' +
-      DOCUMENT_TEMPLATES.slice(0, 6).map(tp =>
-        '<button class="fc-option' + (c.templateId === tp.id ? ' on' : '') + '" data-tpl="' + tp.id + '">' +
-          '<div class="fc-option-body"><div class="fc-option-title">' + esc(tp.label) + '</div>' +
-            '<div class="fc-option-desc">' + esc(tp.description) + '</div></div></button>').join('');
+    // Choosing a document type is the first of four steps, and "Something
+    // else" branches into a template search — so this defers to the wizard's
+    // sub-flow rather than pretending a flat list is the whole story.
+    const tpl = window.getTemplateForConfig && c.templateId ? window.getTemplateForConfig(c) : null;
+    const els = Object.values(c.dataElements || {}).filter(function (x) { return x.included; }).length;
+    const vizs = Object.values(c.visualizations || {}).filter(function (x) { return x.included; }).length;
+
+    body += '<div class="fc-insp-section-label">Document</div>';
+    if (tpl) {
+      body += '<div class="fc-field-row" style="padding:10px 11px;">' +
+          '<strong>' + esc(c.templateId === 'custom' ? (c.customLabel || 'Custom document') : tpl.label) + '</strong>' +
+        '</div>' +
+        '<div class="fc-hint">' + els + ' data element' + (els === 1 ? '' : 's') +
+          (vizs ? ', ' + vizs + ' chart' + (vizs === 1 ? '' : 's') : '') + '.</div>' +
+        '<button class="fc-deep-link" id="s-deep" style="margin-top:12px;">Edit the full setup \u2192</button>';
+    } else {
+      body += '<div class="fc-hint" style="margin-bottom:10px;">Pick the S-Docs template this step produces, ' +
+          'start from a skill, or search what your ops team has published.</div>' +
+        '<button class="fc-deep-link" id="s-deep">Choose a document type \u2192</button>';
+    }
 
   } else if (node.type === 'analyze') {
     body += '<div class="fc-insp-section-label">How should it analyse?</div>' +
@@ -903,9 +933,7 @@ function renderStepPanel(el, node) {
     snapshot(); c.platformId = b.dataset.dest;
     renderInspector(); softRefresh(node.id); softRefresh('agent');
   });
-  el.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => {
-    snapshot(); c.templateId = b.dataset.tpl; renderInspector(); softRefresh(node.id);
-  });
+  bind('s-deep', 'click', function () { openDeepSetup(node); });
   el.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => {
     snapshot(); c.channelId = b.dataset.chan;
     c.recipient = (NOTIFY_RECIPIENTS[c.channelId] || [])[0] || '';
@@ -978,6 +1006,45 @@ function renderDecisionPanel(el, node) {
   el.querySelectorAll('[data-edge]').forEach(inp => {
     inp.onchange = () => { outgoing[+inp.dataset.edge].label = inp.value; render(true); };
   });
+}
+
+// ---------------------------------------------------------------------
+// Deep setup — reuses the wizard's real multi-step sub-flows
+//
+// Generate is four steps (document type, data elements, source priority,
+// preview) and its "Something else" path opens a template search; Analyze
+// carries the whole playbook editor. Rebuilding those in the side panel
+// would duplicate ~600 lines of builder.js and let the two drift, so the
+// canvas opens the wizard's own modal and writes the result back.
+// ---------------------------------------------------------------------
+let deepNode = null;
+
+// builder.js paints the wizard's vertical task list; nothing to paint here.
+window.renderFlowCanvas = function () {};
+
+// builder.js calls this when a sub-flow is confirmed. Its own version appends
+// to state.tasks; ours applies the config to the node that opened it.
+window.saveTaskConfig = function (type, config) {
+  if (deepNode) {
+    snapshot();
+    deepNode.config = config;
+    const el = document.getElementById('subflow-overlay');
+    if (el) el.classList.remove('show');
+    softRefresh(deepNode.id);
+    renderInspector();
+    toast('Saved');
+  }
+  deepNode = null;
+};
+
+function openDeepSetup(node) {
+  if (typeof window.renderSubflow !== 'function') return toast('Setup unavailable');
+  deepNode = node;
+  // seed anything the sub-flow expects but a canvas-created node lacks
+  const blank = window.defaultConfigFor ? window.defaultConfigFor(node.type) : {};
+  node.config = Object.assign({}, blank, node.config || {});
+  window.renderSubflow(node.type, node.config, 0);
+  document.getElementById('subflow-overlay').classList.add('show');
 }
 
 // ---------------------------------------------------------------------
@@ -1316,3 +1383,11 @@ function initAiOverlay() {
 
 if (new URLSearchParams(location.search).get('mode') === 'ai') initAiOverlay();
 else startScratch();
+
+// A handle for poking at the prototype from the console.
+window.fc = {
+  get state() { return state; },
+  render: render, fit: fit, select: select, findNode: findNode,
+};
+
+})();

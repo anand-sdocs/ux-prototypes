@@ -89,6 +89,14 @@
     </div>
   </div>
 
+  <!-- The wizard's task sub-flow overlay, reused verbatim for deep setup -->
+  <div class="subflow-overlay" id="subflow-overlay">
+    <div class="subflow-panel" id="subflow-panel"></div>
+  </div>
+  <!-- builder.js's renderFlowCanvas() writes here; we neutralise it, but it
+       must exist or the wizard's shared helpers throw on a null element -->
+  <div id="flow-canvas" hidden></div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@dagrejs/graphlib@2.2.4/dist/graphlib.min.js"></script>
@@ -96,6 +104,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@joint/core@4.3.3/dist/joint.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@joint/layout-directed-graph@4.3.0/dist/DirectedGraph.min.js"></script>
   <script src="schema.js"></script>
+  <!-- loaded for its task sub-flows only; its wizard init is guarded by
+       #panel-0, which this page doesn't have, so it boots nothing -->
+  <script src="builder.js"></script>
   <script src="builder-canvas.js"></script>
 </body>
 </html>
