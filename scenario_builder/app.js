@@ -14,6 +14,11 @@ let current = scenarios[0];
 /* ---------------------------------------------------------------- helpers */
 
 const tplById = id => ORG.templates.find(t => t.id === id);
+const tplsOf   = sc => (sc.templateIds || []).map(tplById).filter(Boolean);
+const tplNames = sc => tplsOf(sc).map(t => t.name).join(', ');
+/* Records x templates. The number that actually maps to runtime, licence
+   consumption and how long the user waits. */
+const docCount = (sc, n) => n * Math.max(1, tplsOf(sc).length);
 const fieldsFor = obj => ORG.objects[obj] ? ORG.objects[obj].fields : {};
 const labelOf = (obj, path) => (fieldsFor(obj)[path] || {}).label || path;
 const typeOf  = (obj, path) => (fieldsFor(obj)[path] || {}).type || 'text';
@@ -88,8 +93,10 @@ function renderCard(s, stage = 'review') {
   const rows = resolve(s);
   const cols = columnsOf(s);
   const n = rows.length;
-  const tpl = tplById(s.templateId);
-  const tplName = tpl ? tpl.name : 'document';
+  const tpls = tplsOf(s);
+  const tplName = tpls.length ? tplNames(s) : 'document';
+  const multi = tpls.length > 1;
+  const docs = docCount(s, n);
   const crit = criteriaOf(s);
   const objLabel = ORG.objects[s.object]
     ? (n === 1 ? ORG.objects[s.object].label : ORG.objects[s.object].labelPlural) : s.object;
@@ -100,8 +107,8 @@ function renderCard(s, stage = 'review') {
               : n === 0             ? ['warning','Nothing to generate']
               : ['info','Ready'];
 
-  const headline = stage === 'running' ? `Generating ${n} documents`
-                 : stage === 'done'    ? `Generated ${n} documents`
+  const headline = stage === 'running' ? `Generating ${docs} documents`
+                 : stage === 'done'    ? `Generated ${docs} documents`
                  : n === 0             ? `Nothing matches ${s.name}`
                  : `${n} ${objLabel} — ${crit}`;
 
@@ -118,13 +125,15 @@ function renderCard(s, stage = 'review') {
 
   if (stage === 'running') {
     out.push(`<div><div class="mc-progress"><i style="width:45%"></i></div>
-      <div class="mc-progress-label">${Math.floor(n*0.45)} of ${n} processed</div></div>`);
+      <div class="mc-progress-label">${Math.floor(docs*0.45)} of ${docs} processed</div></div>`);
     out.push(callout('info', 'In progress', 'Still running. Call the check tool again in a few seconds.'));
   }
 
   if (s.blocks.callout && stage === 'review') {
-    out.push(callout('info', 'About to generate',
-      `${n} × ${tplName}. Review the list, then confirm.`));
+    // Nobody should approve 36 documents believing they approved 12.
+    out.push(callout('info', 'About to generate', multi
+      ? `${n} records × ${tpls.length} templates = ${docs} documents (${tplName}). Review the list, then confirm.`
+      : `${n} × ${tplName}. Review the list, then confirm.`));
   }
   if (stage === 'done') {
     out.push(callout('success', 'Done', `${tplName} — ${crit}`));
@@ -132,8 +141,9 @@ function renderCard(s, stage = 'review') {
 
   if (s.blocks.stats && stage !== 'running') {
     const stats = stage === 'done'
-      ? [['Requested', n], ['Generated', n]]
-      : [['Records', n], ['Template', tplName]].concat(
+      ? [['Requested', docs], ['Generated', docs]]
+      : (multi ? [['Records', n], ['Templates', tpls.length], ['Documents', docs]]
+               : [['Records', n], ['Template', tplName]]).concat(
           s.dateField && s.window ? [['Window', windowWords(s.window)]] : []);
     out.push(`<div class="mc-stats">${stats.map(([l,v]) =>
       `<div class="mc-stat"><span>${esc(l)}</span><b>${esc(String(v))}</b></div>`).join('')}</div>`);
@@ -152,15 +162,18 @@ function renderCard(s, stage = 'review') {
     out.push('<div class="mc-sep"></div><div class="mc-eyebrow">DOCUMENTS</div>');
     rows.forEach(r => {
       const label = r[s.slots[0]] || 'Document';
-      out.push(`<div class="mc-doc"><b>${esc(tplName)}_${esc(String(label).slice(0,18))}.pdf</b>
-        <div class="mc-doc-right"><span class="mc-badge success">Generated</span>
-        <a class="mc-link">Open</a></div></div>`);
+      tpls.forEach(t => {
+        out.push(`<div class="mc-doc"><b>${esc(t.name)}_${esc(String(label).slice(0,18))}.pdf</b>
+          <div class="mc-doc-right"><span class="mc-badge success">Generated</span>
+          <a class="mc-link">Open</a></div></div>`);
+      });
     });
   }
 
   if (s.blocks.button && stage === 'review' && n) {
     out.push(`<div class="mc-actions"><button class="mc-btn">${
-      esc(s.confirmLabel || ('Generate all ' + n))}</button></div>`);
+      esc(s.confirmLabel || (multi ? 'Generate ' + docs + ' documents' : 'Generate all ' + n))
+    }</button></div>`);
   }
   if (stage === 'running') {
     out.push(`<div class="mc-actions"><button class="mc-btn">Check progress</button></div>`);
@@ -185,7 +198,6 @@ function esc(s) {
 
 function renderList() {
   $('#scenario-tbody').innerHTML = scenarios.map(s => {
-    const tpl = tplById(s.templateId);
     const sel = s.resolverClass
       ? `<span class="pill pill-violet">Apex</span> <span class="sel-note">${esc(s.resolverClass)}</span>`
       : `<span class="sel-note">${esc(criteriaOf(s))}</span>`;
@@ -193,8 +205,9 @@ function renderList() {
       <td><a class="link" data-open="${s.id}">${esc(s.name)}</a>
           <div class="mc-sub">${esc(s.description)}</div></td>
       <td>${esc(s.object)}</td>
-      <td>${tpl ? esc(tpl.name) : '—'}</td>
+      <td>${tplsOf(s).length ? esc(tplNames(s)) : '—'}</td>
       <td>${sel}</td>
+      <td class="num">${tplsOf(s).length}</td>
       <td class="num">${columnsOf(s).length}</td>
       <td class="num">${s.prompts.length}</td>
       <td><span class="pill ${s.active ? 'pill-green' : 'pill-grey'}">${s.active ? 'Active' : 'Inactive'}</span></td>
@@ -226,14 +239,14 @@ function loadBuilder() {
   $('#f-filter').value = s.extraFilter;
   $('#f-resolver').value = s.resolverClass;
   $('#f-max').value = s.maxRecords;
+  $('#f-maxdocs').value = s.maxDocuments;
   $('#f-cardtitle').value = s.cardTitle;
   $('#f-confirm').value = s.confirmLabel;
   $('#f-empty').value = s.emptyMessage;
   $('#f-override').checked = s.allowOverride;
 
   $('#f-object').innerHTML = Object.keys(ORG.objects).map(o => opt(o, o, s.object)).join('');
-  $('#f-template').innerHTML = ORG.templates.filter(t => t.object === s.object)
-    .map(t => opt(t.id, `${t.name}  ·  ${t.format}`, s.templateId)).join('') || opt('', '— none on this object —', '');
+  renderTemplates();
 
   const dateFields = Object.entries(fieldsFor(s.object))
     .filter(([, f]) => f.type === 'date' || f.type === 'datetime');
@@ -250,6 +263,57 @@ function loadBuilder() {
   renderSlots();
   renderPrompts();
   renderPreview();
+}
+
+/* Templates are a SET, in order. A scenario usually produces a pack of
+   documents per record rather than one, and the order is the reading order. */
+function renderTemplates() {
+  const s = current;
+  const host = $('#template-list');
+  const attached = tplsOf(s);
+
+  host.innerHTML = attached.length ? attached.map((t, i) => `
+    <div class="tpl-row">
+      <div class="tpl-order">${i + 1}</div>
+      <div><div class="tpl-name">${esc(t.name)}</div>
+           <div class="tpl-format">${esc(t.format)} · ${esc(t.object)}</div></div>
+      <div>${i > 0 ? `<button class="btn btn-xs btn-neutral" data-up="${i}">↑ Move up</button>` : ''}</div>
+      <button class="icon-x" data-rmtpl="${i}" title="Remove">&times;</button>
+    </div>`).join('')
+    : `<p class="tpl-empty">No templates attached. A scenario with no template can be
+       previewed but not generated.</p>`;
+
+  const available = ORG.templates.filter(t =>
+    t.object === s.object && !(s.templateIds || []).includes(t.id));
+  $('#f-add-template').innerHTML = available.length
+    ? available.map(t => opt(t.id, `${t.name}  ·  ${t.format}`, '')).join('')
+    : opt('', '— none left on this object —', '');
+  $('#btn-add-template').disabled = !available.length;
+
+  $$('[data-rmtpl]', host).forEach(b => b.onclick = () => {
+    s.templateIds.splice(+b.dataset.rmtpl, 1);
+    renderTemplates(); renderBudget(); renderPreview();
+  });
+  $$('[data-up]', host).forEach(b => b.onclick = () => {
+    const i = +b.dataset.up;
+    [s.templateIds[i-1], s.templateIds[i]] = [s.templateIds[i], s.templateIds[i-1]];
+    renderTemplates(); renderPreview();
+  });
+  renderBudget();
+}
+
+/* Makes the multiplication visible while the admin is still choosing. */
+function renderBudget() {
+  const s = current;
+  const n = resolve(s).length;
+  const t = Math.max(1, tplsOf(s).length);
+  const docs = n * t;
+  const ceiling = s.maxDocuments || 200;
+  const worst = (s.maxRecords || 50) * t;
+  $('#budget').innerHTML = `<b>${n}</b> records × <b>${t}</b> template${t === 1 ? '' : 's'}
+    = <b>${docs}</b> document${docs === 1 ? '' : 's'} now.
+    At the record cap that is <span class="${worst > ceiling ? 'over' : ''}">${worst}</span>,
+    capped at ${ceiling}.`;
 }
 
 function renderSlots() {
@@ -454,33 +518,44 @@ $('#scenario-select').onchange = e => {
 };
 
 const bind = (sel, key, prop = 'value') => {
-  $(sel).oninput = $(sel).onchange = e => {
+  const el = $(sel);
+  if (!el) return;          // a control that is not on the page must not break the page
+  el.oninput = el.onchange = e => {
     current[key] = prop === 'checked' ? e.target.checked
                  : (e.target.type === 'number' ? +e.target.value : e.target.value);
     if (key === 'object') {
       current.slots = Array(SLOTS).fill('');
       current.dateField = ''; current.window = ''; current.extraFilter = '';
       const t = ORG.templates.find(x => x.object === current.object);
-      current.templateId = t ? t.id : '';
+      current.templateIds = t ? [t.id] : [];
       loadBuilder();
       return;
     }
     if (key === 'name') $('#builder-title').textContent = e.target.value;
     if (key === 'resolverClass') $('#resolver-note').hidden = !e.target.value;
+    if (['maxRecords','maxDocuments','extraFilter','dateField','window'].includes(key)) renderBudget();
     renderPreview();
   };
 };
 bind('#f-name','name'); bind('#f-desc','description'); bind('#f-guidance','guidance');
-bind('#f-active','active','checked'); bind('#f-object','object'); bind('#f-template','templateId');
+bind('#f-active','active','checked'); bind('#f-object','object');
 bind('#f-datefield','dateField'); bind('#f-window','window');
 bind('#f-override','allowOverride','checked'); bind('#f-filter','extraFilter');
 bind('#f-resolver','resolverClass'); bind('#f-sort','sortField'); bind('#f-max','maxRecords');
+bind('#f-maxdocs','maxDocuments');
 bind('#f-cardtitle','cardTitle'); bind('#f-confirm','confirmLabel'); bind('#f-empty','emptyMessage');
 
 $$('#block-toggles input').forEach(i => i.onchange = () => {
   current.blocks[i.dataset.block] = i.checked;
   renderPreview();
 });
+
+$('#btn-add-template').onclick = () => {
+  const id = $('#f-add-template').value;
+  if (!id) return;
+  (current.templateIds = current.templateIds || []).push(id);
+  renderTemplates(); renderPreview();
+};
 
 $('#btn-add-prompt').onclick = () => {
   current.prompts.push({ label:'New prompt', text:'', window:'' });
@@ -490,9 +565,9 @@ $('#btn-add-prompt').onclick = () => {
 $('#btn-save').onclick = () => { renderList(); showTab('list'); };
 $('#btn-new').onclick = () => {
   const s = { id:'a0S' + (scenarios.length+1), name:'New Scenario', active:false,
-    description:'', guidance:'', object:'Opportunity', templateId:'a0H01',
+    description:'', guidance:'', object:'Opportunity', templateIds:['a0H01'],
     dateField:'', window:'', allowOverride:true, extraFilter:'', resolverClass:'',
-    sortField:'', maxRecords:50, documentAction:'',
+    sortField:'', maxRecords:50, maxDocuments:200, documentAction:'',
     slots:['Name','','','','','','',''], cardTitle:'', confirmLabel:'', emptyMessage:'',
     blocks:{callout:true,stats:true,table:true,button:true}, prompts:[] };
   scenarios.push(s); current = s; showTab('builder'); loadBuilder();

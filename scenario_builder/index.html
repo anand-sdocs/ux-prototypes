@@ -86,7 +86,7 @@
           <thead>
             <tr>
               <th>Scenario</th><th>Object</th><th>Template</th><th>Selection</th>
-              <th class="num">Columns</th><th class="num">Prompts</th><th>Status</th><th></th>
+              <th class="num">Templates</th><th class="num">Columns</th><th class="num">Prompts</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody id="scenario-tbody"></tbody>
@@ -144,9 +144,16 @@
           <!-- WHICH RECORDS -->
           <section class="fset">
             <h3 class="fset-title">Which records</h3>
-            <div class="grid-2">
-              <div class="field"><label for="f-object">Object</label><div class="select-wrap"><select id="f-object"></select></div></div>
-              <div class="field"><label for="f-template">Template</label><div class="select-wrap"><select id="f-template"></select></div></div>
+            <div class="field"><label for="f-object">Object</label><div class="select-wrap"><select id="f-object"></select></div></div>
+            <div class="field">
+              <label>Templates
+                <span class="hint">One document per template, per record. Order is generation order.</span>
+              </label>
+              <div id="template-list"></div>
+              <div class="add-row">
+                <div class="select-wrap"><select id="f-add-template"></select></div>
+                <button class="btn btn-neutral btn-xs" id="btn-add-template">+ Add template</button>
+              </div>
             </div>
             <div class="grid-3">
               <div class="field"><label for="f-datefield">Date Field<span class="hint">Optional</span></label><div class="select-wrap"><select id="f-datefield"></select></div></div>
@@ -174,6 +181,18 @@
               <div class="field"><label for="f-resolver">Resolver Class<span class="hint">Tier 2 escape hatch</span></label><input id="f-resolver" type="text" class="mono" placeholder="None — declarative"></div>
               <div class="field"><label for="f-sort">Sort Field</label><div class="select-wrap"><select id="f-sort"></select></div></div>
               <div class="field"><label for="f-max">Max Records</label><input id="f-max" type="number" min="1" max="500"></div>
+            </div>
+            <div class="grid-3">
+              <div class="field">
+                <label for="f-maxdocs">Max Documents
+                  <span class="help-dot" title="Records x templates. The ceiling that actually maps to runtime and licence consumption.">?</span>
+                </label>
+                <input id="f-maxdocs" type="number" min="1" max="1000">
+              </div>
+              <div class="field budget-field">
+                <label>This scenario generates</label>
+                <div class="budget" id="budget"></div>
+              </div>
             </div>
             <div class="callout-inline" id="resolver-note" hidden>
               <b>Tier 2.</b> This scenario selects records with Apex, not a filter. The resolver returns ids only &mdash; the column mapping below still builds the card.
