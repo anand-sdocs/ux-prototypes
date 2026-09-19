@@ -84,7 +84,8 @@ const TaskNode = joint.dia.Element.define('agent.Task', {
 }, {
   markup: [{
     tagName: 'foreignObject', selector: 'fo',
-    children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content' }],
+    children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content',
+                 attributes: { class: 'spike-fo' } }],
   }],
 });
 
@@ -133,14 +134,15 @@ const HexNode = joint.dia.Element.define('agent.Hex', {
       fill: '#ffffff', stroke: '#dddbda', strokeWidth: 1.5,
       filter: { name: 'dropShadow', args: { dx: 0, dy: 2, blur: 3, color: 'rgba(0,0,0,0.07)' } },
     },
-    fo: { x: 24, y: 0, width: HEX_W - 48, height: HEX_H, overflow: 'visible' },
+    fo: { x: 26, y: 0, width: HEX_W - 52, height: HEX_H, overflow: 'visible' },
     content: { html: '' },
   },
 }, {
   markup: [
     { tagName: 'path', selector: 'body' },
     { tagName: 'foreignObject', selector: 'fo',
-      children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content' }] },
+      children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content',
+                   attributes: { class: 'spike-fo' } }] },
   ],
 });
 
