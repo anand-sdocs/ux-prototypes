@@ -168,8 +168,11 @@
     </div>
     <p class="subtitle">Interactive design prototypes for the S-Docs e-signature platform.</p>
     <nav class="category-nav">
+      <button class="category-btn" data-target="headless">
+        <span>Headless</span><span class="count">1</span>
+      </button>
       <button class="category-btn" data-target="agentic">
-        <span>Agentic Platform</span><span class="count">11</span>
+        <span>Agentic Platform</span><span class="count">12</span>
       </button>
       <button class="category-btn" data-target="identity">
         <span>Identity Verification</span><span class="count">4</span>
@@ -193,20 +196,31 @@
         <span>Support</span><span class="count">1</span>
       </button>
       <button class="category-btn" data-target="brand">
-        <span>Brand</span><span class="count">1</span>
+        <span>Brand</span><span class="count">2</span>
       </button>
     </nav>
   </aside>
 
   <main>
+    <section class="group" id="headless">
+      <h2 class="section-title">Headless</h2>
+      <p class="section-count">1 prototype</p>
+      <div class="grid">
+        <a class="card" href="scenario_builder/index.html">
+          <h3>Document Scenarios</h3>
+          <p>Admins define which records get which documents &mdash; and the phrasings people
+             actually use to ask for them &mdash; without writing a filter, a query or a field
+             API name. A seven-step wizard ending in a live preview of the whole conversation,
+             as it would happen in Claude or Slack. Covers multi-template packs, runtime inputs,
+             e-signature confirmations, and generating row-by-row versus all at once.</p>
+        </a>
+      </div>
+    </section>
+
     <section class="group" id="agentic">
       <h2 class="section-title">Agentic Platform</h2>
       <p class="section-count">12 prototypes</p>
       <div class="grid">
-        <a class="card" href="scenario_builder/index.html">
-          <h3>Document Scenarios</h3>
-          <p>Admin UI for the scenario framework: define which records get which document and the phrasings that mean it, with a live preview of the card a user sees in Claude or Slack &mdash; plus a tester that shows which scenario a request matches, and why.</p>
-        </a>
         <a class="card" href="agentic-platform-landing/index.html">
           <h3>Marketing Landing Page</h3>
           <p>A visual, story-led pitch for the agent platform &mdash; capabilities, how it works, skills, governance, and a demo CTA.</p>
