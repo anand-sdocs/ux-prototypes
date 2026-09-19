@@ -80,10 +80,11 @@ function stepSummary(node) {
   const c = node.config || {};
   switch (node.type) {
     case 'extract': {
-      const src = CONNECTORS.find(x => x.id === c.sourceId);
-      const n = (c.fields || []).length;
-      if (!src) return 'Pick a source to extract from';
-      return src.name + ' — ' + (n ? n + ' field' + (n === 1 ? '' : 's') : 'no fields yet');
+      const n = (c.schema || []).length;
+      const skill = c.skillId ? SKILLS.find(x => x.id === c.skillId) : null;
+      if (skill) return skill.name + ' — ' + n + ' field' + (n === 1 ? '' : 's');
+      if (!c.fileName) return 'Upload a sample, or start from a skill';
+      return 'From "' + c.fileName + '" — ' + (n ? n + ' field' + (n === 1 ? '' : 's') : 'no schema yet');
     }
     case 'generate': {
       const t = DOCUMENT_TEMPLATES.find(x => x.id === c.templateId);
@@ -280,7 +281,6 @@ function connectedSources() {
   const ids = new Set();
   state.nodes.forEach(n => {
     const c = n.config || {};
-    if (c.sourceId) ids.add(c.sourceId);
     if (c.platformId) ids.add(c.platformId);
   });
   Object.keys(state.triggers).forEach(k => { if (k === 'slack' || k === 'email') ids.add(k); });
@@ -368,6 +368,20 @@ function buildCells() {
   });
 
   state.edges.forEach(e => cells.push(edgeLink(e.from, e.to, e.label)));
+
+  // --- a dashed "add a step" after every leaf, or the flow dead-ends ---
+  state.nodes.forEach(n => {
+    if (n.kind === 'end') return;
+    if (state.edges.some(e => e.from === n.id)) return;
+    const gid = 'add:' + n.id;
+    const g = new GhostNode({ id: gid, size: { width: 200, height: 52 } });
+    g.attr('fo', { x: 8, y: 0, width: 184, height: 52 });
+    g.attr('content/html',
+      '<div class="fc-addtrigger-inner"><span style="width:14px;height:14px;display:flex;">' + PLUS_ICON + '</span>Add a step</div>');
+    g.set('fcRef', { type: 'addAfter', id: n.id });
+    cells.push(g);
+    cells.push(edgeLink(n.id, gid, null, true));
+  });
 
   // --- empty state: nothing to run yet ---
   if (!state.nodes.length) {
@@ -519,7 +533,8 @@ paper.on('element:pointerclick', (view) => {
   const ref = view.model.get('fcRef');
   if (!ref) return;
   if (ref.type === 'addTrigger') return openTriggerMenu(view);
-  if (ref.type === 'addFirst') return openInsertMenuAt(view, null, null);
+  if (ref.type === 'addFirst') return openInsertMenuAt(view, null);
+  if (ref.type === 'addAfter') return openInsertMenuAt(view, ref.id);
   select(ref);
 });
 
@@ -713,14 +728,45 @@ function renderStepPanel(el, node) {
     '<input type="text" id="s-title" value="' + esc(node.title) + '"></div>';
 
   if (node.type === 'extract') {
-    body += '<div class="fc-insp-section-label">Where does the document come from?</div>' +
-      CONNECTORS.map(x => sourceOption(x, c.sourceId, 'data-src')).join('') +
-      '<div class="fc-insp-section-label">Fields to pull out</div>' +
-      '<div class="fc-field-list">' +
-        (c.fields || []).map(f =>
-          '<div class="fc-field-row"><code>' + esc(f.name) + '</code><span class="fc-field-type">' + esc(f.type) + '</span></div>').join('') +
-      '</div>' +
-      '<button class="fc-deep-link" id="s-detect" style="margin-top:10px;">Detect fields from a sample document →</button>';
+    // Extract isn't a connection — the document arrives from the trigger or an
+    // earlier step. What you configure is the schema: seed it from a sample
+    // document or an existing extraction skill, then confirm the fields.
+    const extractSkills = SKILLS.filter(x => x.taskType === 'extract');
+    body += '<div class="fc-insp-section-label">Sample document</div>' +
+      '<div class="dropzone' + (c.fileName ? ' uploaded' : '') + '" id="s-drop" style="padding:16px;font-size:12.5px;">' +
+        (c.fileName
+          ? '<div class="upload-file-row"><div class="upload-file-icon">PDF</div><div><strong>' + esc(c.fileName) + '</strong>' +
+            '<div style="color:var(--text-muted);font-size:11.5px;">2.4 MB · uploaded</div></div></div>'
+          : 'Click to simulate uploading a sample (contract, claim form, invoice…).') +
+      '</div>';
+
+    if (extractSkills.length) {
+      body += '<div class="fc-insp-section-label">Or start from a skill</div>' +
+        extractSkills.map(sk =>
+          '<button class="fc-option' + (c.skillId === sk.id ? ' on' : '') + '" data-skill="' + sk.id + '">' +
+            '<div class="fc-option-logo" style="background:' + sk.color + ';color:#fff;border:none;">' + esc(sk.name[0]) + '</div>' +
+            '<div class="fc-option-body"><div class="fc-option-title">' + esc(sk.name) + '</div>' +
+              '<div class="fc-option-desc">' + esc(sk.description) + '</div></div>' +
+            '<span class="fc-option-tick">' + (c.skillId === sk.id ? 'In use' : 'Use') + '</span>' +
+          '</button>').join('');
+    }
+
+    body += '<div class="fc-insp-section-label">What should it pull out?</div>' +
+      '<div class="fc-field"><textarea id="s-desc" rows="3" placeholder="Plain language is fine — e.g. Insurance claim form with claimant name, policy number, claim amount, and incident description.">' +
+        esc(c.description || '') + '</textarea></div>' +
+      '<button class="fc-deep-link" id="s-gen">' + ((c.schema || []).length ? 'Regenerate schema' : 'Generate schema') + '</button>';
+
+    if ((c.schema || []).length) {
+      body += '<div class="fc-insp-section-label">Schema (' + c.schema.length + ' fields)</div>' +
+        '<table class="schema-table"><thead><tr><th>Field</th><th>Type</th><th></th></tr></thead><tbody>' +
+        c.schema.map(function (f, i) {
+          return '<tr><td><code style="font-size:11.5px;">' + esc(f.name) + '</code></td>' +
+            '<td><span class="type-tag">' + esc(f.type) + '</span></td>' +
+            '<td><button class="fc-chip" data-delfield="' + i + '" title="Remove field" ' +
+              'style="padding:1px 7px;line-height:1.3;">&times;</button></td></tr>';
+        }).join('') +
+        '</tbody></table>';
+    }
 
   } else if (node.type === 'generate') {
     body += '<div class="fc-insp-section-label">Document template</div>' +
@@ -776,11 +822,37 @@ function renderStepPanel(el, node) {
   bind('s-playbook', 'input', e => { c.playbookName = e.target.value; softRefresh(node.id); });
   bind('s-msg', 'input', e => { c.message = e.target.value; });
   bind('s-recip', 'change', e => { c.recipient = e.target.value; softRefresh(node.id); });
-  bind('s-detect', 'click', () => {
+  bind('s-desc', 'input', function (e) { c.description = e.target.value; });
+  bind('s-drop', 'click', function () {
     snapshot();
-    c.fields = EXTRACT_SAMPLE_SCHEMA.slice(0, 4);
+    c.fileName = 'sample_document.pdf';
     renderInspector(); softRefresh(node.id);
-    toast('Detected 4 fields from the sample');
+  });
+  bind('s-gen', 'click', function () {
+    snapshot();
+    c.schema = EXTRACT_SAMPLE_SCHEMA.map(function (f) { return Object.assign({}, f); });
+    c.fileName = c.fileName || 'sample_document.pdf';
+    renderInspector(); softRefresh(node.id);
+    toast('Generated a ' + c.schema.length + '-field schema');
+  });
+  el.querySelectorAll('[data-skill]').forEach(function (b) {
+    b.onclick = function () {
+      snapshot();
+      const sk = SKILLS.find(function (x) { return x.id === b.dataset.skill; });
+      c.skillId = sk.id;
+      c.schema = (sk.payload.schema || []).map(function (f) { return Object.assign({}, f); });
+      c.fileName = c.fileName || 'sample_document.pdf';
+      node.title = sk.name.replace(/ Skill$/, '');
+      renderInspector(); softRefresh(node.id);
+      toast('Using ' + sk.name);
+    };
+  });
+  el.querySelectorAll('[data-delfield]').forEach(function (b) {
+    b.onclick = function () {
+      snapshot();
+      c.schema.splice(Number(b.dataset.delfield), 1);
+      renderInspector(); softRefresh(node.id);
+    };
   });
   bind('s-addrule', 'click', () => {
     snapshot();
@@ -789,12 +861,6 @@ function renderStepPanel(el, node) {
   });
   bind('s-delete', 'click', () => deleteNode(node.id));
 
-  el.querySelectorAll('[data-src]').forEach(b => b.onclick = () => {
-    snapshot(); c.sourceId = b.dataset.src;
-    const conn = CONNECTORS.find(x => x.id === c.sourceId);
-    renderInspector(); softRefresh(node.id); softRefresh('agent');
-    toast('Connected to ' + conn.name);
-  });
   el.querySelectorAll('[data-dest]').forEach(b => b.onclick = () => {
     snapshot(); c.platformId = b.dataset.dest;
     renderInspector(); softRefresh(node.id); softRefresh('agent');
@@ -941,8 +1007,9 @@ function openInsertMenu(evt, link) {
     d => insertNode(INSERT_OPTIONS[+d.i]));
 }
 
-function openInsertMenuAt(view, from, to) {
-  insertCtx = null;
+// afterId === null means "this is the first step"; otherwise append after it.
+function openInsertMenuAt(view, afterId) {
+  insertCtx = afterId ? { after: afterId } : null;
   const rect = view.el.getBoundingClientRect();
   showMenu('insert-menu', rect.left, rect.bottom + 6,
     '<div class="fc-insert-menu-head">Add a step</div>' + INSERT_OPTIONS.map(menuOptionHtml).join(''),
@@ -990,7 +1057,7 @@ function makeNode(option) {
 
 function defaultConfig(type) {
   switch (type) {
-    case 'extract': return { sourceId: null, fields: [] };
+    case 'extract': return { fileName: null, description: '', schema: [], skillId: null };
     case 'generate': return { templateId: null };
     case 'analyze': return { mode: null, rules: [] };
     case 'save': return { platformId: null };
@@ -1006,6 +1073,8 @@ function insertNode(option) {
 
   if (!insertCtx) {
     // first step in an empty flow — nothing to rewire
+  } else if (insertCtx.after) {
+    state.edges.push({ from: insertCtx.after, to: node.id });
   } else {
     const { from, to } = insertCtx;
     if (String(from).startsWith('trig:')) {
