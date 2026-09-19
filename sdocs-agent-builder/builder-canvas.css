@@ -312,6 +312,7 @@
 .fc-ai-box {
   background: #fff; border-radius: 16px; box-shadow: var(--shadow-lg);
   width: 620px; max-width: 100%; padding: 26px;
+  max-height: calc(100vh - 40px); overflow-y: auto;  /* same reason as .subflow-panel */
 }
 .fc-ai-box h2 { font-family: var(--font-display); margin: 0 0 6px; font-size: 21px; }
 .fc-ai-box p { color: var(--text-muted); font-size: 13.5px; margin: 0 0 16px; line-height: 1.5; }
