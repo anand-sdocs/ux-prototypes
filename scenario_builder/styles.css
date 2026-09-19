@@ -107,10 +107,14 @@ textarea{resize:vertical}
 /* switch */
 .switch-row{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0}
 .switch-row input{position:absolute;opacity:0;width:0;height:0}
-.switch{width:32px;height:18px;border-radius:9px;background:#c9c9c9;position:relative;transition:background .15s;flex:0 0 auto}
-.switch::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
-.switch-row input:checked + .switch{background:var(--green)}
-.switch-row input:checked + .switch::after{transform:translateX(14px)}
+.switch{width:32px;height:18px;border-radius:9px;background:#e0e0e0;border:1px solid #c2c2c2;
+  position:relative;transition:background .15s,border-color .15s;flex:0 0 auto}
+.switch::after{content:'';position:absolute;top:1px;left:1px;width:14px;height:14px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+/* On/off must differ by colour AND knob position — colour alone fails for
+   anyone who cannot distinguish it, and a moved knob alone is easy to miss. */
+input:checked + .switch{background:var(--green);border-color:var(--green)}
+input:checked + .switch::after{transform:translateX(14px)}
 .switch-label{font-size:12.5px;color:var(--text)}
 
 /* chip toggles */
@@ -358,6 +362,8 @@ textarea{resize:vertical}
 .block-toggle .switch{width:28px;height:16px}
 .block-toggle .switch::after{width:12px;height:12px}
 .block-toggle input:checked + .switch::after{transform:translateX(12px)}
+.block-toggle:has(input:checked){border-color:#bcdcc7;background:var(--green-bg)}
+.block-toggle:has(input:checked) b{font-weight:600}
 .block-toggle b{font-size:12.5px;font-weight:500}
 .block-toggle span.bt-desc{display:block;font-size:11px;color:var(--text-faint)}
 
@@ -424,3 +430,19 @@ textarea{resize:vertical}
 .mc-rowbtn:hover{background:var(--brand-light);border-color:var(--brand)}
 .mc-recipients{font-size:11.5px;color:var(--text-mute);line-height:1.6}
 .mc-recipients b{color:var(--text)}
+
+/* ================= TESTER: experience left, diagnosis right ================= */
+.split.tester-split{grid-template-columns:minmax(0,1fr) 360px}
+@media (max-width:1180px){.split.tester-split{grid-template-columns:1fr}}
+.convo{background:#faf9f7;border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:11px}
+.convo.slack{background:#fff}
+.turn-user{align-self:flex-end;max-width:78%;background:#eceae6;border-radius:12px 12px 3px 12px;padding:9px 13px;font-size:12.5px;line-height:1.5}
+.turn-bot{align-self:flex-start;max-width:85%;font-size:12.5px;line-height:1.55;color:var(--text)}
+.turn-note{align-self:center;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;padding:2px 0}
+.convo .mcp-card{align-self:stretch}
+.stage-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:10px;flex-wrap:wrap}
+.diag-box{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-1);padding:13px 15px;margin-bottom:12px}
+.diag-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin-bottom:9px}
+.diag-box .score-table{font-size:11.5px}
+.diag-box .soql-box{font-size:10.5px;margin-top:0}
+.mode-pill{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:9px;background:var(--violet-bg);color:#3b3f9e}

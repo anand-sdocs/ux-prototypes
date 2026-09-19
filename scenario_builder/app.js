@@ -80,11 +80,22 @@ function resolve(s) {
 }
 
 function criteriaOf(s) {
-  if (s.resolverClass) return 'selected by ' + s.resolverClass;
+  if (s.resolverClass) return 'chosen by ' + s.resolverClass;
   const parts = [];
-  if (s.dateField && s.window) parts.push(labelOf(s.object, s.dateField) + ' ' + windowWords(s.window));
-  if (s.extraFilter) parts.push(s.extraFilter);
-  return parts.length ? parts.join(', ') : 'all ' + s.object;
+  if (s.dateField && s.window) {
+    const wl = (ORG.windowLabels && ORG.windowLabels[s.window]) || windowWords(s.window);
+    parts.push(labelOf(s.object, s.dateField) + ' ' + wl.toLowerCase());
+  }
+  (s.conditions || []).forEach(c => {
+    const l = labelOf(s.object, c.field);
+    parts.push(c.op === 'is true' ? l
+             : c.op === 'is false' ? 'not ' + l
+             : `${l} ${c.op} ${c.value}`);
+  });
+  // Fall back to the raw predicate only for scenarios with no structured
+  // conditions, which should not happen once everything goes through the wizard.
+  if (!parts.length && s.extraFilter) parts.push(s.extraFilter);
+  return parts.length ? parts.join(', ') : 'all ' + (ORG.objects[s.object]?.labelPlural || s.object);
 }
 
 /* ------------------------------------------------------------ the MCP card */
@@ -107,8 +118,9 @@ function renderCard(s, stage = 'review', opts = {}) {
               : n === 0             ? ['warning','Nothing to generate']
               : ['info','Ready'];
 
-  const headline = stage === 'running' ? `Generating ${docs} documents`
-                 : stage === 'done'    ? `Generated ${docs} documents`
+  const doc = k => `${k} document${k === 1 ? '' : 's'}`;
+  const headline = stage === 'running' ? `Generating ${doc(docs)}`
+                 : stage === 'done'    ? `Generated ${doc(docs)}`
                  : n === 0             ? `Nothing matches ${s.name}`
                  : `${n} ${objLabel} — ${crit}`;
 
@@ -290,46 +302,138 @@ function scoreAll(request) {
 }
 
 let testerScenario = null;
+let testerRequest = '';
+let testerStage = 0;
+
+/* The stages a run actually goes through differ by mode, so the tester follows
+   the scenario rather than assuming everyone presses one big button. */
+function stagesFor(sc) {
+  if (!sc) return [{ k:'ask', label:'Asked' }];
+  // "Both" is walked down its per-record path, because that is the one that can
+  // ask a question — showing a question followed by a bulk result is incoherent.
+  const perRecord = sc.mode === 'record' || sc.mode === 'both';
+  const asks = tplsOf(sc).flatMap(t => (t.inputs || []).filter(i => i.required));
+  const signing = tplsOf(sc).some(t => t.esign);
+  const stages = [{ k:'review', label:'Reviews the list' }];
+  if (perRecord) stages.push({ k:'pick', label:'Picks one row' });
+  if (asks.length && sc.mode !== 'bulk') stages.push({ k:'ask', label:'Answers a question' });
+  stages.push({ k:'running', label: signing ? 'Sending' : 'Generating' });
+  stages.push({ k:'done', label: signing ? 'Sent' : 'Done' });
+  return stages;
+}
 
 function runTest(request) {
+  testerRequest = request;
   const ranked = scoreAll(request);
   const top = ranked[0];
   const ambiguous = !top || top.score < MIN_SCORE
     || (ranked[1] && (top.score - ranked[1].score) < MIN_MARGIN);
-  const max = Math.max(1, top ? top.score : 1);
-
-  const verdict = ambiguous
-    ? `<span class="pill pill-amber">No confident match</span>`
-    : `<span class="pill pill-green">Matched</span>`;
-
-  const explain = ambiguous
-    ? `<p class="reason">Nothing cleared the confidence threshold (${MIN_SCORE}), or the top two were
-       within ${MIN_MARGIN} points of each other. <code>run</code> returns the candidates as chips
-       rather than guessing &mdash; so it converges on <code>discover</code> and the model cannot
-       get stuck.</p>`
-    : `<p class="reason">Resolved to <b>${esc(top.s.name)}</b> without a discovery round trip.
-       <code>run</code> accepts free text, so only an ambiguous request costs the extra call.</p>`;
-
-  $('#match-report').innerHTML = `
-    <div class="match-block">
-      <div class="match-head"><h3>Match</h3>${verdict}</div>
-      ${explain}
-      <table class="score-table">
-        <thead><tr><th>Scenario</th><th>Score</th><th>Where it matched</th></tr></thead>
-        <tbody>${ranked.map(r => `
-          <tr class="${!ambiguous && r === top ? 'win' : ''}">
-            <td>${esc(r.s.name)}</td>
-            <td><i class="score-bar" style="width:${Math.round(r.score / max * 60)}px"></i>${r.score}</td>
-            <td class="reason">${r.parts.filter(p => p[2]).map(p =>
-              `${p[0]} ×${p[2]}`).join(', ') || '—'}</td>
-          </tr>`).join('')}</tbody>
-      </table>
-      ${ambiguous ? '' : soqlFor(top.s)}
-    </div>`;
-
   testerScenario = ambiguous ? null : top.s;
-  $('#t-chat-user').textContent = request;
-  renderTesterCard();
+  testerStage = 0;
+  renderDiagnosis(ranked, ambiguous, top);
+  renderConvo();
+}
+
+/* ---- right: why it did that */
+function renderDiagnosis(ranked, ambiguous, top) {
+  const max = Math.max(1, top ? top.score : 1);
+  const sc = testerScenario;
+  $('#t-diagnosis').innerHTML = `
+    <div class="diag-box">
+      <div class="diag-title">Match</div>
+      <div class="try-verdict">
+        <span class="pill ${ambiguous ? 'pill-amber' : 'pill-green'}">${ambiguous ? 'No confident match' : 'Matched'}</span>
+        <span class="reason">${ambiguous
+          ? `Nothing cleared ${MIN_SCORE}, or the top two were within ${MIN_MARGIN}. Returns a picker rather than guessing.`
+          : `${esc(top.s.name)}, ahead by ${top.score - (ranked[1]?.score || 0)}.`}</span>
+      </div>
+      <table class="score-table">
+        <thead><tr><th>Scenario</th><th>Score</th><th>Matched on</th></tr></thead>
+        <tbody>${ranked.map(r => `<tr class="${!ambiguous && r === top ? 'win' : ''}">
+          <td>${esc(r.s.name)}</td>
+          <td><i class="score-bar" style="width:${Math.round(r.score / max * 40)}px"></i>${r.score}</td>
+          <td class="reason">${r.parts.filter(p => p[2]).map(p => `${p[0]} ×${p[2]}`).join(', ') || '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    ${sc ? `<div class="diag-box">
+      <div class="diag-title">How it runs</div>
+      <div class="reason">
+        Mode: <b>${esc((sc.mode || 'bulk') === 'record' ? 'one record at a time'
+                      : sc.mode === 'both' ? 'either' : 'all at once')}</b><br>
+        ${tplsOf(sc).length} template${tplsOf(sc).length === 1 ? '' : 's'} ×
+        ${resolve(sc).length} record${resolve(sc).length === 1 ? '' : 's'}
+        = ${resolve(sc).length * Math.max(1, tplsOf(sc).length)} documents
+        ${tplsOf(sc).some(t => t.esign) ? '<br><b>Sends for signature</b> — needs its own confirmation.' : ''}
+        ${tplsOf(sc).flatMap(t => (t.inputs || []).filter(i => i.required)).length
+          ? `<br>Asks for: ${esc(tplsOf(sc).flatMap(t => (t.inputs || []).filter(i => i.required)).map(i => i.label).join(', '))}`
+          : ''}
+      </div>
+    </div>
+    <div class="diag-box">
+      <div class="diag-title">Query</div>
+      ${soqlFor(sc)}
+    </div>` : ''}`;
+}
+
+/* ---- left: what the user sees, as a conversation */
+function renderConvo() {
+  const sc = testerScenario;
+  const stages = stagesFor(sc);
+  if (testerStage >= stages.length) testerStage = stages.length - 1;
+
+  $('#t-mode-pill').textContent = sc
+    ? ((sc.mode || 'bulk') === 'record' ? 'one at a time' : sc.mode === 'both' ? 'either way' : 'all at once')
+    : '';
+  $('#t-stage-seg').innerHTML = stages.map((st, i) =>
+    `<button class="seg-btn ${i === testerStage ? 'active' : ''}" data-stage="${i}">${st.label}</button>`).join('');
+  $$('#t-stage-seg .seg-btn').forEach(b => b.onclick = () => {
+    testerStage = +b.dataset.stage; renderConvo();
+  });
+
+  const turns = [`<div class="turn-user">${esc(testerRequest)}</div>`];
+
+  if (!sc) {
+    turns.push(`<div class="mcp-card">
+      <div class="mc-head"><div><div class="mc-title">Which scenario did you mean?</div>
+      <div class="mc-sub">More than one could match.</div></div>
+      <span class="mc-badge info">Needs a choice</span></div>
+      ${callout('info','Pick a scenario','Call discover for full details, or run one directly.')}
+      <div class="mc-chips">${scenarios.filter(x => x.active).slice(0,5).map(x =>
+        `<button class="mc-chip">${esc(x.name)}</button>`).join('')}</div></div>`);
+    $('#t-convo').innerHTML = turns.join('');
+    return;
+  }
+
+  const key = stages[testerStage].k;
+  const idx = k => stages.findIndex(st => st.k === k);
+  const reached = k => idx(k) !== -1 && testerStage >= idx(k);
+  const asks = tplsOf(sc).flatMap(t => (t.inputs || []).filter(i => i.required));
+  const signing = tplsOf(sc).some(t => t.esign);
+  // Per-record runs act on ONE record, so the counts must shrink to match.
+  const one = { ...sc, maxRecords: 1 };
+  const scoped = reached('pick') ? one : sc;
+
+  turns.push(`<div class="mcp-card">${renderCard(sc, 'review')}</div>`);
+
+  if (reached('pick')) {
+    const first = resolve(sc)[0];
+    const label = first ? String(first[sc.slots[0]] ?? 'that record') : 'that record';
+    turns.push(`<div class="turn-note">presses ${signing ? 'Send' : 'Generate'} on ${esc(label)}</div>`);
+  }
+  if (reached('ask') && asks.length) {
+    turns.push(`<div class="turn-bot">Before I ${signing ? 'send' : 'generate'} that, what should
+      <b>${esc(asks.map(i => i.label).join('</b> and <b>'))}</b> be?</div>`);
+    turns.push(`<div class="turn-user">${esc(asks.map(i =>
+      i.dataType === 'DateType' ? '30 September 2026' : 'Standard terms').join(', '))}</div>`);
+  }
+  if (key === 'running') {
+    turns.push(`<div class="mcp-card">${renderCard(scoped, 'running')}</div>`);
+  }
+  if (key === 'done') {
+    turns.push(`<div class="mcp-card">${renderCard(scoped, 'done')}</div>`);
+  }
+  $('#t-convo').innerHTML = turns.join('');
 }
 
 function soqlFor(s) {
@@ -342,28 +446,12 @@ function soqlFor(s) {
     if (s.extraFilter) where.push(`(${s.extraFilter})`);
   }
   const note = s.resolverClass
-    ? `<span class="cm">// tier 2: ${esc(s.resolverClass)} chose the ids; this only fetches display values</span>\n`
-    : `<span class="cm">// every field came from describe, never from input; window is whitelisted</span>\n`;
+    ? `<span class="cm">// tier 2: ${esc(s.resolverClass)} chose the ids</span>\n`
+    : `<span class="cm">// built from config; never from user text</span>\n`;
   return `<div class="soql-box">${note}<span class="kw">SELECT</span> ${esc(sel)}
 <span class="kw">FROM</span> ${esc(s.object)}${where.length ? `
 <span class="kw">WHERE</span> ${esc(where.join(' AND '))}` : ''}
-<span class="kw">ORDER BY</span> ${esc(s.sortField || s.dateField || s.slots[0])}
-<span class="kw">LIMIT</span> ${s.maxRecords}  <span class="cm">— runs in USER_MODE</span></div>`;
-}
-
-function renderTesterCard() {
-  const stage = $('#t-stage-seg .seg-btn.active').dataset.stage;
-  if (!testerScenario) {
-    $('#t-mcp-card').innerHTML = `
-      <div class="mc-head"><div><div class="mc-title">Which scenario did you mean?</div>
-      <div class="mc-sub">More than one scenario could match.</div></div>
-      <span class="mc-badge info">Needs a choice</span></div>
-      ${callout('info','Pick a scenario','Call discover for full details, or run one of these directly.')}
-      <div class="mc-chips">${scenarios.filter(s=>s.active).slice(0,5).map(s =>
-        `<button class="mc-chip">${esc(s.name)}</button>`).join('')}</div>`;
-    return;
-  }
-  $('#t-mcp-card').innerHTML = renderCard(testerScenario, stage);
+<span class="kw">LIMIT</span> ${s.maxRecords}  <span class="cm">— USER_MODE</span></div>`;
 }
 
 /* ------------------------------------------------------------------- wire */
@@ -383,12 +471,6 @@ $('#btn-new').onclick = () => {
     documentAction:'', slots:Array(SLOTS).fill(''), cardTitle:'', confirmLabel:'',
     emptyMessage:'', blocks:{callout:true,stats:true,table:true,button:true}, prompts:[] });
 };
-
-$$('#t-stage-seg .seg-btn').forEach(b => b.onclick = () => {
-  $$('#t-stage-seg .seg-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  renderTesterCard();
-});
 
 $('#btn-run').onclick = () => runTest($('#t-request').value);
 $('#t-request').onkeydown = e => { if (e.key === 'Enter') runTest(e.target.value); };

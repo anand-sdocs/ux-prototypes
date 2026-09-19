@@ -273,51 +273,37 @@
 
   <!-- ---------------- TESTER ---------------- -->
   <section class="tab-panel" id="panel-tester">
-    <div class="split">
+    <div class="card">
+      <div class="tester-input">
+        <input id="t-request" type="text" placeholder="Type what someone might ask..." autocomplete="off">
+        <button class="btn btn-brand" id="btn-run">Run</button>
+      </div>
+      <div class="try-row">
+        <span class="try-label">Try:</span>
+        <button class="try-chip" data-q="generate invoices for opportunities renewing this month">renewals this month</button>
+        <button class="try-chip" data-q="send the pilot paperwork out">pilot paperwork (signs)</button>
+        <button class="try-chip" data-q="generate quotes for all open deals">open deals</button>
+        <button class="try-chip" data-q="case summaries for cases closed this week">case summaries</button>
+        <button class="try-chip" data-q="do the thing with the stuff">an ambiguous one</button>
+      </div>
+    </div>
+
+    <div class="split tester-split">
       <div class="split-main">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>Test a request</h2>
-              <p class="card-sub">Type what a user would say. This runs the same matching the run tool uses &mdash; so you can see which scenario wins, and why, before anyone asks in Slack.</p>
-            </div>
+        <div class="stage-bar">
+          <span class="preview-label">What the user sees</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="mode-pill" id="t-mode-pill"></span>
+            <div class="seg" id="t-stage-seg"></div>
           </div>
-
-          <div class="tester-input">
-            <input id="t-request" type="text" placeholder="e.g. send the pilot paperwork out" autocomplete="off">
-            <button class="btn btn-brand" id="btn-run">Run</button>
-          </div>
-          <div class="try-row">
-            <span class="try-label">Try:</span>
-            <button class="try-chip" data-q="generate invoices for opportunities renewing this month">renewals this month</button>
-            <button class="try-chip" data-q="send the pilot paperwork out">pilot paperwork</button>
-            <button class="try-chip" data-q="case summaries for cases closed this week">case summaries</button>
-            <button class="try-chip" data-q="quarterly statements for active customers">statements</button>
-            <button class="try-chip" data-q="do the thing with the stuff">an ambiguous one</button>
-          </div>
-
-          <div id="match-report"></div>
         </div>
+        <div class="convo" id="t-convo"></div>
       </div>
 
       <aside class="split-side">
         <div class="preview-sticky">
-          <div class="preview-head">
-            <span class="preview-label">What the user sees</span>
-            <div class="seg" id="t-stage-seg">
-              <button class="seg-btn active" data-stage="review">Review</button>
-              <button class="seg-btn" data-stage="running">Running</button>
-              <button class="seg-btn" data-stage="done">Done</button>
-            </div>
-          </div>
-          <div class="chat-frame">
-            <div class="chat-msg user" id="t-chat-user"></div>
-            <div class="mcp-card" id="t-mcp-card"></div>
-          </div>
-          <div class="preview-foot">
-            One card, three states. <code>run</code> and <code>check</code> return the same payload shape,
-            so the card advances rather than being replaced.
-          </div>
+          <div class="preview-head"><span class="preview-label">Why it did that</span></div>
+          <div id="t-diagnosis"></div>
         </div>
       </aside>
     </div>

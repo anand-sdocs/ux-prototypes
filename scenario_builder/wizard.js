@@ -83,15 +83,7 @@ function syncScenario(sc) {
 
 /* Plain-English sentence for the review step and the scenario list. */
 function describeSelection(sc) {
-  if (sc.findBy === 'apex') return `chosen by the ${sc.resolverClass || 'Apex'} class`;
-  const bits = [];
-  if (sc.dateField && sc.window)
-    bits.push(`${labelOf(sc.object, sc.dateField)} is within ${winLabel(sc.window).toLowerCase()}`);
-  (sc.conditions || []).forEach(c => {
-    const l = labelOf(sc.object, c.field);
-    bits.push(needsValue(c.op) ? `${l} ${c.op} ${c.value}` : `${l} ${c.op.replace('is ','is ')}`);
-  });
-  return bits.length ? bits.join(' and ') : 'every record';
+  return criteriaOf(sc);   // one definition, shared with the card
 }
 
 /* ------------------------------------------------------------------- render */
@@ -521,7 +513,8 @@ function stepReview() {
       where ${esc(describeSelection(s))},</div>
     <div class="sum-line">and generate <b>${esc(tplNames(s) || 'no templates yet')}</b> for each one.</div>
     <div class="sum-line">Right now that is <b>${n} record${n===1?'':'s'}</b> → <b>${n*t} document${n*t===1?'':'s'}</b>,
-      run <b>${esc((MODES.find(m => m.k === s.mode) || MODES[0]).b.toLowerCase())}</b>.</div>
+      run <b>${esc({ bulk:'all at once', record:'one record at a time',
+                      both:'either way' }[s.mode || 'bulk'])}</b>.</div>
     ${esignOf(s).length ? `<div class="sum-line">Then sent for signature to
       <b>${esc(s.signerField || 'nobody yet')}</b>.</div>` : ''}
     ${warn.map(w => `<div class="sum-warn">⚠ ${esc(w)}</div>`).join('')}`;
