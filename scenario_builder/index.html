@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -177,7 +177,13 @@
             <h3 class="wiz-sub">Which documents should each record get?</h3>
             <div id="w-tpl-chosen"></div>
             <div class="tpl-pick" id="w-tpl-available"></div>
+            <div id="w-tpl-extras"></div>
             <div class="budget-banner" id="w-budget"></div>
+
+            <h3 class="wiz-sub">How should people run this?</h3>
+            <div class="choice-grid" id="w-mode"></div>
+            <div id="w-mode-warn"></div>
+
             <div class="field narrow">
               <label for="w-maxdocs">Never generate more than</label>
               <div class="inline-num">
@@ -352,8 +358,8 @@
   </div>
 </aside>
 
-<script src="schema.js"></script>
-<script src="app.js"></script>
-<script src="wizard.js"></script>
+<script src="schema.js?v=3"></script>
+<script src="app.js?v=3"></script>
+<script src="wizard.js?v=3"></script>
 </body>
 </html>

@@ -398,3 +398,29 @@ textarea{resize:vertical}
 .side-rec span{color:var(--text-faint);flex:0 0 auto}
 .side-empty{font-size:12px;color:var(--text-faint);font-style:italic}
 .prompt-row .field-help.nowrap{margin:0;font-size:11px;line-height:1.3}
+
+/* template badges, inputs and signing */
+.tpl-badges{display:inline-flex;gap:5px;margin-left:7px;vertical-align:middle}
+.tpl-badge{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:9px;letter-spacing:.02em}
+.tpl-badge.input{background:var(--amber-bg);color:var(--amber)}
+.tpl-badge.esign{background:var(--violet-bg);color:#3b3f9e}
+.extra-block{border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:5px;background:#fbfbff;padding:12px 14px;margin-bottom:9px}
+.extra-block.warn{border-left-color:var(--amber);background:var(--amber-bg)}
+.extra-head{font-size:12.5px;font-weight:600;margin-bottom:6px}
+.input-item{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:4px 0}
+.input-item .ii-type{font-family:var(--mono);font-size:10.5px;color:var(--text-faint)}
+.input-item .ii-req{font-size:10px;font-weight:700;color:var(--red)}
+.extra-note{font-size:11.5px;color:var(--text-mute);line-height:1.55;margin-top:6px}
+.signer-row{display:flex;align-items:center;gap:9px;margin-top:8px;flex-wrap:wrap}
+.signer-row label{font-size:12px;color:var(--text-mute);flex:0 0 auto}
+.signer-row .select-wrap{flex:1 1 220px;max-width:320px}
+.mode-warn{border-radius:5px;padding:10px 13px;font-size:12.5px;line-height:1.55;margin-top:10px}
+.mode-warn.amber{background:var(--amber-bg);border:1px solid #f3dfae;color:var(--amber)}
+.mode-warn.ok{background:var(--green-bg);border:1px solid #cdeed6;color:var(--green)}
+
+/* per-row generate on the card */
+.mc-table td.rowact{text-align:right;white-space:nowrap}
+.mc-rowbtn{background:#fff;border:1px solid var(--border-strong);border-radius:4px;padding:2px 9px;font-size:10.5px;font-weight:600;color:var(--brand);cursor:pointer}
+.mc-rowbtn:hover{background:var(--brand-light);border-color:var(--brand)}
+.mc-recipients{font-size:11.5px;color:var(--text-mute);line-height:1.6}
+.mc-recipients b{color:var(--text)}

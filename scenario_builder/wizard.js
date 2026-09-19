@@ -41,6 +41,16 @@ let wiz = { step: 0, s: null, popOpen: null };
 
 /* ------------------------------------------------------------------ helpers */
 
+const inputsOf  = sc => tplsOf(sc).flatMap(t => (t.inputs || []).map(i => ({ ...i, tpl: t.name })));
+const reqInputs = sc => inputsOf(sc).filter(i => i.required);
+const esignOf   = sc => tplsOf(sc).filter(t => t.esign);
+
+const MODES = [
+  { k:'bulk',   b:'All at once',       d:'One button generates for every matching record.' },
+  { k:'record', b:'One record at a time', d:'Each row gets its own button. Useful when someone picks and chooses.' },
+  { k:'both',   b:'Both',              d:'A button per row, and one to do the lot.' }
+];
+
 const winLabel = w => (ORG.windowLabels && ORG.windowLabels[w]) || windowWords(w);
 
 /* Conditions -> SOQL. Generated, never typed. Shown only on request. */
@@ -249,11 +259,17 @@ function stepDocs() {
   $('#w-tpl-chosen').innerHTML = chosen.length ? chosen.map((t, i) => `
     <div class="chosen-row">
       <div class="chosen-n">${i + 1}</div>
-      <div class="grow"><b>${esc(t.name)}</b><em>${esc(t.format)}</em></div>
+      <div class="grow"><b>${esc(t.name)}</b><span class="tpl-badges">
+        ${(t.inputs || []).length ? '<span class="tpl-badge input">NEEDS INPUT</span>' : ''}
+        ${t.esign ? '<span class="tpl-badge esign">E-SIGNATURE</span>' : ''}
+      </span><em>${esc(t.format)}</em></div>
       ${i > 0 ? `<button class="btn btn-xs btn-neutral" data-tup="${i}">Move up</button>` : ''}
       <button class="icon-x" data-trm="${i}" title="Remove">&times;</button>
     </div>`).join('')
     : `<p class="field-help">Nothing chosen yet. Pick at least one below.</p>`;
+
+  renderTemplateExtras();
+  renderMode();
 
   const avail = ORG.templates.filter(t => t.object === s.object && !(s.templateIds || []).includes(t.id));
   $('#w-tpl-available').innerHTML = avail.length
@@ -284,6 +300,73 @@ function stepDocs() {
     : 'Pick a template to see how many documents this would produce.';
   $('#w-maxdocs').value = ceiling;
   $('#w-maxdocs').oninput = e => { s.maxDocuments = +e.target.value; stepDocs(); };
+}
+
+/* Runtime inputs and e-signature are properties of the TEMPLATE, so they are
+   configured next to the template that brought them. */
+function renderTemplateExtras() {
+  const s = wiz.s;
+  const host = $('#w-tpl-extras');
+  const ins = inputsOf(s);
+  const signing = esignOf(s);
+  const blocks = [];
+
+  if (ins.length) {
+    const bulkOnly = s.mode === 'bulk';
+    blocks.push(`<div class="extra-block ${bulkOnly ? 'warn' : ''}">
+      <div class="extra-head">${bulkOnly ? '⚠ ' : ''}This template asks for information when it runs</div>
+      ${ins.map(i => `<div class="input-item">
+          <span>${esc(i.label)}</span>
+          <span class="ii-type">${esc(i.dataType.replace('Type','').toLowerCase())}</span>
+          ${i.required ? '<span class="ii-req">REQUIRED</span>' : ''}
+          <span class="ii-type">from ${esc(i.tpl)}</span>
+        </div>`).join('')}
+      <div class="extra-note">${bulkOnly
+        ? `These cannot be collected during an all-at-once run yet — the values would have to
+           be the same for every record, and the generation API has no way to carry them.
+           Switch to <b>one record at a time</b>, or drop this template.`
+        : `When someone runs this for a record, the assistant will ask for these before generating.`}
+      </div></div>`);
+  }
+
+  if (signing.length) {
+    const opts = (ORG.signerFields[s.object] || []);
+    blocks.push(`<div class="extra-block ${s.signerField ? '' : 'warn'}">
+      <div class="extra-head">${s.signerField ? '' : '⚠ '}${esc(signing.map(t => t.name).join(', '))}
+        ${signing.length === 1 ? 'is sent for signature' : 'are sent for signature'}</div>
+      <div class="extra-note">Sending leaves your org and cannot be taken back, so people will see
+        exactly who receives each document and confirm that separately — never as part of
+        &ldquo;generate everything&rdquo;.</div>
+      <div class="signer-row">
+        <label>Who signs?</label>
+        <div class="select-wrap"><select id="w-signer">
+          ${opt('', '— choose a recipient —', s.signerField)}
+          ${opts.map(o => opt(o.path, `${o.label} (${o.path})`, s.signerField)).join('')}
+        </select></div>
+      </div></div>`);
+  }
+  host.innerHTML = blocks.join('');
+  const sel = $('#w-signer');
+  if (sel) sel.onchange = e => { s.signerField = e.target.value; renderTemplateExtras(); };
+}
+
+function renderMode() {
+  const s = wiz.s;
+  s.mode = s.mode || 'bulk';
+  $('#w-mode').innerHTML = MODES.map(m =>
+    `<button class="choice ${s.mode === m.k ? 'sel' : ''}" data-mode="${m.k}">
+       <b>${m.b}</b><span>${m.d}</span></button>`).join('');
+  $$('[data-mode]').forEach(b => b.onclick = () => { s.mode = b.dataset.mode; stepDocs(); });
+
+  const ins = reqInputs(s);
+  const warn = $('#w-mode-warn');
+  if (ins.length && s.mode === 'bulk') {
+    warn.innerHTML = `<div class="mode-warn amber">All-at-once runs cannot collect
+      ${esc(ins.map(i => i.label).join(', '))}. Those values will be left blank on every document.</div>`;
+  } else if (ins.length) {
+    warn.innerHTML = `<div class="mode-warn ok">Per-record runs can collect
+      ${esc(ins.map(i => i.label).join(', '))} in the conversation.</div>`;
+  } else warn.innerHTML = '';
 }
 
 /* 4 ------------------------------------------------------------------- card */
@@ -427,13 +510,20 @@ function stepReview() {
   if (!tplsOf(s).length) warn.push('No templates chosen — this scenario cannot generate anything yet.');
   if (!(s.prompts || []).length) warn.push('No example phrasings — the assistant may not pick this scenario reliably.');
   if (!s.guidance) warn.push('No guidance written.');
+  if (esignOf(s).length && !s.signerField)
+    warn.push('Documents are sent for signature but no recipient is chosen — this cannot be activated.');
+  if (reqInputs(s).length && s.mode === 'bulk')
+    warn.push(`All-at-once runs cannot collect ${reqInputs(s).map(i => i.label).join(', ')}.`);
 
   $('#w-summary').innerHTML = `
     <div class="sum-line">When someone asks for <b>${esc(s.name || 'this scenario')}</b>,</div>
     <div class="sum-line">we find <b>${esc(ORG.objects[s.object]?.labelPlural || s.object)}</b>
       where ${esc(describeSelection(s))},</div>
     <div class="sum-line">and generate <b>${esc(tplNames(s) || 'no templates yet')}</b> for each one.</div>
-    <div class="sum-line">Right now that is <b>${n} record${n===1?'':'s'}</b> → <b>${n*t} document${n*t===1?'':'s'}</b>.</div>
+    <div class="sum-line">Right now that is <b>${n} record${n===1?'':'s'}</b> → <b>${n*t} document${n*t===1?'':'s'}</b>,
+      run <b>${esc((MODES.find(m => m.k === s.mode) || MODES[0]).b.toLowerCase())}</b>.</div>
+    ${esignOf(s).length ? `<div class="sum-line">Then sent for signature to
+      <b>${esc(s.signerField || 'nobody yet')}</b>.</div>` : ''}
     ${warn.map(w => `<div class="sum-warn">⚠ ${esc(w)}</div>`).join('')}`;
 
   $('#w-active').checked = s.active;

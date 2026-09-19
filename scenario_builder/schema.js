@@ -65,15 +65,30 @@ const ORG = {
     }
   },
 
+  /* inputs mirror Data_Element__c where Type__c = 'UserInput'; required comes
+     from Merge_Data__c.Is_Required__c. esign mirrors E_Signature_Solution__c. */
   templates: [
     { id: 'a0H01', name: 'Invoice',          object: 'Opportunity', format: 'PDF' },
-    { id: 'a0H02', name: 'Renewal Quote',    object: 'Opportunity', format: 'PDF' },
-    { id: 'a0H03', name: 'Pilot Agreement',  object: 'Account',     format: 'PDF' },
+    { id: 'a0H02', name: 'Renewal Quote',    object: 'Opportunity', format: 'PDF',
+      inputs: [
+        { apiName:'Effective_Date', label:'Effective Date', dataType:'DateType',   required:true  },
+        { apiName:'Discount_Note',  label:'Discount Note',  dataType:'StringType', required:false }
+      ] },
+    { id: 'a0H03', name: 'Pilot Agreement',  object: 'Account',     format: 'PDF', esign: true },
     { id: 'a0H04', name: 'Statement',        object: 'Account',     format: 'PDF-UPLOAD' },
-    { id: 'a0H05', name: 'NDA',              object: 'Account',     format: 'PDF' },
+    { id: 'a0H05', name: 'NDA',              object: 'Account',     format: 'PDF', esign: true },
     { id: 'a0H06', name: 'Case Summary',     object: 'Case',        format: 'PDF' },
-    { id: 'a0H07', name: 'Renewal Notice',   object: 'Contact',     format: 'PDF' }
+    { id: 'a0H07', name: 'Renewal Notice',   object: 'Contact',     format: 'PDF',
+      inputs: [{ apiName:'Expiry_Note', label:'Expiry Note', dataType:'StringType', required:true }] }
   ],
+
+  /* Fields that could carry a signer's email, per object. */
+  signerFields: {
+    Account:     [{ path:'Owner.Email', label:'Account Owner' }, { path:'Primary_Contact_Email__c', label:'Primary Contact' }],
+    Opportunity: [{ path:'Owner.Email', label:'Opportunity Owner' }],
+    Contact:     [{ path:'Email', label:'The contact themselves' }],
+    Case:        [{ path:'Contact.Email', label:'Case Contact' }]
+  },
 
   /* The whitelist. User text never reaches SOQL - it only picks from here. */
   windows: [
@@ -141,7 +156,7 @@ const SCENARIOS = [
   {
     /* "Open deals" is one scenario with several names, not several scenarios.
        The filter is a single boolean; the vocabulary is what makes it findable. */
-    id:'a0S06', name:'Open deals', active:true,
+    id:'a0S06', name:'Open deals', active:true, mode:'both', signerField:'',
     description:'Documents for opportunities that are still open.',
     guidance:'Use for open deals, live opportunities, the pipeline, deals in flight, or anything still being worked. Not for closed or won business.',
     object:'Opportunity', templateIds:['a0H02'],
@@ -159,7 +174,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S01', name:'Renewals this month', active:true,
+    id:'a0S01', mode:'bulk', signerField:'', name:'Renewals this month', active:true,
     description:'Invoices for opportunities whose renewal date falls this month.',
     guidance:'Use for renewals, expiring contracts or "what is up for renewal". The window may be changed to next month.',
     object:'Opportunity', templateIds:['a0H01','a0H02'],
@@ -176,7 +191,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S02', name:'Pilot NDAs this week', active:true,
+    id:'a0S02', mode:'record', signerField:'Primary_Contact_Email__c', name:'Pilot NDAs this week', active:true,
     description:'Pilot agreements for accounts that accepted a pilot this week.',
     guidance:'Use for pilot paperwork, NDAs or onboarding documents for new pilot customers.',
     object:'Account', templateIds:['a0H03','a0H05'],
@@ -192,7 +207,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S03', name:'Case closure summaries', active:true,
+    id:'a0S03', mode:'bulk', signerField:'', name:'Case closure summaries', active:true,
     description:'Summary documents for cases closed this week.',
     guidance:'Use for case summaries, closure reports or support wrap-ups. Note Case has no Name field.',
     object:'Case', templateIds:['a0H06'],
@@ -208,7 +223,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S04', name:'Quarterly statements', active:true,
+    id:'a0S04', mode:'bulk', signerField:'', name:'Quarterly statements', active:true,
     description:'Statements for active customer accounts. No date dimension.',
     guidance:'Use for statements or account summaries. This scenario has no date window at all.',
     object:'Account', templateIds:['a0H04'],
@@ -224,7 +239,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S05', name:'Accounts with no signed NDA', active:true,
+    id:'a0S05', mode:'bulk', signerField:'', name:'Accounts with no signed NDA', active:true,
     description:'Accounts that have not signed an NDA in twelve months.',
     guidance:'An anti-join against generated documents. Cannot be expressed as a filter, so it uses Apex.',
     object:'Account', templateIds:['a0H05'],

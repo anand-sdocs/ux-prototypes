@@ -129,6 +129,14 @@ function renderCard(s, stage = 'review', opts = {}) {
     out.push(callout('info', 'In progress', 'Still running. Call the check tool again in a few seconds.'));
   }
 
+  const signing = tpls.filter(t => t.esign);
+  if (signing.length && stage === 'review' && n) {
+    out.push(`<div class="mc-callout warning"><b>Goes out for signature</b>
+      ${esc(signing.map(t => t.name).join(', '))} will be sent to
+      <b>${esc(s.signerField || 'a recipient you have not chosen yet')}</b> on each of the
+      ${n} record${n===1?'':'s'} below. This cannot be recalled.</div>`);
+  }
+
   if (s.blocks.callout && stage === 'review') {
     // Nobody should approve 36 documents believing they approved 12.
     out.push(callout('info', 'About to generate', multi
@@ -150,14 +158,18 @@ function renderCard(s, stage = 'review', opts = {}) {
   }
 
   if (s.blocks.table && stage === 'review' && (n || opts.designing)) {
+    // A row button generates that record's whole pack. Bulk does every record.
+    const perRow = (s.mode === 'record' || s.mode === 'both');
+    const rowLabel = tpls.some(t => t.esign) ? 'Send' : 'Generate';
     const bodyRows = n
       ? rows.map(r => `<tr>${cols.map(c =>
-          `<td class="${c.align}">${esc(fmt(r[c.path], typeOf(s.object, c.path)))}</td>`).join('')}</tr>`).join('')
-      : `<tr><td class="mc-empty" colspan="${cols.length || 1}">Nothing matches right now —
+          `<td class="${c.align}">${esc(fmt(r[c.path], typeOf(s.object, c.path)))}</td>`).join('')
+          }${perRow ? `<td class="rowact"><button class="mc-rowbtn">${rowLabel}</button></td>` : ''}</tr>`).join('')
+      : `<tr><td class="mc-empty" colspan="${(cols.length || 1) + (perRow ? 1 : 0)}">Nothing matches right now —
            the columns below are still what people will see when something does.</td></tr>`;
     out.push(`<div class="mc-table-wrap"><table class="mc-table"><thead><tr>${
       cols.map(c => `<th class="${c.align}">${esc(c.header)}</th>`).join('')
-    }</tr></thead><tbody>${bodyRows}</tbody></table></div>`);
+    }${perRow ? '<th></th>' : ''}</tr></thead><tbody>${bodyRows}</tbody></table></div>`);
   }
 
   if (stage === 'done') {
@@ -172,13 +184,21 @@ function renderCard(s, stage = 'review', opts = {}) {
     });
   }
 
-  if (s.blocks.button && stage === 'review' && n) {
-    out.push(`<div class="mc-actions"><button class="mc-btn">${
-      esc(s.confirmLabel || (multi ? 'Generate ' + docs + ' documents' : 'Generate all ' + n))
-    }</button></div>`);
+  if (s.blocks.button && stage === 'review' && n && s.mode !== 'record') {
+    const signingAll = tpls.some(t => t.esign);
+    const label = s.confirmLabel
+      || (signingAll ? `Send ${docs} for signature`
+          : multi ? `Generate ${docs} documents` : `Generate all ${n}`);
+    out.push(`<div class="mc-actions"><button class="mc-btn">${esc(label)}</button></div>`);
   }
   if (stage === 'running') {
     out.push(`<div class="mc-actions"><button class="mc-btn">Check progress</button></div>`);
+  }
+
+  const asks = tpls.flatMap(t => (t.inputs || []).filter(i => i.required));
+  if (asks.length && stage === 'review' && n && s.mode !== 'bulk') {
+    out.push(`<div class="mc-callout info"><b>Will ask you for</b>
+      ${esc(asks.map(i => i.label).join(', '))} before generating.</div>`);
   }
 
   if (s.prompts.length && stage === 'review') {
