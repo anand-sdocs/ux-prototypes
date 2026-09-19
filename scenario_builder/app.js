@@ -13,6 +13,10 @@ let current = scenarios[0];
 
 /* ---------------------------------------------------------------- helpers */
 
+const usesDate = sc => sc.findBy ? (sc.findBy === 'date' || sc.findBy === 'both') : !!sc.dateField;
+const usesConds = sc => sc.findBy ? (sc.findBy === 'fields' || sc.findBy === 'both') : !!sc.extraFilter;
+const usesApex = sc => sc.findBy ? sc.findBy === 'apex' : !!sc.resolverClass;
+
 const tplById = id => ORG.templates.find(t => t.id === id);
 const tplsOf   = sc => (sc.templateIds || []).map(tplById).filter(Boolean);
 const tplNames = sc => tplsOf(sc).map(t => t.name).join(', ');
@@ -58,11 +62,11 @@ function columnsOf(s) {
 function resolve(s) {
   let records = (RECORDS[s.object] || []).slice();
 
-  if (s.resolverClass) {
+  if (usesApex(s)) {
     // Tier 2 stands in for Apex: ids only, display still declarative.
     records = records.filter((_, i) => i % 2 === 0);
   } else {
-    if (s.extraFilter) {
+    if (usesConds(s) && s.extraFilter) {
       s.extraFilter.split(/\s+AND\s+/i).forEach(clause => {
         const m = clause.match(/(\w+(?:__c)?)\s*=\s*'?([^']+)'?/);
         if (!m) return;
@@ -71,7 +75,7 @@ function resolve(s) {
         records = records.filter(r => r[f] === want);
       });
     }
-    if (s.dateField && s.window) {
+    if (usesDate(s) && s.dateField && s.window) {
       // Any seeded date counts as "in window" for the prototype.
       records = records.filter(r => r[s.dateField]);
     }
@@ -80,13 +84,13 @@ function resolve(s) {
 }
 
 function criteriaOf(s) {
-  if (s.resolverClass) return 'chosen by ' + s.resolverClass;
+  if (usesApex(s)) return 'chosen by ' + (s.resolverClass || 'Apex');
   const parts = [];
-  if (s.dateField && s.window) {
+  if (usesDate(s) && s.dateField && s.window) {
     const wl = (ORG.windowLabels && ORG.windowLabels[s.window]) || windowWords(s.window);
     parts.push(labelOf(s.object, s.dateField) + ' ' + wl.toLowerCase());
   }
-  (s.conditions || []).forEach(c => {
+  (usesConds(s) ? (s.conditions || []) : []).forEach(c => {
     const l = labelOf(s.object, c.field);
     parts.push(c.op === 'is true' ? l
              : c.op === 'is false' ? 'not ' + l
@@ -472,13 +476,14 @@ function soqlFor(s) {
   const cols = columnsOf(s);
   const sel = ['Id', ...cols.map(c => c.path)].join(', ');
   const where = [];
-  if (s.resolverClass) where.push('Id IN :scopeIds');
+  if (usesApex(s)) where.push('Id IN :scopeIds');
   else {
-    if (s.dateField && s.window) where.push(`${s.dateField} = ${s.window}`);
-    if (s.extraFilter) where.push(`(${s.extraFilter})`);
+    if (usesDate(s) && s.dateField && s.window) where.push(`${s.dateField} = ${s.window}`);
+    if (usesConds(s) && s.extraFilter) where.push(`(${s.extraFilter})`);
   }
   const note = s.resolverClass
-    ? `<span class="cm">// tier 2: ${esc(s.resolverClass)} chose the ids</span>\n`
+    ? `<span class="cm">// ${esc(s.resolverClass)} already chose the records;\n`
+      + `// this only reads the mapped columns back</span>\n`
     : `<span class="cm">// built from config; never from user text</span>\n`;
   return `<div class="soql-box">${note}<span class="kw">SELECT</span> ${esc(sel)}
 <span class="kw">FROM</span> ${esc(s.object)}${where.length ? `

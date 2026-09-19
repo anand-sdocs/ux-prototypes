@@ -84,9 +84,11 @@ function condsToSoql(sc) {
 
 /* Keep the underlying record in the shape the engine expects. */
 function syncScenario(sc) {
+  // Only the derived value is rewritten. The date field and the Apex class are
+  // things the admin typed: switching to another option to see what it offers
+  // must not throw them away, so they are kept and simply not used. What gets
+  // SAVED is filtered by findBy at that point instead.
   sc.extraFilter = (sc.findBy === 'fields' || sc.findBy === 'both') ? condsToSoql(sc) : '';
-  if (sc.findBy !== 'date' && sc.findBy !== 'both') { sc.dateField = ''; sc.window = ''; }
-  if (sc.findBy !== 'apex') sc.resolverClass = '';
 }
 
 /* Plain-English sentence for the review step and the scenario list. */
@@ -188,12 +190,32 @@ function stepRecords() {
   if (useCond) renderConditions();
   if (s.findBy === 'apex') {
     $('#w-resolver').value = s.resolverClass;
-    $('#w-resolver').oninput = e => { s.resolverClass = e.target.value; syncScenario(s); wizSide(); };
+    $('#w-resolver').oninput = e => {
+      s.resolverClass = e.target.value; syncScenario(s); wizSide(); renderApexNote();
+    };
+    renderApexNote();
   }
 
-  const soql = buildSoqlPreview(s);
-  $('#w-soql').innerHTML = soql;
-  $('#w-soql-peek').hidden = !s.object;
+  // The query peek only makes sense when a query is what selects the records.
+  // With a resolver, Apex has already chosen them and the scenario merely reads
+  // the mapped columns back — so showing SOQL here would teach the wrong thing.
+  const usesQuery = s.object && s.findBy !== 'apex';
+  $('#w-soql-peek').hidden = !usesQuery;
+  if (usesQuery) $('#w-soql').innerHTML = buildSoqlPreview(s);
+}
+
+/* What replaces the query preview when Apex does the selecting. */
+function renderApexNote() {
+  const s = wiz.s;
+  const el = $('#w-apex-note');
+  if (!el) return;
+  const cls = s.resolverClass || 'Your class';
+  el.innerHTML = `<div class="callout-inline">
+    <b>${esc(cls)}</b> decides which records — there is no filter to show, because the
+    choosing happens in code rather than in a query.
+    <br><br>It returns record ids and nothing else. The columns you map in
+    <b>Design the card</b> still build the list, so this scenario looks and behaves
+    like any other once it has run.</div>`;
 }
 
 function renderConditions() {
@@ -624,6 +646,10 @@ $('#wiz-next').onclick = () => {
   if (wiz.step < STEPS.length - 1) { wiz.step++; wizRender(); }
   else {
     syncScenario(wiz.s);
+    // Now make the stored record honest: drop what this mode does not use.
+    if (wiz.s.findBy !== 'apex') wiz.s.resolverClass = '';
+    if (wiz.s.findBy !== 'date' && wiz.s.findBy !== 'both') { wiz.s.dateField = ''; wiz.s.window = ''; }
+    if (wiz.s.findBy !== 'fields' && wiz.s.findBy !== 'both') wiz.s.conditions = [];
     if (!scenarios.includes(wiz.s)) scenarios.push(wiz.s);
     renderList(); showTab('list');
   }
