@@ -454,3 +454,6 @@ input:checked + .switch::after{transform:translateX(14px)}
 .path-btn{background:#fff;border:1px solid var(--border-strong);border-radius:4px;padding:3px 10px;font-size:11px;color:var(--text-mute);cursor:pointer;margin-left:4px}
 .path-btn.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
 #t-mode-pill{background:none;padding:0}
+.score-table tr.self td{background:var(--amber-bg)}
+.row-self{font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;
+  border:1px solid var(--border-strong);border-radius:8px;padding:1px 5px;margin-left:5px;white-space:nowrap}

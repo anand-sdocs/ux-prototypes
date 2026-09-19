@@ -298,9 +298,12 @@ function overlap(hay, needles) {
 }
 
 /* Mirrors MCPXScenarioCatalog.score — weighted by how deliberate the text is. */
-function scoreAll(request) {
+function scoreAll(request, draft) {
   const needles = tokenise(request);
-  return scenarios.filter(s => s.active).map(s => {
+  const pool = scenarios.filter(s => s.active);
+  // The one being edited competes too, even though it is not saved or active yet.
+  if (draft && !pool.some(x => x.id === draft.id)) pool.push(draft);
+  return pool.map(s => {
     const parts = [
       ['name', 5, overlap(s.name, needles)],
       ['description', 3, overlap(s.description, needles)],
@@ -337,7 +340,7 @@ function stagesFor(sc) {
 
 function runTest(request, force) {
   testerRequest = request;
-  const ranked = scoreAll(request);
+  const ranked = scoreAll(request, force);
   const top = ranked[0];
   const ambiguous = !top || top.score < MIN_SCORE
     || (ranked[1] && (top.score - ranked[1].score) < MIN_MARGIN);
@@ -357,18 +360,33 @@ function renderDiagnosis(ranked, ambiguous, top, force, winner) {
   if (!host) return;
   const max = Math.max(1, top ? top.score : 1);
   const sc = testerScenario;
+  const me = force ? ranked.find(r => r.s.id === force.id) : null;
   const mine = force && winner && winner.id === force.id;
-  const verdict = force
-    ? (mine ? ['pill-green', 'This scenario wins']
-       : ambiguous ? ['pill-amber', 'Nothing wins confidently']
-       : ['pill-amber', `“${winner.name}” wins instead`])
-    : (ambiguous ? ['pill-amber', 'No confident match'] : ['pill-green', 'Matched']);
-  const why = force
-    ? (mine ? `Ahead of the next by ${top.score - (ranked[1]?.score || 0)}.`
-       : ambiguous ? `Nothing cleared ${MIN_SCORE}. Add a phrasing closer to this one.`
-       : `Add this wording as a phrasing so this scenario claims it.`)
-    : (ambiguous ? `Nothing cleared ${MIN_SCORE}, or the top two were within ${MIN_MARGIN}.`
-       : `${esc(top.s.name)}, ahead by ${top.score - (ranked[1]?.score || 0)}.`);
+  const rank = me ? ranked.indexOf(me) + 1 : null;
+
+  let verdict, why;
+  if (!force) {
+    verdict = ambiguous ? ['pill-amber', 'No confident match'] : ['pill-green', 'Matched'];
+    why = ambiguous
+      ? `Nothing cleared ${MIN_SCORE}, or the top two were within ${MIN_MARGIN}.`
+      : `${esc(top.s.name)}, ahead by ${top.score - (ranked[1]?.score || 0)}.`;
+  } else if (mine) {
+    verdict = ['pill-green', 'This scenario wins'];
+    why = `Scored ${me.score}, ahead of the next by ${me.score - (ranked[1]?.score || 0)}.`;
+  } else if (!me || me.score === 0) {
+    // The common case while drafting, and the one worth being plain about.
+    verdict = ['pill-amber', 'Not matched yet'];
+    why = `Nothing in this scenario's name, description, guidance or phrasings matches
+           those words. Add a phrasing in step 2 that sounds like it.`;
+  } else if (ambiguous) {
+    verdict = ['pill-amber', 'Too close to call'];
+    why = `This scored ${me.score} at rank ${rank}, but nothing cleared ${MIN_SCORE}
+           by a clear margin, so the user would be asked to choose.`;
+  } else {
+    verdict = ['pill-amber', `Second to “${esc(winner.name)}”`];
+    why = `This scored ${me.score}; “${esc(winner.name)}” scored ${top.score}.
+           Add this wording as a phrasing so this scenario claims it.`;
+  }
   host.innerHTML = `
     <div class="diag-box">
       <div class="diag-title">Match</div>
@@ -378,8 +396,11 @@ function renderDiagnosis(ranked, ambiguous, top, force, winner) {
       </div>
       <table class="score-table">
         <thead><tr><th>Scenario</th><th>Score</th><th>Matched on</th></tr></thead>
-        <tbody>${ranked.map(r => `<tr class="${force ? (r.s.id === force.id ? 'win' : '') : (!ambiguous && r === top ? 'win' : '')}">
-          <td>${esc(r.s.name)}</td>
+        <tbody>${ranked.map(r => `<tr class="${
+            force ? (r.s.id === force.id ? (mine ? 'win' : 'self') : '')
+                  : (!ambiguous && r === top ? 'win' : '')}">
+          <td>${esc(r.s.name)}${force && r.s.id === force.id
+            ? ' <span class="row-self">this one</span>' : ''}</td>
           <td><i class="score-bar" style="width:${Math.round(r.score / max * 40)}px"></i>${r.score}</td>
           <td class="reason">${r.parts.filter(p => p[2]).map(p => `${p[0]} ×${p[2]}`).join(', ') || '—'}</td>
         </tr>`).join('')}</tbody>
