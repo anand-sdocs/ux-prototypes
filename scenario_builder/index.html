@@ -69,7 +69,6 @@
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="list" role="tab">Scenarios</button>
     <button class="tab" data-tab="builder" role="tab">Builder</button>
-    <button class="tab" data-tab="tester" role="tab">Tester</button>
   </div>
 
   <!-- ---------------- SCENARIOS LIST ---------------- -->
@@ -180,10 +179,6 @@
             <div id="w-tpl-extras"></div>
             <div class="budget-banner" id="w-budget"></div>
 
-            <h3 class="wiz-sub">How should people run this?</h3>
-            <div class="choice-grid" id="w-mode"></div>
-            <div id="w-mode-warn"></div>
-
             <div class="field narrow">
               <label for="w-maxdocs">Never generate more than</label>
               <div class="inline-num">
@@ -207,10 +202,7 @@
                   <label for="w-cardtitle">Card heading</label>
                   <input id="w-cardtitle" type="text" placeholder="Defaults to the scenario name">
                 </div>
-                <div class="field">
-                  <label for="w-confirm">Button wording</label>
-                  <input id="w-confirm" type="text" placeholder="Generate 8 documents">
-                </div>
+                <div id="w-bulk"></div>
                 <p class="field-help" id="w-colcount"></p>
               </div>
             </div>
@@ -232,17 +224,28 @@
             <button class="btn btn-neutral btn-xs" id="w-add-prompt">+ Add a phrasing</button>
           </div>
 
-          <!-- 6. REVIEW -->
+          <!-- 6. PREVIEW -->
+          <div class="wiz-step" data-step="preview" hidden>
+            <p class="wiz-lead">Type what someone might say and watch the whole thing play out.
+               The panel on the right shows whether this scenario is the one that wins that phrase.</p>
+            <div class="tester-input">
+              <input id="t-request" type="text" placeholder="Type what someone might ask..." autocomplete="off">
+              <button class="btn btn-brand" id="btn-run">Try it</button>
+            </div>
+            <div class="try-row" id="t-try-row"></div>
+            <div class="stage-bar">
+              <span class="preview-label">What the user sees</span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span class="mode-pill" id="t-mode-pill"></span>
+                <div class="seg" id="t-stage-seg"></div>
+              </div>
+            </div>
+            <div class="convo" id="t-convo"></div>
+          </div>
+
+          <!-- 7. REVIEW -->
           <div class="wiz-step" data-step="review" hidden>
             <div class="summary" id="w-summary"></div>
-            <div class="try-block">
-              <h4 class="filter-legend">Try it</h4>
-              <div class="tester-input">
-                <input id="w-try" type="text" placeholder="Type what someone might ask...">
-                <button class="btn btn-neutral" id="w-try-run">Try</button>
-              </div>
-              <div id="w-try-out"></div>
-            </div>
             <label class="switch-row activate-row">
               <input id="w-active" type="checkbox">
               <span class="switch"></span>
@@ -266,44 +269,6 @@
             <span class="preview-label" id="wiz-side-label">Matching now</span>
           </div>
           <div id="wiz-side-body"></div>
-        </div>
-      </aside>
-    </div>
-  </section>
-
-  <!-- ---------------- TESTER ---------------- -->
-  <section class="tab-panel" id="panel-tester">
-    <div class="card">
-      <div class="tester-input">
-        <input id="t-request" type="text" placeholder="Type what someone might ask..." autocomplete="off">
-        <button class="btn btn-brand" id="btn-run">Run</button>
-      </div>
-      <div class="try-row">
-        <span class="try-label">Try:</span>
-        <button class="try-chip" data-q="generate invoices for opportunities renewing this month">renewals this month</button>
-        <button class="try-chip" data-q="send the pilot paperwork out">pilot paperwork (signs)</button>
-        <button class="try-chip" data-q="generate quotes for all open deals">open deals</button>
-        <button class="try-chip" data-q="case summaries for cases closed this week">case summaries</button>
-        <button class="try-chip" data-q="do the thing with the stuff">an ambiguous one</button>
-      </div>
-    </div>
-
-    <div class="split tester-split">
-      <div class="split-main">
-        <div class="stage-bar">
-          <span class="preview-label">What the user sees</span>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span class="mode-pill" id="t-mode-pill"></span>
-            <div class="seg" id="t-stage-seg"></div>
-          </div>
-        </div>
-        <div class="convo" id="t-convo"></div>
-      </div>
-
-      <aside class="split-side">
-        <div class="preview-sticky">
-          <div class="preview-head"><span class="preview-label">Why it did that</span></div>
-          <div id="t-diagnosis"></div>
         </div>
       </aside>
     </div>

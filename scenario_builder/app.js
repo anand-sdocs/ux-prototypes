@@ -171,7 +171,7 @@ function renderCard(s, stage = 'review', opts = {}) {
 
   if (s.blocks.table && stage === 'review' && (n || opts.designing)) {
     // A row button generates that record's whole pack. Bulk does every record.
-    const perRow = (s.mode === 'record' || s.mode === 'both');
+    const perRow = true;   // always available; bulk is the opt-in
     const rowLabel = tpls.some(t => t.esign) ? 'Send' : 'Generate';
     const bodyRows = n
       ? rows.map(r => `<tr>${cols.map(c =>
@@ -196,7 +196,7 @@ function renderCard(s, stage = 'review', opts = {}) {
     });
   }
 
-  if (s.blocks.button && stage === 'review' && n && s.mode !== 'record') {
+  if (s.allowBulk && stage === 'review' && n) {
     const signingAll = tpls.some(t => t.esign);
     const label = s.confirmLabel
       || (signingAll ? `Send ${docs} for signature`
@@ -208,7 +208,7 @@ function renderCard(s, stage = 'review', opts = {}) {
   }
 
   const asks = tpls.flatMap(t => (t.inputs || []).filter(i => i.required));
-  if (asks.length && stage === 'review' && n && s.mode !== 'bulk') {
+  if (asks.length && stage === 'review' && n) {
     out.push(`<div class="mc-callout info"><b>Will ask you for</b>
       ${esc(asks.map(i => i.label).join(', '))} before generating.</div>`);
   }
@@ -304,52 +304,70 @@ function scoreAll(request) {
 let testerScenario = null;
 let testerRequest = '';
 let testerStage = 0;
+let testerPath = 'row';   // 'row' | 'bulk'
 
 /* The stages a run actually goes through differ by mode, so the tester follows
    the scenario rather than assuming everyone presses one big button. */
 function stagesFor(sc) {
   if (!sc) return [{ k:'ask', label:'Asked' }];
-  // "Both" is walked down its per-record path, because that is the one that can
-  // ask a question — showing a question followed by a bulk result is incoherent.
-  const perRecord = sc.mode === 'record' || sc.mode === 'both';
   const asks = tplsOf(sc).flatMap(t => (t.inputs || []).filter(i => i.required));
   const signing = tplsOf(sc).some(t => t.esign);
   const stages = [{ k:'review', label:'Reviews the list' }];
-  if (perRecord) stages.push({ k:'pick', label:'Picks one row' });
-  if (asks.length && sc.mode !== 'bulk') stages.push({ k:'ask', label:'Answers a question' });
+  if (testerPath === 'row') {
+    stages.push({ k:'pick', label:'Picks one row' });
+    // Only the per-row path can be asked a question: the bulk API cannot
+    // carry user inputs at all.
+    if (asks.length) stages.push({ k:'ask', label:'Answers a question' });
+  }
   stages.push({ k:'running', label: signing ? 'Sending' : 'Generating' });
   stages.push({ k:'done', label: signing ? 'Sent' : 'Done' });
   return stages;
 }
 
-function runTest(request) {
+function runTest(request, force) {
   testerRequest = request;
   const ranked = scoreAll(request);
   const top = ranked[0];
   const ambiguous = !top || top.score < MIN_SCORE
     || (ranked[1] && (top.score - ranked[1].score) < MIN_MARGIN);
-  testerScenario = ambiguous ? null : top.s;
+  const winner = ambiguous ? null : top.s;
+  // When previewing a scenario we show THAT scenario's experience even if
+  // another would win the phrase — and say so, because that is the finding.
+  testerScenario = force || winner;
   testerStage = 0;
-  renderDiagnosis(ranked, ambiguous, top);
+  testerPath = 'row';
+  renderDiagnosis(ranked, ambiguous, top, force, winner);
   renderConvo();
 }
 
 /* ---- right: why it did that */
-function renderDiagnosis(ranked, ambiguous, top) {
+function renderDiagnosis(ranked, ambiguous, top, force, winner) {
+  const host = $('#t-diagnosis');
+  if (!host) return;
   const max = Math.max(1, top ? top.score : 1);
   const sc = testerScenario;
-  $('#t-diagnosis').innerHTML = `
+  const mine = force && winner && winner.id === force.id;
+  const verdict = force
+    ? (mine ? ['pill-green', 'This scenario wins']
+       : ambiguous ? ['pill-amber', 'Nothing wins confidently']
+       : ['pill-amber', `“${winner.name}” wins instead`])
+    : (ambiguous ? ['pill-amber', 'No confident match'] : ['pill-green', 'Matched']);
+  const why = force
+    ? (mine ? `Ahead of the next by ${top.score - (ranked[1]?.score || 0)}.`
+       : ambiguous ? `Nothing cleared ${MIN_SCORE}. Add a phrasing closer to this one.`
+       : `Add this wording as a phrasing so this scenario claims it.`)
+    : (ambiguous ? `Nothing cleared ${MIN_SCORE}, or the top two were within ${MIN_MARGIN}.`
+       : `${esc(top.s.name)}, ahead by ${top.score - (ranked[1]?.score || 0)}.`);
+  host.innerHTML = `
     <div class="diag-box">
       <div class="diag-title">Match</div>
       <div class="try-verdict">
-        <span class="pill ${ambiguous ? 'pill-amber' : 'pill-green'}">${ambiguous ? 'No confident match' : 'Matched'}</span>
-        <span class="reason">${ambiguous
-          ? `Nothing cleared ${MIN_SCORE}, or the top two were within ${MIN_MARGIN}. Returns a picker rather than guessing.`
-          : `${esc(top.s.name)}, ahead by ${top.score - (ranked[1]?.score || 0)}.`}</span>
+        <span class="pill ${verdict[0]}">${esc(verdict[1])}</span>
+        <span class="reason">${why}</span>
       </div>
       <table class="score-table">
         <thead><tr><th>Scenario</th><th>Score</th><th>Matched on</th></tr></thead>
-        <tbody>${ranked.map(r => `<tr class="${!ambiguous && r === top ? 'win' : ''}">
+        <tbody>${ranked.map(r => `<tr class="${force ? (r.s.id === force.id ? 'win' : '') : (!ambiguous && r === top ? 'win' : '')}">
           <td>${esc(r.s.name)}</td>
           <td><i class="score-bar" style="width:${Math.round(r.score / max * 40)}px"></i>${r.score}</td>
           <td class="reason">${r.parts.filter(p => p[2]).map(p => `${p[0]} ×${p[2]}`).join(', ') || '—'}</td>
@@ -359,8 +377,8 @@ function renderDiagnosis(ranked, ambiguous, top) {
     ${sc ? `<div class="diag-box">
       <div class="diag-title">How it runs</div>
       <div class="reason">
-        Mode: <b>${esc((sc.mode || 'bulk') === 'record' ? 'one record at a time'
-                      : sc.mode === 'both' ? 'either' : 'all at once')}</b><br>
+        Row by row: <b>always</b> &nbsp;·&nbsp; Bulk generate:
+        <b>${sc.allowBulk ? 'allowed' : 'off'}</b><br>
         ${tplsOf(sc).length} template${tplsOf(sc).length === 1 ? '' : 's'} ×
         ${resolve(sc).length} record${resolve(sc).length === 1 ? '' : 's'}
         = ${resolve(sc).length * Math.max(1, tplsOf(sc).length)} documents
@@ -382,9 +400,16 @@ function renderConvo() {
   const stages = stagesFor(sc);
   if (testerStage >= stages.length) testerStage = stages.length - 1;
 
-  $('#t-mode-pill').textContent = sc
-    ? ((sc.mode || 'bulk') === 'record' ? 'one at a time' : sc.mode === 'both' ? 'either way' : 'all at once')
-    : '';
+  const pill = $('#t-mode-pill');
+  if (sc && sc.allowBulk) {
+    pill.innerHTML = `<button class="path-btn ${testerPath === 'row' ? 'on' : ''}" data-path="row">One row</button>
+                      <button class="path-btn ${testerPath === 'bulk' ? 'on' : ''}" data-path="bulk">All at once</button>`;
+    $$('[data-path]').forEach(b => b.onclick = () => {
+      testerPath = b.dataset.path; testerStage = 0; renderConvo();
+    });
+  } else {
+    pill.textContent = sc ? 'one row at a time' : '';
+  }
   $('#t-stage-seg').innerHTML = stages.map((st, i) =>
     `<button class="seg-btn ${i === testerStage ? 'active' : ''}" data-stage="${i}">${st.label}</button>`).join('');
   $$('#t-stage-seg .seg-btn').forEach(b => b.onclick = () => {
@@ -472,17 +497,9 @@ $('#btn-new').onclick = () => {
     emptyMessage:'', blocks:{callout:true,stats:true,table:true,button:true}, prompts:[] });
 };
 
-$('#btn-run').onclick = () => runTest($('#t-request').value);
-$('#t-request').onkeydown = e => { if (e.key === 'Enter') runTest(e.target.value); };
-$$('.try-chip').forEach(c => c.onclick = () => {
-  $('#t-request').value = c.dataset.q; runTest(c.dataset.q);
-});
-
 $('#btn-docs').onclick = () => { $('#drawer').hidden = false; $('#drawer-scrim').hidden = false; };
 const closeDrawer = () => { $('#drawer').hidden = true; $('#drawer-scrim').hidden = true; };
 $('#drawer-close').onclick = closeDrawer;
 $('#drawer-scrim').onclick = closeDrawer;
 
 renderList();
-$('#t-request').value = 'generate invoices for opportunities renewing this month';
-runTest($('#t-request').value);

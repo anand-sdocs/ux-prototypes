@@ -111,11 +111,18 @@ const ORG = {
     NEXT_30_DAYS:'In the next 30 days', NEXT_90_DAYS:'In the next 90 days'
   },
 
+  /* Salesforce Lightning Design System standard icons, v2.24.3.
+     Paths and background colours taken from the published package; the sprite
+     cannot be referenced cross-origin, so they are inlined. */
   objectMeta: {
-    Opportunity: { icon:'briefcase', colour:'#fcb95b', desc:'Deals and renewals' },
-    Account:     { icon:'building',  colour:'#7f8de1', desc:'Companies you do business with' },
-    Case:        { icon:'lifebuoy',  colour:'#f88962', desc:'Support requests' },
-    Contact:     { icon:'user',      colour:'#a094ed', desc:'People at your accounts' }
+    Opportunity: { icon:'opportunity', colour:'#ff5d2d', desc:'Deals and renewals',
+      viewBox:'0 0 1000 1000', path:'M711 690H289c-10 0-19 9-19 19v1c0 33 27 60 60 60h340c33 0 60-27 60-60v-1c0-10-9-19-19-19zm49-410a60 60 0 0 0-39 106c-17 39-56 66-102 64-53-3-96-46-99-99 0-9 0-17 2-25a60 60 0 0 0-22-116 60 60 0 0 0-22 116c2 8 2 16 2 25-3 53-46 96-99 99-46 3-86-25-102-64a60 60 0 0 0-39-106c-33 0-60 27-60 60s27 60 60 60l28 214c1 9 9 16 19 16h426c9 0 17-7 19-16l28-214c33 0 60-27 60-60s-27-60-60-60z' },
+    Account: { icon:'account', colour:'#5867e8', desc:'Companies you do business with',
+      viewBox:'0 0 100 100', path:'M79 51.1c.1-2.1-1.4-2.7-2-2.7H55.2c-1.9 0-2.2 2-2.2 2.2V74h26zM64 67.9a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm10 10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zM59 40.3V28.7c.1-2.1-1.4-2.7-2-2.7H23.2c-1.9 0-2.2 2-2.2 2.2V74h26V44.7s0-2.4 2.2-2.4h7.9c1.1 0 1.9-1.2 1.9-2zM32 66.9a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.3a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm11 30.7a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.3a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm0-10.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2zm11 0a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2z' },
+    Case: { icon:'case', colour:'#ff538a', desc:'Support requests',
+      viewBox:'0 0 1000 1000', path:'M380 290h40c6 0 10-4 10-10v-30h140v30c0 6 4 10 10 10h40c6 0 10-4 10-10v-30c0-33-27-60-60-60H430c-33 0-60 27-60 60v30c0 6 4 10 10 10zm360 60H260c-33 0-60 27-60 60v320c0 33 27 60 60 60h480c33 0 60-27 60-60V410c0-33-27-60-60-60z' },
+    Contact: { icon:'contact', colour:'#9602c7', desc:'People at your accounts',
+      viewBox:'0 0 1000 1000', path:'M740 290H260c-33 0-60 27-60 60v290c0 33 27 60 60 60h480c33 0 60-27 60-60V350c0-33-27-60-60-60zM486 630H314c-19 0-34-21-34-41 1-30 32-48 65-63 23-10 26-19 26-29s-6-19-14-26a68 68 0 0 1-21-50c0-38 23-70 63-70s63 32 63 70c0 20-7 38-21 50-8 7-14 16-14 26s3 19 26 28c33 14 64 34 65 64 2 20-13 41-32 41zm234-70c0 11-9 20-20 20h-90c-11 0-20-9-20-20v-30c0-11 9-20 20-20h90c11 0 20 9 20 20v30zm0-110c0 11-9 20-20 20H550c-11 0-20-9-20-20v-30c0-11 9-20 20-20h150c11 0 20 9 20 20v30z' }
   },
 
   documentActions: [
@@ -156,7 +163,7 @@ const SCENARIOS = [
   {
     /* "Open deals" is one scenario with several names, not several scenarios.
        The filter is a single boolean; the vocabulary is what makes it findable. */
-    id:'a0S06', name:'Open deals', active:true, mode:'both', signerField:'',
+    id:'a0S06', name:'Open deals', active:true, allowBulk:true, signerField:'',
     description:'Documents for opportunities that are still open.',
     guidance:'Use for open deals, live opportunities, the pipeline, deals in flight, or anything still being worked. Not for closed or won business.',
     object:'Opportunity', templateIds:['a0H02'],
@@ -174,7 +181,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S01', mode:'bulk', signerField:'', name:'Renewals this month', active:true,
+    id:'a0S01', allowBulk:true, signerField:'', name:'Renewals this month', active:true,
     description:'Invoices for opportunities whose renewal date falls this month.',
     guidance:'Use for renewals, expiring contracts or "what is up for renewal". The window may be changed to next month.',
     object:'Opportunity', templateIds:['a0H01','a0H02'],
@@ -191,7 +198,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S02', mode:'record', signerField:'Primary_Contact_Email__c', name:'Pilot NDAs this week', active:true,
+    id:'a0S02', allowBulk:false, signerField:'Primary_Contact_Email__c', name:'Pilot NDAs this week', active:true,
     description:'Pilot agreements for accounts that accepted a pilot this week.',
     guidance:'Use for pilot paperwork, NDAs or onboarding documents for new pilot customers.',
     object:'Account', templateIds:['a0H03','a0H05'],
@@ -207,7 +214,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S03', mode:'bulk', signerField:'', name:'Case closure summaries', active:true,
+    id:'a0S03', allowBulk:true, signerField:'', name:'Case closure summaries', active:true,
     description:'Summary documents for cases closed this week.',
     guidance:'Use for case summaries, closure reports or support wrap-ups. Note Case has no Name field.',
     object:'Case', templateIds:['a0H06'],
@@ -223,7 +230,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S04', mode:'bulk', signerField:'', name:'Quarterly statements', active:true,
+    id:'a0S04', allowBulk:true, signerField:'', name:'Quarterly statements', active:true,
     description:'Statements for active customer accounts. No date dimension.',
     guidance:'Use for statements or account summaries. This scenario has no date window at all.',
     object:'Account', templateIds:['a0H04'],
@@ -239,7 +246,7 @@ const SCENARIOS = [
     ]
   },
   {
-    id:'a0S05', mode:'bulk', signerField:'', name:'Accounts with no signed NDA', active:true,
+    id:'a0S05', allowBulk:true, signerField:'', name:'Accounts with no signed NDA', active:true,
     description:'Accounts that have not signed an NDA in twelve months.',
     guidance:'An anti-join against generated documents. Cannot be expressed as a filter, so it uses Apex.',
     object:'Account', templateIds:['a0H05'],

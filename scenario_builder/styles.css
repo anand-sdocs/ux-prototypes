@@ -446,3 +446,11 @@ input:checked + .switch::after{transform:translateX(14px)}
 .diag-box .score-table{font-size:11.5px}
 .diag-box .soql-box{font-size:10.5px;margin-top:0}
 .mode-pill{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:9px;background:var(--violet-bg);color:#3b3f9e}
+.obj-ico.slds{display:grid;place-items:center;border-radius:8px}
+.obj-ico.slds svg{display:block}
+.bulk-toggle{border-color:var(--border-strong)}
+.bulk-detail{border-left:2px solid var(--border);padding-left:11px;margin:9px 0 0 6px}
+.bulk-detail .field{margin-bottom:8px}
+.path-btn{background:#fff;border:1px solid var(--border-strong);border-radius:4px;padding:3px 10px;font-size:11px;color:var(--text-mute);cursor:pointer;margin-left:4px}
+.path-btn.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+#t-mode-pill{background:none;padding:0}

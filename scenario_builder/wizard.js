@@ -18,6 +18,8 @@ const STEPS = [
   { key:'card',    label:'Design the card', hint:'What people see',        title:'Design what people see',
     blurb:'This card appears before anything is generated, so people can check the list first.' },
 
+  { key:'preview', label:'Preview',         hint:'Watch it play out',      title:'Preview the whole thing',
+    blurb:'Everything so far, as the person asking will experience it — including the questions it asks and the confirmations it insists on.' },
   { key:'review',  label:'Review',          hint:'Check and activate',     title:'Review and activate',
     blurb:'Everything below is configuration. Activating takes effect immediately — nothing is deployed.' }
 ];
@@ -41,15 +43,21 @@ let wiz = { step: 0, s: null, popOpen: null };
 
 /* ------------------------------------------------------------------ helpers */
 
+/* An SLDS standard icon: white glyph on the object's own background colour,
+   exactly as Salesforce renders it. */
+function sldsIcon(objectName, size = 32) {
+  const m = (ORG.objectMeta || {})[objectName];
+  if (!m || !m.path) {
+    return `<span class="obj-ico" style="background:#8b8b8b">${esc((objectName || '?')[0])}</span>`;
+  }
+  return `<span class="obj-ico slds" style="background:${m.colour}" aria-hidden="true">
+    <svg viewBox="${m.viewBox}" width="${Math.round(size * 0.58)}" height="${Math.round(size * 0.58)}"
+         fill="#fff" focusable="false"><path d="${m.path}"/></svg></span>`;
+}
+
 const inputsOf  = sc => tplsOf(sc).flatMap(t => (t.inputs || []).map(i => ({ ...i, tpl: t.name })));
 const reqInputs = sc => inputsOf(sc).filter(i => i.required);
 const esignOf   = sc => tplsOf(sc).filter(t => t.esign);
-
-const MODES = [
-  { k:'bulk',   b:'All at once',       d:'One button generates for every matching record.' },
-  { k:'record', b:'One record at a time', d:'Each row gets its own button. Useful when someone picks and chooses.' },
-  { k:'both',   b:'Both',              d:'A button per row, and one to do the lot.' }
-];
 
 const winLabel = w => (ORG.windowLabels && ORG.windowLabels[w]) || windowWords(w);
 
@@ -104,8 +112,8 @@ function wizRender() {
   $('#wiz-back').style.visibility = wiz.step === 0 ? 'hidden' : 'visible';
   $('#wiz-next').textContent = wiz.step === STEPS.length - 1 ? 'Save scenario' : 'Next';
 
-  ({ name:stepName, records:stepRecords, docs:stepDocs,
-     card:stepCard, words:stepWords, review:stepReview })[st.key]();
+  ({ name:stepName, records:stepRecords, docs:stepDocs, card:stepCard,
+     words:stepWords, preview:stepPreview, review:stepReview })[st.key]();
   wizSide();
 }
 
@@ -129,7 +137,7 @@ function stepRecords() {
   $('#w-objects').innerHTML = Object.keys(ORG.objects).map(o => {
     const m = (ORG.objectMeta || {})[o] || {};
     return `<button class="obj-tile ${s.object === o ? 'sel' : ''}" data-obj="${o}">
-      <span class="obj-ico" style="background:${m.colour || '#8b8b8b'}">${esc((ORG.objects[o].label||o)[0])}</span>
+      ${sldsIcon(o)}
       <span><b>${esc(ORG.objects[o].labelPlural || o)}</b><span>${esc(m.desc || o)}</span></span>
     </button>`;
   }).join('');
@@ -261,7 +269,6 @@ function stepDocs() {
     : `<p class="field-help">Nothing chosen yet. Pick at least one below.</p>`;
 
   renderTemplateExtras();
-  renderMode();
 
   const avail = ORG.templates.filter(t => t.object === s.object && !(s.templateIds || []).includes(t.id));
   $('#w-tpl-available').innerHTML = avail.length
@@ -294,6 +301,14 @@ function stepDocs() {
   $('#w-maxdocs').oninput = e => { s.maxDocuments = +e.target.value; stepDocs(); };
 }
 
+function defaultBulkLabel(s) {
+  const n = resolve(s).length, t = Math.max(1, tplsOf(s).length);
+  const signing = tplsOf(s).some(x => x.esign);
+  return signing ? `Send ${n * t} for signature`
+       : t > 1   ? `Generate ${n * t} documents`
+                 : `Generate all ${n}`;
+}
+
 /* Runtime inputs and e-signature are properties of the TEMPLATE, so they are
    configured next to the template that brought them. */
 function renderTemplateExtras() {
@@ -304,7 +319,7 @@ function renderTemplateExtras() {
   const blocks = [];
 
   if (ins.length) {
-    const bulkOnly = s.mode === 'bulk';
+    const bulkOnly = !!s.allowBulk;
     blocks.push(`<div class="extra-block ${bulkOnly ? 'warn' : ''}">
       <div class="extra-head">${bulkOnly ? '⚠ ' : ''}This template asks for information when it runs</div>
       ${ins.map(i => `<div class="input-item">
@@ -314,9 +329,9 @@ function renderTemplateExtras() {
           <span class="ii-type">from ${esc(i.tpl)}</span>
         </div>`).join('')}
       <div class="extra-note">${bulkOnly
-        ? `These cannot be collected during an all-at-once run yet — the values would have to
-           be the same for every record, and the generation API has no way to carry them.
-           Switch to <b>one record at a time</b>, or drop this template.`
+        ? `Row-by-row runs will ask for these. <b>Bulk generate cannot</b> — the generation API
+           has no way to carry them — so documents produced by "generate everything" will have
+           these left blank.`
         : `When someone runs this for a record, the assistant will ask for these before generating.`}
       </div></div>`);
   }
@@ -342,31 +357,11 @@ function renderTemplateExtras() {
   if (sel) sel.onchange = e => { s.signerField = e.target.value; renderTemplateExtras(); };
 }
 
-function renderMode() {
-  const s = wiz.s;
-  s.mode = s.mode || 'bulk';
-  $('#w-mode').innerHTML = MODES.map(m =>
-    `<button class="choice ${s.mode === m.k ? 'sel' : ''}" data-mode="${m.k}">
-       <b>${m.b}</b><span>${m.d}</span></button>`).join('');
-  $$('[data-mode]').forEach(b => b.onclick = () => { s.mode = b.dataset.mode; stepDocs(); });
-
-  const ins = reqInputs(s);
-  const warn = $('#w-mode-warn');
-  if (ins.length && s.mode === 'bulk') {
-    warn.innerHTML = `<div class="mode-warn amber">All-at-once runs cannot collect
-      ${esc(ins.map(i => i.label).join(', '))}. Those values will be left blank on every document.</div>`;
-  } else if (ins.length) {
-    warn.innerHTML = `<div class="mode-warn ok">Per-record runs can collect
-      ${esc(ins.map(i => i.label).join(', '))} in the conversation.</div>`;
-  } else warn.innerHTML = '';
-}
-
 /* 4 ------------------------------------------------------------------- card */
 const BLOCKS = [
-  { k:'callout', b:'Summary line',   d:'What is about to happen' },
-  { k:'stats',   b:'Key figures',    d:'Records, templates, documents' },
-  { k:'table',   b:'The list',       d:'The records themselves' },
-  { k:'button',  b:'Confirm button', d:'Nothing generates without it' }
+  { k:'callout', b:'Summary line', d:'What is about to happen' },
+  { k:'stats',   b:'Key figures',  d:'Records, templates, documents' },
+  { k:'table',   b:'The list',     d:'Each row has its own Generate button' }
 ];
 
 function stepCard() {
@@ -379,10 +374,32 @@ function stepCard() {
     </label>`).join('');
   $$('[data-blk]').forEach(i => i.onchange = () => { s.blocks[i.dataset.blk] = i.checked; stepCard(); });
 
+  // Bulk is a separate, deliberate switch — not a card block. Off by default:
+  // one press generating for every matching record is the irreversible one.
+  const asks = reqInputs(s);
+  $('#w-bulk').innerHTML = `
+    <label class="block-toggle bulk-toggle">
+      <input type="checkbox" id="w-allowbulk" ${s.allowBulk ? 'checked' : ''}>
+      <span class="switch"></span>
+      <span><b>Allow bulk generate</b><span class="bt-desc">One button for every matching record</span></span>
+    </label>
+    <div class="bulk-detail" ${s.allowBulk ? '' : 'hidden'}>
+      <div class="field">
+        <label for="w-confirm">Button wording</label>
+        <input id="w-confirm" type="text" value="${esc(s.confirmLabel)}"
+               placeholder="${esc(defaultBulkLabel(s))}">
+        <p class="field-help">Leave blank to use &ldquo;${esc(defaultBulkLabel(s))}&rdquo;.</p>
+      </div>
+      ${asks.length ? `<div class="mode-warn amber">Bulk generate cannot collect
+        ${esc(asks.map(i => i.label).join(', '))}. Documents from the bulk button will have
+        ${asks.length === 1 ? 'that field' : 'those fields'} left blank.</div>` : ''}
+    </div>`;
+  $('#w-allowbulk').onchange = e => { s.allowBulk = e.target.checked; stepCard(); };
+  const conf = $('#w-confirm');
+  if (conf) conf.oninput = e => { s.confirmLabel = e.target.value; drawDesigner(); };
+
   $('#w-cardtitle').value = s.cardTitle;
-  $('#w-confirm').value = s.confirmLabel;
   $('#w-cardtitle').oninput = e => { s.cardTitle = e.target.value; drawDesigner(); };
-  $('#w-confirm').oninput  = e => { s.confirmLabel = e.target.value; drawDesigner(); };
   drawDesigner();
 }
 
@@ -494,7 +511,31 @@ function stepWords() {
   });
 }
 
-/* 6 ----------------------------------------------------------------- review */
+/* 6 ---------------------------------------------------------------- preview */
+function stepPreview() {
+  const s = wiz.s;
+  const chips = (s.prompts || []).filter(p => p.text);
+  $('#t-try-row').innerHTML = chips.length
+    ? `<span class="try-label">Try:</span>` + chips.map((p, i) =>
+        `<button class="try-chip" data-try="${i}">${esc(p.label || p.text)}</button>`).join('')
+    : `<span class="try-label">No phrasings yet — add some in step 2, or type anything above.</span>`;
+  $$('[data-try]').forEach(b => b.onclick = () => {
+    $('#t-request').value = chips[+b.dataset.try].text;
+    go();
+  });
+
+  wizSide();                    // the diagnosis pane must exist before we paint into it
+  const go = () => runTest($('#t-request').value, s);
+  $('#btn-run').onclick = go;
+  $('#t-request').onkeydown = e => { if (e.key === 'Enter') go(); };
+
+  if (!$('#t-request').value) {
+    $('#t-request').value = (chips[0] && chips[0].text) || `Run the ${s.name} scenario`;
+  }
+  go();
+}
+
+/* 7 ----------------------------------------------------------------- review */
 function stepReview() {
   const s = wiz.s;
   const n = resolve(s).length, t = Math.max(1, tplsOf(s).length);
@@ -504,8 +545,9 @@ function stepReview() {
   if (!s.guidance) warn.push('No guidance written.');
   if (esignOf(s).length && !s.signerField)
     warn.push('Documents are sent for signature but no recipient is chosen — this cannot be activated.');
-  if (reqInputs(s).length && s.mode === 'bulk')
-    warn.push(`All-at-once runs cannot collect ${reqInputs(s).map(i => i.label).join(', ')}.`);
+  if (reqInputs(s).length && s.allowBulk)
+    warn.push(`Bulk generate cannot collect ${reqInputs(s).map(i => i.label).join(', ')} — `
+      + `documents from that button will have them blank.`);
 
   $('#w-summary').innerHTML = `
     <div class="sum-line">When someone asks for <b>${esc(s.name || 'this scenario')}</b>,</div>
@@ -513,27 +555,13 @@ function stepReview() {
       where ${esc(describeSelection(s))},</div>
     <div class="sum-line">and generate <b>${esc(tplNames(s) || 'no templates yet')}</b> for each one.</div>
     <div class="sum-line">Right now that is <b>${n} record${n===1?'':'s'}</b> → <b>${n*t} document${n*t===1?'':'s'}</b>,
-      run <b>${esc({ bulk:'all at once', record:'one record at a time',
-                      both:'either way' }[s.mode || 'bulk'])}</b>.</div>
+      generated <b>${s.allowBulk ? 'row by row, or all at once' : 'row by row'}</b>.</div>
     ${esignOf(s).length ? `<div class="sum-line">Then sent for signature to
       <b>${esc(s.signerField || 'nobody yet')}</b>.</div>` : ''}
     ${warn.map(w => `<div class="sum-warn">⚠ ${esc(w)}</div>`).join('')}`;
 
   $('#w-active').checked = s.active;
   $('#w-active').onchange = e => { s.active = e.target.checked; };
-  $('#w-try').value = (s.prompts[0] || {}).text || '';
-  $('#w-try-run').onclick = () => {
-    const q = $('#w-try').value;
-    const ranked = scoreAll(q);
-    const top = ranked[0];
-    const hit = top && top.s.id === s.id && top.score >= MIN_SCORE
-      && (!ranked[1] || (top.score - ranked[1].score) >= MIN_MARGIN);
-    $('#w-try-out').innerHTML = `<div class="try-verdict">
-      <span class="pill ${hit ? 'pill-green' : 'pill-amber'}">${hit ? 'This scenario wins' : 'Not a confident match'}</span>
-      <span class="reason">${hit
-        ? `Scored ${top.score}, ahead of the next by ${top.score - (ranked[1]?.score || 0)}.`
-        : `Best match was “${esc(top ? top.s.name : 'none')}” at ${top ? top.score : 0}. Add a phrasing closer to this.`}</span></div>`;
-  };
 }
 
 /* ------------------------------------------------------------- side preview */
@@ -542,6 +570,12 @@ function wizSide() {
   const key = STEPS[wiz.step].key;
   const label = $('#wiz-side-label');
   const body = $('#wiz-side-body');
+
+  if (key === 'preview') {
+    label.textContent = 'Why it did that';
+    if (!$('#t-diagnosis')) body.innerHTML = '<div id="t-diagnosis"></div>';
+    return;
+  }
 
   if (key === 'card' || key === 'words') {
     label.textContent = key === 'card' ? 'Reference' : 'Buttons people will see';
@@ -576,7 +610,12 @@ function openWizard(scenario) {
     : wiz.s.dateField ? ((wiz.s.conditions || []).length ? 'both' : 'date')
     : (wiz.s.conditions || []).length ? 'fields' : 'fields');
   wiz.s.conditions = wiz.s.conditions || [];
+  if (wiz.s.allowBulk === undefined) wiz.s.allowBulk = false;
   wiz.step = 0;
+  // Each scenario previews with its OWN phrasing; carrying the last one over
+  // silently tests the wrong thing.
+  const req = $('#t-request');
+  if (req) req.value = '';
   showTab('builder');
   wizRender();
 }
