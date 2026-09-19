@@ -16,6 +16,8 @@ const ORG = {
         CloseDate:       { label: 'Close Date', type: 'date' },
         Renewal_Date__c: { label: 'Renewal Date', type: 'date' },
         Probability:     { label: 'Probability (%)', type: 'percent' },
+        IsClosed:        { label: 'Closed', type: 'boolean' },
+        IsWon:           { label: 'Won', type: 'boolean' },
         'Account.Name':  { label: 'Account Name', type: 'text' },
         'Owner.Alias':   { label: 'Alias', type: 'text' }
       }
@@ -112,10 +114,10 @@ const ORG = {
 /* Sample records, used by the tester to resolve a scenario to rows. */
 const RECORDS = {
   Opportunity: [
-    { Name:'Acme — Platform Renewal', StageName:'Negotiation', Amount:45000, Renewal_Date__c:'2026-09-30', Probability:70, 'Account.Name':'Acme Corp', 'Owner.Alias':'jdoe' },
-    { Name:'Globex — Annual Renewal', StageName:'Proposal',   Amount:128000, Renewal_Date__c:'2026-09-14', Probability:55, 'Account.Name':'Globex', 'Owner.Alias':'mpat' },
-    { Name:'Initech — Support Renewal', StageName:'Closed Won', Amount:22500, Renewal_Date__c:'2026-09-22', Probability:100, 'Account.Name':'Initech', 'Owner.Alias':'jdoe' },
-    { Name:'Umbrella — Licence Renewal', StageName:'Negotiation', Amount:76000, Renewal_Date__c:'2026-09-08', Probability:60, 'Account.Name':'Umbrella Ltd', 'Owner.Alias':'skim' }
+    { Name:'Acme — Platform Renewal', IsClosed:false, IsWon:false, StageName:'Negotiation', Amount:45000, Renewal_Date__c:'2026-09-30', Probability:70, 'Account.Name':'Acme Corp', 'Owner.Alias':'jdoe' },
+    { Name:'Globex — Annual Renewal', IsClosed:false, IsWon:false, StageName:'Proposal',   Amount:128000, Renewal_Date__c:'2026-09-14', Probability:55, 'Account.Name':'Globex', 'Owner.Alias':'mpat' },
+    { Name:'Initech — Support Renewal', IsClosed:true, IsWon:true, StageName:'Closed Won', Amount:22500, Renewal_Date__c:'2026-09-22', Probability:100, 'Account.Name':'Initech', 'Owner.Alias':'jdoe' },
+    { Name:'Umbrella — Licence Renewal', IsClosed:false, IsWon:false, StageName:'Negotiation', Amount:76000, Renewal_Date__c:'2026-09-08', Probability:60, 'Account.Name':'Umbrella Ltd', 'Owner.Alias':'skim' }
   ],
   Account: [
     { Name:'Acme Corp', Type:'Customer', Industry:'Manufacturing', AnnualRevenue:12000000, BillingCity:'Dayton', Pilot_Status__c:'Accepted', Pilot_Accepted_Date__c:'2026-09-15', Active__c:true, 'Owner.Alias':'jdoe' },
@@ -136,6 +138,26 @@ const RECORDS = {
 
 /* Scenario records as an administrator would have saved them. */
 const SCENARIOS = [
+  {
+    /* "Open deals" is one scenario with several names, not several scenarios.
+       The filter is a single boolean; the vocabulary is what makes it findable. */
+    id:'a0S06', name:'Open deals', active:true,
+    description:'Documents for opportunities that are still open.',
+    guidance:'Use for open deals, live opportunities, the pipeline, deals in flight, or anything still being worked. Not for closed or won business.',
+    object:'Opportunity', templateIds:['a0H02'],
+    dateField:'', window:'', allowOverride:false,
+    conditions:[{field:'IsClosed', op:'is false', value:''}], findBy:'fields',
+    extraFilter:'IsClosed = false', resolverClass:'', sortField:'Amount', maxRecords:50, maxDocuments:200,
+    documentAction:'',
+    slots:['Name','Account.Name','StageName','Amount','Probability','','',''],
+    cardTitle:'Open deals', confirmLabel:'', emptyMessage:'',
+    blocks:{ callout:true, stats:true, table:true, button:true },
+    prompts:[
+      { label:'Open deals', text:'Generate quotes for all open deals', window:'' },
+      { label:'Pipeline',   text:'Documents for everything in the pipeline', window:'' },
+      { label:'In flight',  text:'Quotes for deals still in flight', window:'' }
+    ]
+  },
   {
     id:'a0S01', name:'Renewals this month', active:true,
     description:'Invoices for opportunities whose renewal date falls this month.',

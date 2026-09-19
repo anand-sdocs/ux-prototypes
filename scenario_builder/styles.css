@@ -397,3 +397,4 @@ textarea{resize:vertical}
 .side-rec:last-child{border-bottom:0}
 .side-rec span{color:var(--text-faint);flex:0 0 auto}
 .side-empty{font-size:12px;color:var(--text-faint);font-style:italic}
+.prompt-row .field-help.nowrap{margin:0;font-size:11px;line-height:1.3}

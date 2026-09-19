@@ -8,14 +8,16 @@
 const STEPS = [
   { key:'name',    label:'Name it',         hint:'What to call it',        title:'Name this scenario',
     blurb:'A scenario is a saved answer to "which records should get which document".' },
+  { key:'words',   label:'How people ask',  hint:'The words they use',     title:'How will people ask for this?',
+    blurb:'The same records go by several names — open deals, the pipeline, deals in flight. List the ones your people actually say; that is what the assistant matches against.' },
   { key:'records', label:'Choose records',  hint:'Which ones to include',  title:'Which records should get documents?',
     blurb:'Pick the kind of record, then narrow it down. No formulas — choose from what your org already has.' },
+
   { key:'docs',    label:'Choose documents',hint:'What to generate',       title:'Which documents should they get?',
     blurb:'Every matching record gets one document per template you pick. Order is the order they generate in.' },
   { key:'card',    label:'Design the card', hint:'What people see',        title:'Design what people see',
     blurb:'This card appears before anything is generated, so people can check the list first.' },
-  { key:'words',   label:'Teach the words', hint:'How people ask',         title:'How will people ask for this?',
-    blurb:'The assistant matches what someone types against this. The closer to real phrasing, the better it picks.' },
+
   { key:'review',  label:'Review',          hint:'Check and activate',     title:'Review and activate',
     blurb:'Everything below is configuration. Activating takes effect immediately — nothing is deployed.' }
 ];
@@ -393,6 +395,7 @@ function closeColPicker() { if (wiz.popOpen) { wiz.popOpen.remove(); wiz.popOpen
 /* 5 ------------------------------------------------------------------ words */
 function stepWords() {
   const s = wiz.s;
+  const hasWindow = !!(s.dateField && s.window);
   $('#w-guidance').value = s.guidance;
   $('#w-guidance').oninput = e => { s.guidance = e.target.value; };
   const host = $('#w-prompts');
@@ -400,10 +403,12 @@ function stepWords() {
     <div class="prompt-row">
       <input type="text" data-wp="${i}" data-k="label" value="${esc(p.label)}" placeholder="Button label">
       <input type="text" data-wp="${i}" data-k="text" value="${esc(p.text)}" placeholder="“Generate invoices for opportunities renewing this month”">
-      <div class="select-wrap"><select data-wp="${i}" data-k="window">
-        ${opt('', 'Default period', p.window)}
-        ${ORG.windows.map(w => opt(w, winLabel(w), p.window)).join('')}
-      </select></div>
+      ${hasWindow
+        ? `<div class="select-wrap"><select data-wp="${i}" data-k="window">
+             ${opt('', 'Default period', p.window)}
+             ${ORG.windows.map(w => opt(w, winLabel(w), p.window)).join('')}
+           </select></div>`
+        : `<span class="field-help nowrap">Set a date filter to pin a period</span>`}
       <button class="icon-x" data-delwp="${i}" title="Remove">&times;</button>
     </div>`).join('') || `<p class="field-help">None yet. Even one helps the assistant pick this scenario.</p>`;
   $$('[data-wp]', host).forEach(el => el.oninput = el.onchange = () => {
