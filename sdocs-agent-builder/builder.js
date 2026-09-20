@@ -29,6 +29,9 @@ let currentStep = 0; // 0 = NL entry, 1-6 = wizard steps
 let editingTaskId = null;
 let taskIdCounter = 1;
 
+// Readable by other scripts on the page (the canvas builder reads connections).
+window.wizardState = state;
+
 function slugify(name) {
   return (name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'agent';
 }
@@ -289,6 +292,9 @@ function renderModelStep() {
 // ---------------------------------------------------------------
 
 let pendingConnectorId = null;
+// Set by callers that need to refresh themselves once a connection lands
+// (e.g. the Generate source-priority step, which lists connection status).
+let connectorModalOnDone = null;
 
 function renderConnectors() {
   if (!document.getElementById('connector-grid')) return; // no connector grid on this page (e.g. the AI conversational builder)
@@ -332,9 +338,10 @@ function renderConnectors() {
   document.getElementById('add-custom-connector-tile')?.addEventListener('click', openCustomConnectorModal);
 }
 
-function openConnectorModal(id) {
+function openConnectorModal(id, onDone) {
   const c = CONNECTORS.find(x => x.id === id);
   pendingConnectorId = id;
+  connectorModalOnDone = onDone || null;
   document.getElementById('connector-modal-icon').style.background = c.color;
   document.getElementById('connector-modal-icon').classList.toggle('has-logo', !!c.logo);
   document.getElementById('connector-modal-icon').innerHTML = connectorIconInner(c);
@@ -345,12 +352,16 @@ function openConnectorModal(id) {
 document.getElementById('connector-modal-cancel')?.addEventListener('click', () => {
   document.getElementById('connector-modal').classList.remove('show');
   pendingConnectorId = null;
+  connectorModalOnDone = null;
 });
 document.getElementById('connector-modal-confirm')?.addEventListener('click', () => {
   if (pendingConnectorId) state.connectors[pendingConnectorId] = true;
   document.getElementById('connector-modal').classList.remove('show');
   pendingConnectorId = null;
   renderConnectors();
+  const done = connectorModalOnDone;
+  connectorModalOnDone = null;
+  if (done) done();
 });
 
 // "Custom data source" — a lightweight named entry (name + API base URL)
@@ -1299,7 +1310,9 @@ function renderSourcePriorityList(config) {
         <span class="priority-rank">${i + 1}</span>
         <span class="connector-icon-sm ${c.logo ? 'has-logo' : ''}" style="background:${c.color}">${connectorIconInner(c)}</span>
         <span class="source-name">${escapeHtml(c.name)}</span>
-        <span class="${connected ? 'source-connected-badge' : 'source-disconnected-badge'}">${connected ? '● Connected' : '○ Not connected'}</span>
+        ${connected
+          ? `<span class="source-connected-badge">&#9679; Connected</span>`
+          : `<button class="source-connect-btn" data-connect-source="${id}">Connect</button>`}
         <div class="priority-controls">
           <button class="priority-up" ${i === 0 ? 'disabled' : ''} title="Move up">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
@@ -1311,6 +1324,14 @@ function renderSourcePriorityList(config) {
       </div>
     `;
   }).join('');
+  // Sources can be connected right here. The wizard had a separate Data
+  // sources step earlier in the flow, but the canvas builder has no such
+  // step — and even in the wizard you may have skipped one you now need.
+  list.querySelectorAll('[data-connect-source]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openConnectorModal(btn.dataset.connectSource, () => renderSourcePriorityList(config));
+    });
+  });
   list.querySelectorAll('.priority-up').forEach((btn, i) => btn.addEventListener('click', () => moveSourcePriority(config, i, -1)));
   list.querySelectorAll('.priority-down').forEach((btn, i) => btn.addEventListener('click', () => moveSourcePriority(config, i, 1)));
 }

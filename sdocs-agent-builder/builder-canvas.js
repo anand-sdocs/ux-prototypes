@@ -300,6 +300,9 @@ function connectedSources() {
     if (c.platformId) ids.add(c.platformId);
   });
   Object.keys(state.triggers).forEach(k => { if (k === 'slack' || k === 'email') ids.add(k); });
+  // anything connected from inside a sub-flow (e.g. Generate's source priority)
+  const wiz = window.wizardState && window.wizardState.connectors;
+  if (wiz) Object.keys(wiz).forEach(function (id) { if (wiz[id]) ids.add(id); });
   return [...ids];
 }
 

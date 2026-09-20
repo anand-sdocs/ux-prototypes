@@ -586,6 +586,16 @@ body {
 .source-priority-row .source-name { flex: 1; font-size: 13px; font-weight: 600; }
 .source-priority-row .source-connected-badge { font-size: 10.5px; font-weight: 700; color: var(--success-color); }
 .source-priority-row .source-disconnected-badge { font-size: 10.5px; font-weight: 700; color: var(--text-muted); }
+/* Connecting is possible from here: the canvas builder has no separate
+   Data sources step, and in the wizard you may have skipped one. */
+.source-priority-row .source-connect-btn {
+  font-size: 10.5px; font-weight: 700; font-family: inherit; cursor: pointer;
+  color: var(--primary-color); background: #fff;
+  border: 1px solid var(--border-color); border-radius: 20px; padding: 3px 11px;
+}
+.source-priority-row .source-connect-btn:hover {
+  border-color: var(--primary-color); background: var(--primary-bg);
+}
 .source-priority-row .priority-controls { display: flex; gap: 2px; }
 .source-priority-row .priority-controls button { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; }
 .source-priority-row .priority-controls button:hover:not(:disabled) { color: var(--primary-color); }
