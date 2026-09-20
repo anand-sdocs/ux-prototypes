@@ -180,6 +180,95 @@ const DOCUMENT_TEMPLATES = [
 // "Something else" search rather than the 6 built-in DOCUMENT_TEMPLATES
 // above. Same shape as a DOCUMENT_TEMPLATES entry, plus `team` for
 // provenance and `usedByCount` so search results feel like a real catalog.
+// The actual S-Docs template records in the org. A document *type* says what
+// you want produced; a template is the artifact that renders it, and its merge
+// fields are what the agent has to go and find. Picking the template is what
+// determines the required inputs — curated suggestions are added on top as
+// optional extras.
+const SDOCS_TEMPLATES = [
+  {
+    id: 'tpl-proposal-standard', name: 'Sales Proposal \u2014 Standard', docTypeId: 'sales_proposal',
+    format: 'PDF', owner: 'Sales Ops', updated: '14 Jul 2026', usedBy: 41, isDefault: true,
+    mergeFields: [
+      { key: 'prospect_name', label: 'Prospect / account name' },
+      { key: 'deal_value', label: 'Proposed deal value' },
+      { key: 'proposed_terms', label: 'Proposed terms' },
+    ],
+  },
+  {
+    id: 'tpl-proposal-enterprise', name: 'Sales Proposal \u2014 Enterprise (legal-reviewed)', docTypeId: 'sales_proposal',
+    format: 'DOCX', owner: 'Legal Ops', updated: '02 Aug 2026', usedBy: 12,
+    mergeFields: [
+      { key: 'prospect_name', label: 'Prospect / account name' },
+      { key: 'deal_value', label: 'Proposed deal value' },
+      { key: 'proposed_terms', label: 'Proposed terms' },
+      { key: 'key_differentiators', label: 'Key differentiators' },
+      { key: 'security_addendum', label: 'Security addendum reference' },
+    ],
+  },
+  {
+    id: 'tpl-scorecard-qbr', name: 'Customer Review Scorecard \u2014 QBR', docTypeId: 'scorecard',
+    format: 'PDF', owner: 'Customer Success Ops', updated: '28 Jun 2026', usedBy: 33, isDefault: true,
+    mergeFields: [
+      { key: 'customer_name', label: 'Customer name' },
+      { key: 'review_period', label: 'Review period' },
+      { key: 'csat_score', label: 'CSAT / health score' },
+      { key: 'key_wins', label: 'Key wins this period' },
+    ],
+  },
+  {
+    id: 'tpl-portfolio-review', name: 'Quarterly Portfolio Review \u2014 Wealth', docTypeId: 'investment_summary',
+    format: 'PDF', owner: 'Wealth Ops', updated: '11 Aug 2026', usedBy: 27, isDefault: true,
+    mergeFields: [
+      { key: 'household_name', label: 'Client / household name' },
+      { key: 'total_aum', label: 'Total assets under management' },
+      { key: 'account_holdings', label: 'Account holdings by fund' },
+      { key: 'fee_summary', label: 'Fee summary' },
+      { key: 'performance_returns', label: 'Annualized performance returns' },
+      { key: 'risk_disclosures', label: 'Risk disclosures' },
+    ],
+  },
+  {
+    id: 'tpl-sow-standard', name: 'Statement of Work \u2014 Standard', docTypeId: 'sow',
+    format: 'DOCX', owner: 'Delivery Ops', updated: '19 Jul 2026', usedBy: 18, isDefault: true,
+    mergeFields: [
+      { key: 'client_name', label: 'Client name' },
+      { key: 'project_scope', label: 'Project scope' },
+      { key: 'deliverables', label: 'Deliverables' },
+      { key: 'timeline', label: 'Timeline' },
+      { key: 'payment_terms', label: 'Payment terms' },
+    ],
+  },
+  {
+    id: 'tpl-sow-tm', name: 'Statement of Work \u2014 Time & Materials', docTypeId: 'sow',
+    format: 'DOCX', owner: 'Delivery Ops', updated: '05 Aug 2026', usedBy: 6,
+    mergeFields: [
+      { key: 'client_name', label: 'Client name' },
+      { key: 'project_scope', label: 'Project scope' },
+      { key: 'rate_card', label: 'Hourly rate card' },
+      { key: 'estimated_hours', label: 'Estimated hours' },
+    ],
+  },
+  {
+    id: 'tpl-i140-packet', name: 'I-140 Filing Packet', docTypeId: 'i140',
+    format: 'PDF', owner: 'Immigration Ops', updated: '30 Jun 2026', usedBy: 9, isDefault: true,
+    mergeFields: [
+      { key: 'beneficiary_name', label: 'Beneficiary name' },
+      { key: 'petitioner_company', label: 'Petitioning company' },
+      { key: 'job_title', label: 'Job title' },
+      { key: 'priority_date', label: 'Priority date' },
+      { key: 'supporting_evidence', label: 'Supporting evidence' },
+    ],
+  },
+];
+
+// Templates that render a given document type, default first.
+function sdocsTemplatesFor(docTypeId) {
+  return SDOCS_TEMPLATES
+    .filter(function (t) { return t.docTypeId === docTypeId; })
+    .sort(function (a, b) { return (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0); });
+}
+
 const OPS_TEMPLATE_LIBRARY = [
   {
     id: 'ops-nda-cover-letter',

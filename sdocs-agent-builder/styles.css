@@ -494,6 +494,40 @@ body {
 .subflow-mini-step { flex: 1; height: 4px; border-radius: 999px; background: var(--border-color); }
 .subflow-mini-step.done, .subflow-mini-step.active { background: var(--primary-color); }
 
+/* S-Docs template pick (Generate, step 2) */
+.sdocs-template-list { display: flex; flex-direction: column; gap: 8px; }
+.sdocs-template-row {
+  display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+  border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 14px;
+}
+.sdocs-template-row:hover { border-color: var(--primary-color); }
+.sdocs-template-row.selected { border-color: var(--primary-color); background: var(--primary-bg); }
+.sdocs-template-radio {
+  width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border-color);
+  flex: 0 0 auto; margin-top: 2px;
+}
+.sdocs-template-row.selected .sdocs-template-radio {
+  border-color: var(--primary-color); box-shadow: inset 0 0 0 3px #fff; background: var(--primary-color);
+}
+.sdocs-template-body { min-width: 0; }
+.sdocs-template-name { font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+.sdocs-template-default {
+  font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--success-color); background: var(--success-bg); border-radius: 20px; padding: 2px 7px;
+}
+.sdocs-template-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+.sdocs-template-fields { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.7; }
+.sdocs-template-fields code {
+  background: var(--bg-app); border: 1px solid var(--border-color);
+  border-radius: 4px; padding: 1px 5px; font-size: 10.5px;
+}
+.el-required-tag {
+  font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--primary-color); background: var(--primary-bg); border-radius: 20px; padding: 2px 7px;
+  margin-left: auto;
+}
+.data-element-row.required-by-template { border-color: #cfe3f6; }
+
 /* upload dropzone (extract) */
 .dropzone {
   border: 1.5px dashed var(--border-color); border-radius: var(--border-radius); padding: 40px 20px;
