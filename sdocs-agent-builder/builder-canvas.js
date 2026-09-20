@@ -139,100 +139,12 @@ function triggerSummary(key) {
 }
 
 // ---------------------------------------------------------------------
-// Shapes — geometry carried over from the JointJS spike
-// ---------------------------------------------------------------------
-joint.dia.attributes.html = { set: function (html, refBBox, node) { node.innerHTML = html; } };
-const XHTML = 'http://www.w3.org/1999/xhtml';
-
-const CARD_W = 330, CARD_H = 78;
-const HEX_NOTCH = 30, HEX_RADIUS = 11;
-
-// Rounds every vertex of a polygon, clamping the radius to half the
-// shorter adjacent edge so a short edge can't collapse the shape.
-function roundedPolyPath(pts, r) {
-  const n = pts.length;
-  let d = '';
-  for (let i = 0; i < n; i++) {
-    const prev = pts[(i - 1 + n) % n], cur = pts[i], next = pts[(i + 1) % n];
-    const inLen = Math.hypot(cur.x - prev.x, cur.y - prev.y);
-    const outLen = Math.hypot(next.x - cur.x, next.y - cur.y);
-    const rr = Math.min(r, inLen / 2, outLen / 2);
-    const p1 = { x: cur.x + (prev.x - cur.x) / inLen * rr, y: cur.y + (prev.y - cur.y) / inLen * rr };
-    const p2 = { x: cur.x + (next.x - cur.x) / outLen * rr, y: cur.y + (next.y - cur.y) / outLen * rr };
-    d += (i === 0 ? 'M ' : ' L ') + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2);
-    d += ' Q ' + cur.x.toFixed(2) + ' ' + cur.y.toFixed(2) + ' ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
-  }
-  return d + ' Z';
-}
-
-function hexPath(w, h, notch, r) {
-  return roundedPolyPath([
-    { x: notch, y: 0 }, { x: w - notch, y: 0 }, { x: w, y: h / 2 },
-    { x: w - notch, y: h }, { x: notch, y: h }, { x: 0, y: h / 2 },
-  ], r);
-}
-
-const SOFT_SHADOW = { name: 'dropShadow', args: { dx: 0, dy: 2, blur: 3, color: 'rgba(0,0,0,0.07)' } };
-
-function foMarkup(sel) {
-  return { tagName: 'foreignObject', selector: 'fo',
-    children: [{ tagName: 'div', namespaceURI: XHTML, selector: 'content', attributes: { class: 'fc-fo' } }] };
-}
-
-// A rounded rectangle whose contents are HTML (agent, trigger, step cards).
-const CardNode = joint.dia.Element.define('fc.Card', {
-  size: { width: CARD_W, height: CARD_H },
-  attrs: {
-    body: { width: 'calc(w)', height: 'calc(h)', rx: 12, ry: 12,
-            fill: '#ffffff', stroke: '#dddbda', strokeWidth: 1.5, filter: SOFT_SHADOW },
-    fo: { x: 15, y: 0, width: CARD_W - 30, height: CARD_H, overflow: 'visible' },
-    content: { html: '' },
-  },
-}, { markup: [{ tagName: 'rect', selector: 'body' }, foMarkup()] });
-
-// A flat-ended hexagon with softened corners — same footprint as a card,
-// so decisions sit on the same grid instead of interrupting it.
-const HexNode = joint.dia.Element.define('fc.Hex', {
-  size: { width: CARD_W, height: CARD_H },
-  attrs: {
-    body: { d: hexPath(CARD_W, CARD_H, HEX_NOTCH, HEX_RADIUS),
-            fill: '#ffffff', stroke: '#dddbda', strokeWidth: 1.5, filter: SOFT_SHADOW },
-    fo: { x: 26, y: 0, width: CARD_W - 52, height: CARD_H, overflow: 'visible' },
-    content: { html: '' },
-  },
-}, { markup: [{ tagName: 'path', selector: 'body' }, foMarkup()] });
-
-const PillNode = joint.dia.Element.define('fc.Pill', {
-  size: { width: 110, height: 40 },
-  attrs: {
-    body: { width: 'calc(w)', height: 'calc(h)', rx: 20, ry: 20, fill: '#c9ccd1', stroke: 'none' },
-    label: { x: 'calc(w/2)', y: 'calc(h/2)', textAnchor: 'middle', textVerticalAnchor: 'middle',
-             fontSize: 12, fontWeight: 700, fontFamily: 'Inter, sans-serif', fill: '#5e6670' },
-  },
-}, { markup: [{ tagName: 'rect', selector: 'body' }, { tagName: 'text', selector: 'label' }] });
-
-// Dashed affordance: "add a trigger", "add your first step".
-const GhostNode = joint.dia.Element.define('fc.Ghost', {
-  size: { width: 200, height: 52 },
-  attrs: {
-    body: { width: 'calc(w)', height: 'calc(h)', rx: 11, ry: 11,
-            fill: '#ffffff', stroke: '#c2c6cc', strokeWidth: 1.5, strokeDasharray: '5 4' },
-    fo: { x: 8, y: 0, width: 184, height: 52, overflow: 'visible' },
-    content: { html: '' },
-  },
-}, { markup: [{ tagName: 'rect', selector: 'body' }, foMarkup()] });
-
-// Feather-style icons at the stroke weight used across the prototype.
-function ico(inner) {
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-    'stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
-}
-const DECISION_ICON = {
-  rule:     ico('<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>'),
-  decision: ico('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>'),
-  approval: ico('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>'),
-};
-const PLUS_ICON = ico('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>');
+// Shapes, icons and the link factory come from flow-canvas-core.js, which the
+// run-audit page draws with too — one definition, not two that drift.
+const FC = window.FlowCanvas;
+const CARD_W = FC.CARD_W, CARD_H = FC.CARD_H;
+const CardNode = FC.CardNode, HexNode = FC.HexNode, PillNode = FC.PillNode, GhostNode = FC.GhostNode;
+const DECISION_ICON = FC.DECISION_ICON, PLUS_ICON = FC.PLUS_ICON;
 
 // ---------------------------------------------------------------------
 // Node HTML
@@ -433,36 +345,7 @@ function buildCells() {
 }
 
 function edgeLink(from, to, label, ghost) {
-  const link = new joint.shapes.standard.Link({
-    source: { id: from }, target: { id: to },
-    router: { name: 'manhattan', args: { padding: 18, startDirections: ['bottom'], endDirections: ['top'] } },
-    connector: { name: 'rounded', args: { radius: 10 } },
-    attrs: {
-      line: {
-        stroke: ghost ? '#dfe2e6' : '#c2c6cc',
-        strokeWidth: 2,
-        strokeDasharray: ghost ? '5 4' : null,
-        targetMarker: ghost ? null
-          : { type: 'path', d: 'M 9 -4.5 0 0 9 4.5 z', fill: '#c2c6cc', stroke: 'none' },
-      },
-    },
-  });
-  if (label) {
-    link.labels([{
-      // Negative = measured back from the TARGET. Branches share a vertical
-      // stub just below the fork, so a label placed near the source lands on
-      // top of its sibling; at the target end the paths have diverged and each
-      // chip sits over the node it actually leads to.
-      position: { distance: -30 },
-      markup: [{ tagName: 'rect', selector: 'labelBody' }, { tagName: 'text', selector: 'labelText' }],
-      attrs: {
-        labelText: { text: label, fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif',
-                     fill: '#5e6670', textAnchor: 'middle', textVerticalAnchor: 'middle' },
-        labelBody: { ref: 'labelText', fill: '#ffffff', stroke: '#dddbda', strokeWidth: 1, rx: 6, ry: 6,
-                     x: 'calc(x-8)', y: 'calc(y-4)', width: 'calc(w+16)', height: 'calc(h+8)' },
-      },
-    }]);
-  }
+  const link = FC.makeLink(from, to, { label: label, ghost: ghost });
   link.set('edgeFrom', from);
   link.set('edgeTo', to);
   link.set('insertable', !ghost && from !== 'agent');
@@ -472,11 +355,7 @@ function edgeLink(from, to, label, ghost) {
 function render(keepView) {
   const t = paper.translate(), s = paper.scale().sx;
   graph.resetCells(buildCells());
-  joint.layout.DirectedGraph.layout(graph, {
-    dagre: dagre, graphlib: graphlib,
-    rankDir: 'TB', nodeSep: 42, rankSep: 54, marginX: 40, marginY: 40,
-    setLinkVertices: false,
-  });
+  FC.layout(graph);
   if (keepView) { paper.scale(s, s); paper.translate(t.tx, t.ty); }
   renderMinimap();
   renderInspector();
