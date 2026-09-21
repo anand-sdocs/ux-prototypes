@@ -193,6 +193,22 @@ function stepHtml(node) {
     '</div>';
 }
 
+// '=' reads badly on a diagram someone is skim-reading; the rest are fine.
+const OPERATOR_WORDS = { '=': 'is', '>': '>', '<': '<', '>=': '\u2265', '<=': '\u2264', 'contains': 'contains' };
+
+// What this fork actually tests. Shown under the question, so the node is
+// readable without opening the panel — the same job stepSummary does for tasks.
+function decisionSummary(node) {
+  const c = node.config || {};
+  if (node.kind === 'approval') {
+    if (!c.approver) return 'Choose who approves';
+    const ch = NOTIFY_CHANNELS.find(function (x) { return x.id === c.channelId; });
+    return c.approver + (ch ? ', asked via ' + ch.name : '');
+  }
+  if (!c.field || !c.operator || c.value === '' || c.value == null) return 'Set the criteria to evaluate';
+  return c.field + ' ' + (OPERATOR_WORDS[c.operator] || c.operator) + ' ' + c.value;
+}
+
 function hexHtml(node) {
   const k = DECISION_KINDS[node.kind];
   return '<div class="fc-hex-inner">' +
@@ -200,6 +216,7 @@ function hexHtml(node) {
       '<div class="fc-node-body">' +
         '<div class="fc-hex-kicker" style="color:' + k.color + '">' + k.label + '</div>' +
         '<div class="fc-node-title">' + esc(node.title) + '</div>' +
+        '<div class="fc-node-desc">' + esc(decisionSummary(node)) + '</div>' +
       '</div>' +
     '</div>';
 }
@@ -873,12 +890,11 @@ function renderDecisionPanel(el, node) {
   el.innerHTML = panelShell(chip, node.title, k.label, body);
 
   bind('d-title', 'input', e => { node.title = e.target.value; softRefresh(node.id); });
-  bind('d-field', 'change', e => { c.field = e.target.value; });
-  bind('d-op', 'change', e => { c.operator = e.target.value; });
-  bind('d-val', 'input', e => { c.value = e.target.value; });
-  bind('d-prompt', 'input', e => { c.prompt = e.target.value; });
-  bind('d-approver', 'change', e => { c.approver = e.target.value; });
-  bind('d-channel', 'change', e => { c.channelId = e.target.value; });
+  bind('d-field', 'change', e => { c.field = e.target.value; softRefresh(node.id); });
+  bind('d-op', 'change', e => { c.operator = e.target.value; softRefresh(node.id); });
+  bind('d-val', 'input', e => { c.value = e.target.value; softRefresh(node.id); });
+  bind('d-approver', 'change', e => { c.approver = e.target.value; softRefresh(node.id); });
+  bind('d-channel', 'change', e => { c.channelId = e.target.value; softRefresh(node.id); });
   bind('d-delete', 'click', () => deleteNode(node.id));
   el.querySelectorAll('[data-edge]').forEach(inp => {
     inp.onchange = () => { outgoing[+inp.dataset.edge].label = inp.value; render(true); };
