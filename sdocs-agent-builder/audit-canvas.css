@@ -69,3 +69,7 @@
 }
 .ac-chosen { padding: 9px 11px; font-size: 12px; line-height: 1.5; border-top: 1px solid var(--border-color); }
 .ac-chosen strong { display: block; margin-bottom: 3px; }
+
+/* steps the run never reached */
+.ac-dim { opacity: 0.55; }
+.ac-pill--skipped { background: var(--bg-app); color: var(--text-muted); }

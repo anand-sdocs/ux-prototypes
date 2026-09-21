@@ -819,6 +819,109 @@ const HITL_REQUESTS = [
 //                                     // single prompt/response.
 // ---------------------------------------------------------------
 
+// The flow each agent was BUILT with, as the canvas builder models it. The
+// audit needs this: a run only records the steps it executed, so without the
+// design there is no way to show the branch that was not taken.
+//
+// Node titles match the labels in AUDIT_TRAILS, and RUN_PATHS below says which
+// nodes a given run actually visited.
+const AGENT_FLOWS = {
+  a1: {
+    trigger: 'schedule',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract renewal terms' },
+      { id: 'd1', kind: 'rule', title: 'Auto-renew clause present?', config: { field: 'auto_renew_clause', operator: '=', value: 'true' } },
+      { id: 'n2', kind: 'approval', title: 'Deal desk approval', config: { approver: 'Deal desk', channelId: 'slack' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'Save to Salesforce' },
+      { id: 'n4', kind: 'task', type: 'notify', title: 'Notify deal desk' },
+    ],
+    edges: [
+      { from: 'n1', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n2', label: 'No' },
+      { from: 'n2', to: 'n3', label: 'Approved' },
+      { from: 'n3', to: 'n4' },
+    ],
+  },
+  a2: {
+    trigger: 'email',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract claim details' },
+      { id: 'n2', kind: 'task', type: 'analyze', title: 'Check against policy playbook' },
+      { id: 'd1', kind: 'rule', title: 'Confident enough to auto-file?', config: { field: 'accuracy_score', operator: '>=', value: '95' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'File the claim' },
+      { id: 'n4', kind: 'task', type: 'notify', title: 'Notify claims reviewer' },
+      { id: 'n5', kind: 'approval', title: 'Claims reviewer decision', config: { approver: 'Record owner', channelId: 'email' } },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2' },
+      { from: 'n2', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n4', label: 'No' },
+      { from: 'n4', to: 'n5' },
+    ],
+  },
+  a3: {
+    trigger: 'schedule',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'generate', title: 'Draft weekly pipeline summary' },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Post to #deal-approvals' },
+    ],
+    edges: [{ from: 'n1', to: 'n2' }],
+  },
+  a4: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'analyze', title: 'Run legal playbook' },
+      { id: 'd1', kind: 'rule', title: 'Any high-risk findings?', config: { field: 'risk_score', operator: '=', value: 'High' } },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Notify legal' },
+      { id: 'n3', kind: 'task', type: 'save', title: 'File the review' },
+    ],
+    edges: [
+      { from: 'n1', to: 'd1' },
+      { from: 'd1', to: 'n2', label: 'Yes' },
+      { from: 'd1', to: 'n3', label: 'No' },
+    ],
+  },
+  a5: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract expense line items' },
+      { id: 'n2', kind: 'task', type: 'analyze', title: 'Check against spend thresholds' },
+      { id: 'd1', kind: 'rule', title: 'Within the auto-approve limit?', config: { field: 'claim_amount', operator: '<', value: '2500' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'Save approved rows to Google Sheets' },
+      { id: 'n4', kind: 'approval', title: 'Manager approval', config: { approver: 'Manager', channelId: 'slack' } },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2' },
+      { from: 'n2', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n4', label: 'No' },
+      { from: 'n4', to: 'n3', label: 'Approved' },
+    ],
+  },
+  a6: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'generate', title: 'Draft Statement of Work' },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Notify account owner' },
+    ],
+    edges: [{ from: 'n1', to: 'n2' }],
+  },
+};
+
+// Which nodes each recorded run actually went through, in order. Stated rather
+// than inferred from step labels, so the highlight can never drift from the
+// trail it is describing.
+const RUN_PATHS = {
+  a1: ['n1', 'd1', 'n3', 'n4'],
+  a2: ['n1', 'n2', 'd1', 'n4'],
+  a3: ['n1', 'n2'],
+  a4: ['n1', 'd1', 'n2'],
+  a5: ['n1', 'n2', 'd1', 'n3'],
+  a6: ['n1', 'n2'],
+};
+
 const AUDIT_TRAILS = {
   a1: {
     runId: 'run-77210',
