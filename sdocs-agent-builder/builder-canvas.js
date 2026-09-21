@@ -23,9 +23,9 @@
 // Model
 // ---------------------------------------------------------------------
 const DECISION_KINDS = {
-  rule:     { label: 'Rule condition', color: '#b8860b', tint: '#fff8e1' },
-  decision: { label: 'Agent decision', color: '#7d3ac1', tint: '#f4edfb' },
-  approval: { label: 'Human approval', color: '#c62828', tint: '#fdecea' },
+  rule:     { label: 'Check a value', color: '#b8860b', tint: '#fff8e1' },
+  decision: { label: 'Let the agent decide', color: '#7d3ac1', tint: '#f4edfb' },
+  approval: { label: 'Ask a person', color: '#c62828', tint: '#fdecea' },
 };
 
 const CAUTION_LABELS = ['Act freely', 'Balanced', 'Always ask'];
@@ -843,25 +843,27 @@ function renderDecisionPanel(el, node) {
     '<input type="text" id="d-title" value="' + esc(node.title) + '"></div>';
 
   if (node.kind === 'rule') {
-    body += '<div class="fc-field"><label>Check</label>' +
+    body += '<div class="fc-field"><label>Field to check</label>' +
       '<select id="d-field">' + PLAYBOOK_FIELDS.map(f => '<option' + (c.field === f ? ' selected' : '') + '>' + f + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Operator</label>' +
       '<select id="d-op">' + PLAYBOOK_OPERATORS.map(o => '<option' + (c.operator === o ? ' selected' : '') + '>' + o + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Value</label>' +
       '<input type="text" id="d-val" value="' + esc(c.value || '') + '" placeholder="e.g. High"></div>' +
-      '<div class="fc-hint">A deterministic fork on data an earlier step produced.</div>';
+      '<div class="fc-hint">The data picks the path, so the same input always takes the same route.</div>';
   } else if (node.kind === 'decision') {
     body += '<div class="fc-field"><label>What the agent decides</label>' +
       '<textarea id="d-prompt" rows="4" placeholder="e.g. Decide whether this contract needs legal review, based on the role and guardrails.">' +
       esc(c.prompt || '') + '</textarea>' +
-      '<div class="fc-hint">The model picks one outgoing path at run time using the agent’s role and guardrails.</div></div>';
+      '<div class="fc-hint">The agent picks the path at run time from its role and guardrails, so two ' +
+      'runs with similar input may go different ways.</div></div>';
   } else {
     body += '<div class="fc-field"><label>Who approves?</label>' +
       '<select id="d-approver">' + ['Deal desk', 'Legal', 'Record owner', 'Manager'].map(a =>
         '<option' + (c.approver === a ? ' selected' : '') + '>' + a + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Ask via</label><select id="d-channel">' +
         NOTIFY_CHANNELS.map(ch => '<option value="' + ch.id + '"' + (c.channelId === ch.id ? ' selected' : '') + '>' + esc(ch.name) + '</option>').join('') +
-      '</select></div>';
+      '</select></div>' +
+      '<div class="fc-hint">A person picks the path. The run pauses here until they answer.</div>';
   }
 
   body += '<div class="fc-insp-section-label">Outgoing paths (' + outgoing.length + ')</div>' +
@@ -938,9 +940,9 @@ const INSERT_OPTIONS = [
   { kind: 'task', type: 'analyze',  label: 'Analyze' },
   { kind: 'task', type: 'save',     label: 'Save' },
   { kind: 'task', type: 'notify',   label: 'Notify' },
-  { kind: 'rule',     label: 'Rule condition' },
-  { kind: 'decision', label: 'Agent decision' },
-  { kind: 'approval', label: 'Human approval' },
+  { kind: 'rule',     label: 'Check a value' },
+  { kind: 'decision', label: 'Let the agent decide' },
+  { kind: 'approval', label: 'Ask a person' },
 ];
 
 function addBtnTool() {
@@ -1052,7 +1054,9 @@ function makeNode(option) {
   if (option.kind === 'task') {
     return { id, kind: 'task', type: option.type, title: option.label, desc: '', config: defaultConfig(option.type) };
   }
-  return { id, kind: option.kind, title: option.kind === 'approval' ? 'Approval needed?' : 'Which path?', config: {} };
+  const title = option.kind === 'approval' ? 'Approval needed?'
+    : option.kind === 'rule' ? 'What does the data say?' : 'Which path?';
+  return { id, kind: option.kind, title: title, config: {} };
 }
 
 function defaultConfig(type) {
