@@ -23,8 +23,7 @@
 // Model
 // ---------------------------------------------------------------------
 const DECISION_KINDS = {
-  rule:     { label: 'Check a value', color: '#b8860b', tint: '#fff8e1' },
-  decision: { label: 'Let the agent decide', color: '#7d3ac1', tint: '#f4edfb' },
+  rule:     { label: 'Evaluate criteria', color: '#b8860b', tint: '#fff8e1' },
   approval: { label: 'Ask a person', color: '#c62828', tint: '#fdecea' },
 };
 
@@ -46,7 +45,7 @@ let state = {
   },
   // trigger key -> config; presence means enabled. Manual is always on.
   triggers: { manual: {} },
-  nodes: [],   // { id, kind: 'task'|'rule'|'decision'|'approval'|'end', type?, title, desc, config }
+  nodes: [],   // { id, kind: 'task'|'rule'|'approval'|'end', type?, title, desc, config }
   edges: [],   // { from, to, label? }
 };
 
@@ -65,7 +64,7 @@ function firstStepId() {
   const head = state.nodes.find(n => !targets.has(n.id));
   return head ? head.id : null;
 }
-function isDecision(kind) { return kind === 'rule' || kind === 'decision' || kind === 'approval'; }
+function isDecision(kind) { return kind === 'rule' || kind === 'approval'; }
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
@@ -843,19 +842,13 @@ function renderDecisionPanel(el, node) {
     '<input type="text" id="d-title" value="' + esc(node.title) + '"></div>';
 
   if (node.kind === 'rule') {
-    body += '<div class="fc-field"><label>Field to check</label>' +
+    body += '<div class="fc-field"><label>Field to evaluate</label>' +
       '<select id="d-field">' + PLAYBOOK_FIELDS.map(f => '<option' + (c.field === f ? ' selected' : '') + '>' + f + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Operator</label>' +
       '<select id="d-op">' + PLAYBOOK_OPERATORS.map(o => '<option' + (c.operator === o ? ' selected' : '') + '>' + o + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Value</label>' +
       '<input type="text" id="d-val" value="' + esc(c.value || '') + '" placeholder="e.g. High"></div>' +
       '<div class="fc-hint">The data picks the path, so the same input always takes the same route.</div>';
-  } else if (node.kind === 'decision') {
-    body += '<div class="fc-field"><label>What the agent decides</label>' +
-      '<textarea id="d-prompt" rows="4" placeholder="e.g. Decide whether this contract needs legal review, based on the role and guardrails.">' +
-      esc(c.prompt || '') + '</textarea>' +
-      '<div class="fc-hint">The agent picks the path at run time from its role and guardrails, so two ' +
-      'runs with similar input may go different ways.</div></div>';
   } else {
     body += '<div class="fc-field"><label>Who approves?</label>' +
       '<select id="d-approver">' + ['Deal desk', 'Legal', 'Record owner', 'Manager'].map(a =>
@@ -940,8 +933,7 @@ const INSERT_OPTIONS = [
   { kind: 'task', type: 'analyze',  label: 'Analyze' },
   { kind: 'task', type: 'save',     label: 'Save' },
   { kind: 'task', type: 'notify',   label: 'Notify' },
-  { kind: 'rule',     label: 'Check a value' },
-  { kind: 'decision', label: 'Let the agent decide' },
+  { kind: 'rule',     label: 'Evaluate criteria' },
   { kind: 'approval', label: 'Ask a person' },
 ];
 
@@ -1054,8 +1046,7 @@ function makeNode(option) {
   if (option.kind === 'task') {
     return { id, kind: 'task', type: option.type, title: option.label, desc: '', config: defaultConfig(option.type) };
   }
-  const title = option.kind === 'approval' ? 'Approval needed?'
-    : option.kind === 'rule' ? 'What does the data say?' : 'Which path?';
+  const title = option.kind === 'approval' ? 'Approval needed?' : 'Does it meet the criteria?';
   return { id, kind: option.kind, title: title, config: {} };
 }
 
