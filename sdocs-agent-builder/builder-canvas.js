@@ -155,9 +155,12 @@ function stepSummary(node) {
       return p.name + ' — ' + obj.name + (mapped ? ', ' + mapped + ' field' + (mapped === 1 ? '' : 's') + ' mapped' : ', not mapped yet');
     }
     case 'notify': {
-      const ch = NOTIFY_CHANNELS.find(x => x.id === c.channelId);
+      const ch = NOTIFY_CHANNELS.find(function (x) { return x.id === c.channelId; });
       if (!ch) return 'Pick a channel';
-      return 'Via ' + ch.name + (c.recipient ? ' to ' + c.recipient : '');
+      const who = [];
+      if (c.recipient) who.push(c.recipient);
+      if (c.notifyInvoker) who.push('whoever ran it');
+      return 'Via ' + ch.name + (who.length ? ' to ' + who.join(' and ') : ' \u2014 no recipient yet');
     }
     default: return '';
   }
@@ -257,6 +260,13 @@ function hexHtml(node) {
         '<div class="fc-node-desc">' + esc(decisionSummary(node)) + '</div>' +
       '</div>' +
     '</div>';
+}
+
+// Whether there is a human to notify at all depends on how the run started.
+function invokerHint(extra) {
+  return state.triggers.manual
+    ? 'This agent can be run by hand, so there is someone to tell.' + (extra || '')
+    : 'Only applies to manual runs \u2014 a scheduled or webhook run has nobody who started it, so this is skipped.';
 }
 
 function errorRecipients() {
@@ -687,7 +697,6 @@ function renderErrorPanel(el) {
   const e = state.errorPath;
   const chip = '<div class="fc-hex-icon" style="width:34px;height:34px;border-radius:10px;background:#fdecea;color:' +
     ERROR_RED + '">' + FC.ALERT_ICON + '</div>';
-  const manual = !!state.triggers.manual;
 
   const body =
     '<div class="fc-muted-note" style="margin:0 0 16px;">Applies to every step. If any of them fails ' +
@@ -709,10 +718,7 @@ function renderErrorPanel(el) {
       '<div class="fc-field-row" style="padding:9px 11px;">' +
         '<input type="checkbox" id="err-invoker"' + (e.notifyInvoker ? ' checked' : '') + '>' +
         '<label for="err-invoker" style="margin:0;font-weight:600;cursor:pointer;">The person who ran it</label></div>' +
-      '<div class="fc-hint">' + (manual
-        ? 'This agent can be run by hand, so there is someone to tell.'
-        : 'Only applies to manual runs \u2014 a scheduled or webhook run has nobody who started it, so this is skipped.') +
-      '</div>' +
+      '<div class="fc-hint">' + invokerHint() + '</div>' +
 
       '<div class="fc-insp-section-label">Tell them via</div>' +
       '<div class="fc-field"><select id="err-channel">' +
@@ -921,10 +927,16 @@ function renderStepPanel(el, node) {
           '<div class="fc-option-body"><div class="fc-option-title">' + esc(ch.name) + '</div></div></button>').join('');
     if (c.channelId) {
       body += '<div class="fc-field" style="margin-top:12px;"><label>Send to</label><select id="s-recip">' +
-        (NOTIFY_RECIPIENTS[c.channelId] || []).map(r =>
-          '<option' + (c.recipient === r ? ' selected' : '') + '>' + esc(r) + '</option>').join('') +
+        '<option value=""' + (c.recipient ? '' : ' selected') + '>\u2014 no fixed recipient \u2014</option>' +
+        (NOTIFY_RECIPIENTS[c.channelId] || []).map(function (r) {
+          return '<option' + (c.recipient === r ? ' selected' : '') + '>' + esc(r) + '</option>';
+        }).join('') +
         '</select></div>' +
-        '<div class="fc-field"><label>Message</label><textarea id="s-msg" rows="3" placeholder="What should it say?">' +
+        '<div class="fc-field-row" style="padding:9px 11px;">' +
+          '<input type="checkbox" id="s-invoker"' + (c.notifyInvoker ? ' checked' : '') + '>' +
+          '<label for="s-invoker" style="margin:0;font-weight:600;cursor:pointer;">Also tell the person who ran it</label></div>' +
+        '<div class="fc-hint">' + invokerHint(' They get told this step finished, on top of any fixed recipient.') + '</div>' +
+        '<div class="fc-field" style="margin-top:14px;"><label>Message</label><textarea id="s-msg" rows="3" placeholder="What should it say?">' +
         esc(c.message || '') + '</textarea></div>';
     }
   }
@@ -936,6 +948,7 @@ function renderStepPanel(el, node) {
   bind('s-playbook', 'input', e => { c.playbookName = e.target.value; softRefresh(node.id); });
   bind('s-msg', 'input', e => { c.message = e.target.value; });
   bind('s-recip', 'change', e => { c.recipient = e.target.value; softRefresh(node.id); });
+  bind('s-invoker', 'change', e => { c.notifyInvoker = e.target.checked; softRefresh(node.id); });
   bind('s-desc', 'input', function (e) { c.description = e.target.value; });
   bind('s-drop', 'click', function () {
     snapshot();
@@ -1247,7 +1260,7 @@ function defaultConfig(type) {
     case 'generate': return { templateId: null };
     case 'analyze': return { mode: null, rules: [] };
     case 'save': return { platformId: null, objectId: null, mappings: {} };
-    case 'notify': return { channelId: null, recipient: '', message: '' };
+    case 'notify': return { channelId: null, recipient: '', message: '', notifyInvoker: false };
     default: return {};
   }
 }
