@@ -29,6 +29,21 @@ const DECISION_KINDS = {
 
 const CAUTION_LABELS = ['Act freely', 'Balanced', 'Always ask'];
 const APPROVERS = ['Deal desk', 'Legal', 'Record owner', 'Manager'];
+const ERROR_RED = '#c62828';
+
+// What happens if any step fails. One handler for the whole agent — a
+// catch-all rather than per-step try/catch — so it hangs off the agent and
+// stays a single edge however large the flow gets.
+const ERROR_ACTIONS = [
+  { id: 'notify_stop', label: 'Notify and stop',
+    desc: 'The run halts. Nothing half-written is left behind.' },
+  { id: 'retry_notify', label: 'Retry once, then notify and stop',
+    desc: 'Absorbs a timed-out call; escalates anything persistent.' },
+  { id: 'pause_review', label: 'Pause for a person to decide',
+    desc: 'Waits in the review queue so someone can retry, skip or abandon it.' },
+  { id: 'log_continue', label: 'Record it and carry on',
+    desc: 'Logs to the audit trail and runs the next step anyway.' },
+];
 
 // A <select> renders its first option as selected whether or not anything was
 // chosen, so a fork could show "accuracy_score > 80" in the panel while the
@@ -56,6 +71,14 @@ let state = {
   },
   // trigger key -> config; presence means enabled. Manual is always on.
   triggers: { manual: {} },
+  // Always present: every agent has a failure path whether or not it was
+  // thought about, and a default is safer than nothing.
+  errorPath: {
+    action: 'notify_stop',
+    notifyAdmin: true,
+    notifyInvoker: true,   // only meaningful when a run was started by hand
+    channelId: 'email',
+  },
   nodes: [],   // { id, kind: 'task'|'rule'|'approval'|'end', type?, title, desc, config }
   edges: [],   // { from, to, label? }
 };
@@ -236,6 +259,33 @@ function hexHtml(node) {
     '</div>';
 }
 
+function errorRecipients() {
+  const e = state.errorPath;
+  const who = [];
+  if (e.notifyAdmin) who.push('the administrator');
+  if (e.notifyInvoker) who.push('whoever ran it');
+  return who;
+}
+
+function errorPathSummary() {
+  const who = errorRecipients();
+  if (state.errorPath.action === 'log_continue') return 'Logged to the audit trail, run continues';
+  if (!who.length) return 'Nobody is told \u2014 pick a recipient';
+  return 'Tells ' + who.join(' and ');
+}
+
+function errorPathHtml() {
+  const action = ERROR_ACTIONS.find(function (a) { return a.id === state.errorPath.action; }) || ERROR_ACTIONS[0];
+  return '<div class="fc-node" style="border:none;box-shadow:none;padding:0;">' +
+      '<div class="fc-hex-icon" style="background:#fdecea;color:' + ERROR_RED + '">' + FC.ALERT_ICON + '</div>' +
+      '<div class="fc-node-body">' +
+        '<div class="fc-hex-kicker" style="color:' + ERROR_RED + '">If anything fails</div>' +
+        '<div class="fc-node-title">' + esc(action.label) + '</div>' +
+        '<div class="fc-node-desc">' + esc(errorPathSummary()) + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
 function connectedSources() {
   const ids = new Set();
   state.nodes.forEach(n => {
@@ -301,6 +351,16 @@ function buildCells() {
     cells.push(edgeLink('agent', 'trig:' + key));
     if (head) cells.push(edgeLink('trig:' + key, head));
   });
+
+  // --- the catch-all failure handler, hanging off the agent ---
+  const errCell = new CardNode({ id: 'errorpath' });
+  errCell.attr('content/html', errorPathHtml());
+  errCell.attr('body/stroke', isSelected('errorPath', null) ? ERROR_RED : '#f0c4c0');
+  errCell.attr('body/strokeWidth', isSelected('errorPath', null) ? 2.5 : 1.5);
+  errCell.attr('body/strokeDasharray', '6 4');
+  errCell.set('fcRef', { type: 'errorPath', id: null });
+  cells.push(errCell);
+  cells.push(edgeLink('agent', 'errorpath', null, true));
 
   // --- ghost "add trigger" sitting in the trigger rank ---
   const addTrig = new GhostNode({ id: 'trig:add', size: { width: 160, height: 62 } });
@@ -508,6 +568,7 @@ function renderInspector() {
     return;
   }
   if (selected.type === 'agent') return renderAgentPanel(el);
+  if (selected.type === 'errorPath') return renderErrorPanel(el);
   if (selected.type === 'trigger') return renderTriggerPanel(el, selected.id);
   const node = findNode(selected.id);
   if (!node) { selected = null; return renderInspector(); }
@@ -613,6 +674,59 @@ function softRefresh(kindOrId) {
   if (!cell) return;
   const node = findNode(kindOrId);
   if (node) cell.attr('content/html', isDecision(node.kind) ? hexHtml(node) : stepHtml(node));
+}
+
+// --- error path --------------------------------------------------------
+function renderErrorPanel(el) {
+  const e = state.errorPath;
+  const chip = '<div class="fc-hex-icon" style="width:34px;height:34px;border-radius:10px;background:#fdecea;color:' +
+    ERROR_RED + '">' + FC.ALERT_ICON + '</div>';
+  const manual = !!state.triggers.manual;
+
+  const body =
+    '<div class="fc-muted-note" style="margin:0 0 16px;">Applies to every step. If any of them fails ' +
+      '\u2014 a source is unreachable, a model call errors, a record won\u2019t save \u2014 the run comes here.</div>' +
+
+    '<div class="fc-insp-section-label">What should happen</div>' +
+    ERROR_ACTIONS.map(function (a) {
+      return '<button class="fc-option' + (e.action === a.id ? ' on' : '') + '" data-err-action="' + a.id + '">' +
+          '<div class="fc-option-body"><div class="fc-option-title">' + esc(a.label) + '</div>' +
+            '<div class="fc-option-desc">' + esc(a.desc) + '</div></div>' +
+        '</button>';
+    }).join('') +
+
+    (e.action === 'log_continue' ? '' :
+      '<div class="fc-insp-section-label">Who to tell</div>' +
+      '<div class="fc-field-row" style="padding:9px 11px;">' +
+        '<input type="checkbox" id="err-admin"' + (e.notifyAdmin ? ' checked' : '') + '>' +
+        '<label for="err-admin" style="margin:0;font-weight:600;cursor:pointer;">The administrator</label></div>' +
+      '<div class="fc-field-row" style="padding:9px 11px;">' +
+        '<input type="checkbox" id="err-invoker"' + (e.notifyInvoker ? ' checked' : '') + '>' +
+        '<label for="err-invoker" style="margin:0;font-weight:600;cursor:pointer;">The person who ran it</label></div>' +
+      '<div class="fc-hint">' + (manual
+        ? 'This agent can be run by hand, so there is someone to tell.'
+        : 'Only applies to manual runs \u2014 a scheduled or webhook run has nobody who started it, so this is skipped.') +
+      '</div>' +
+
+      '<div class="fc-insp-section-label">Tell them via</div>' +
+      '<div class="fc-field"><select id="err-channel">' +
+        NOTIFY_CHANNELS.map(function (ch) {
+          return '<option value="' + ch.id + '"' + (e.channelId === ch.id ? ' selected' : '') + '>' + esc(ch.name) + '</option>';
+        }).join('') +
+      '</select></div>');
+
+  el.innerHTML = panelShell(chip, 'If anything fails', 'Error path \u00b7 applies to every step', body);
+
+  const touch = function () {
+    const cell = graph.getCell('errorpath');
+    if (cell) cell.attr('content/html', errorPathHtml());
+  };
+  el.querySelectorAll('[data-err-action]').forEach(function (b) {
+    b.onclick = function () { snapshot(); e.action = b.dataset.errAction; renderInspector(); touch(); };
+  });
+  bind('err-admin', 'change', function (ev) { e.notifyAdmin = ev.target.checked; touch(); });
+  bind('err-invoker', 'change', function (ev) { e.notifyInvoker = ev.target.checked; touch(); });
+  bind('err-channel', 'change', function (ev) { e.channelId = ev.target.value; touch(); });
 }
 
 // --- trigger -----------------------------------------------------------

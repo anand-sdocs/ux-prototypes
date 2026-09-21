@@ -102,6 +102,7 @@ const DECISION_ICON = {
   rule:     ico('<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>'),
   approval: ico('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>'),
 };
+const ALERT_ICON = ico('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>');
 const PLUS_ICON = ico('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>');
 
 // A connector between two nodes. `opts`: { label, ghost, color, dashed }.
@@ -157,7 +158,7 @@ window.FlowCanvas = {
   CARD_W: CARD_W, CARD_H: CARD_H, HEX_NOTCH: HEX_NOTCH, HEX_RADIUS: HEX_RADIUS,
   roundedPolyPath: roundedPolyPath, hexPath: hexPath, SOFT_SHADOW: SOFT_SHADOW,
   CardNode: CardNode, HexNode: HexNode, PillNode: PillNode, GhostNode: GhostNode,
-  ico: ico, DECISION_ICON: DECISION_ICON, PLUS_ICON: PLUS_ICON,
+  ico: ico, DECISION_ICON: DECISION_ICON, PLUS_ICON: PLUS_ICON, ALERT_ICON: ALERT_ICON,
   makeLink: makeLink, layout: layout, esc: escapeText,
 };
 
