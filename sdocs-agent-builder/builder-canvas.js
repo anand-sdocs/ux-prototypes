@@ -396,29 +396,14 @@ function buildCells() {
     if (e.to) { cells.push(edgeLink(e.from, e.to, e.label)); return; }
     // an unfilled branch: terminate it in its own "Add a step" so it's
     // obvious which path a click extends
-    const gid = 'open:' + e.id;
-    const g = new GhostNode({ id: gid, size: { width: 200, height: 52 } });
-    g.attr('fo', { x: 8, y: 0, width: 184, height: 52 });
-    g.attr('content/html',
-      '<div class="fc-addtrigger-inner"><span style="width:14px;height:14px;display:flex;">' +
-      PLUS_ICON + '</span>Add a step</div>');
-    g.set('fcRef', { type: 'addEdge', id: e.id });
-    cells.push(g);
-    cells.push(edgeLink(e.from, gid, e.label, true));
+    addStepGhost(cells, 'open:' + e.id, { type: 'addEdge', id: e.id }, e.from, e.label);
   });
 
   // --- a dashed "add a step" after every leaf, or the flow dead-ends ---
   state.nodes.forEach(n => {
     if (n.kind === 'end') return;
     if (state.edges.some(e => e.from === n.id)) return;
-    const gid = 'add:' + n.id;
-    const g = new GhostNode({ id: gid, size: { width: 200, height: 52 } });
-    g.attr('fo', { x: 8, y: 0, width: 184, height: 52 });
-    g.attr('content/html',
-      '<div class="fc-addtrigger-inner"><span style="width:14px;height:14px;display:flex;">' + PLUS_ICON + '</span>Add a step</div>');
-    g.set('fcRef', { type: 'addAfter', id: n.id });
-    cells.push(g);
-    cells.push(edgeLink(n.id, gid, null, true));
+    addStepGhost(cells, 'add:' + n.id, { type: 'addAfter', id: n.id }, n.id, null);
   });
 
   // --- empty state: nothing to run yet ---
@@ -433,6 +418,27 @@ function buildCells() {
   }
 
   return cells;
+}
+
+// A branch that trails off gets "Add a step" and then an explicit End, so a
+// reader can tell a finished branch from one still being built.
+function addStepGhost(cells, id, ref, fromId, label) {
+  const g = new GhostNode({ id: id, size: { width: 200, height: 52 } });
+  g.attr('fo', { x: 8, y: 0, width: 184, height: 52 });
+  g.attr('content/html',
+    '<div class="fc-addtrigger-inner"><span style="width:14px;height:14px;display:flex;">' +
+    PLUS_ICON + '</span>Add a step</div>');
+  g.set('fcRef', ref);
+  cells.push(g);
+  cells.push(edgeLink(fromId, id, label, true));
+
+  const endId = 'end:' + id;
+  cells.push(new PillNode({
+    id: endId,
+    size: { width: 110, height: 38 },
+    attrs: { body: { fill: '#e4e6e9' }, label: { text: 'End', fill: '#5e6670', fontSize: 11.5 } },
+  }));
+  cells.push(edgeLink(id, endId, null, true));
 }
 
 function edgeLink(from, to, label, ghost) {
