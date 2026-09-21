@@ -83,6 +83,77 @@ const DESTINATION_PLATFORMS = [
   { id: 'sheets', name: 'Google Sheets', initials: 'GS', color: '#0f9d58', connected: true },
 ];
 
+// What a Save step actually writes to. Picking the platform is not enough —
+// Salesforce alone has many objects, and the field list you map onto depends
+// entirely on which one, so the destination is platform + object.
+const DESTINATION_OBJECTS = {
+  salesforce: [
+    { id: 'Opportunity', name: 'Opportunity', description: 'Deals in the pipeline',
+      fields: ['Name', 'Amount', 'CloseDate', 'StageName', 'AccountId', 'Description', 'Renewal_Term_Months__c', 'Auto_Renew__c'] },
+    { id: 'Contract', name: 'Contract', description: 'Signed agreements and their terms',
+      fields: ['ContractNumber', 'AccountId', 'StartDate', 'EndDate', 'ContractTerm', 'Status', 'Description', 'Auto_Renew__c'] },
+    { id: 'Claim__c', name: 'Claim (custom)', description: 'Custom object used by the claims team',
+      fields: ['Claimant_Name__c', 'Policy_Number__c', 'Claim_Date__c', 'Claim_Amount__c', 'Incident_Description__c', 'Approval_Status__c'] },
+    { id: 'Account', name: 'Account', description: 'Companies and households',
+      fields: ['Name', 'Industry', 'AnnualRevenue', 'BillingCountry', 'OwnerId', 'Description'] },
+    { id: 'Case', name: 'Case', description: 'Support and service requests',
+      fields: ['Subject', 'Description', 'Status', 'Priority', 'ContactId', 'Origin'] },
+  ],
+  hubspot: [
+    { id: 'deal', name: 'Deal', description: 'Deals in the pipeline',
+      fields: ['dealname', 'amount', 'closedate', 'dealstage', 'pipeline', 'description'] },
+    { id: 'company', name: 'Company', description: 'Companies',
+      fields: ['name', 'domain', 'industry', 'annualrevenue', 'country'] },
+    { id: 'ticket', name: 'Ticket', description: 'Support tickets',
+      fields: ['subject', 'content', 'hs_pipeline_stage', 'hs_ticket_priority'] },
+  ],
+  servicenow: [
+    { id: 'incident', name: 'Incident', description: 'Reported incidents',
+      fields: ['short_description', 'description', 'priority', 'state', 'assigned_to', 'opened_at'] },
+    { id: 'sc_request', name: 'Request', description: 'Service catalog requests',
+      fields: ['number', 'short_description', 'requested_for', 'stage', 'due_date'] },
+  ],
+  sheets: [
+    { id: 'claims_intake', name: 'Claims Intake 2026', description: 'Sheet \u00b7 tab "Intake"',
+      fields: ['Claimant', 'Policy #', 'Date', 'Amount', 'Status', 'Notes'] },
+    { id: 'renewals', name: 'Renewals Tracker', description: 'Sheet \u00b7 tab "Q3"',
+      fields: ['Account', 'ACV', 'Renewal date', 'Term', 'Owner'] },
+  ],
+};
+
+function destinationObjectsFor(platformId) {
+  return DESTINATION_OBJECTS[platformId] || [];
+}
+
+function findDestinationObject(platformId, objectId) {
+  return destinationObjectsFor(platformId).find(function (o) { return o.id === objectId; }) || null;
+}
+
+// Loose name match so obvious pairs land automatically and the rest get
+// flagged: claimant_name -> Claimant_Name__c, claim_amount -> Amount.
+function normalizeFieldName(name) {
+  return String(name).toLowerCase().replace(/__c$/, '').replace(/[^a-z0-9]/g, '');
+}
+
+function autoMapFields(sourceFields, objectFields) {
+  const out = {};
+  const taken = {};
+  sourceFields.forEach(function (src) {
+    const n = normalizeFieldName(src);
+    let hit = objectFields.find(function (d) { return !taken[d] && normalizeFieldName(d) === n; });
+    if (!hit) {
+      hit = objectFields.find(function (d) {
+        if (taken[d]) return false;
+        const dn = normalizeFieldName(d);
+        return dn.indexOf(n) !== -1 || n.indexOf(dn) !== -1;
+      });
+    }
+    out[src] = hit || '';
+    if (hit) taken[hit] = true;
+  });
+  return out;
+}
+
 const NOTIFY_CHANNELS = [
   { id: 'email', name: 'Email', initials: 'EM', color: '#c62828' },
   { id: 'slack', name: 'Slack', initials: 'SL', color: '#611f69' },

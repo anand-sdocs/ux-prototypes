@@ -828,7 +828,7 @@ function defaultConfigFor(type) {
     case 'extract': return { fileName: '', schema: [], skillIds: [] };
     case 'generate': return { templateId: null, dataElements: {}, visualizations: {}, customDataElements: [], customVisualizations: [], customLabel: '', pickerMode: 'list', pickerSearch: '', sourcePriority: computeDefaultSourcePriority(), skillIds: [] };
     case 'analyze': return { mode: null, rules: [], combinator: 'AND', playbook: [], skillIds: [] };
-    case 'save': return { platformId: null, mappings: {} };
+    case 'save': return { platformId: null, objectId: null, mappings: {} };
     case 'notify': return { channelId: null, recipient: '', message: '', condition: '' };
     default: return {};
   }
@@ -1792,8 +1792,23 @@ function finishPlaybookAnalyze(config, suggestions) {
 }
 
 // SAVE (destination + field mapping)
+// Which fields a Save step can read: whatever an upstream Extract produced.
+// The canvas passes them on the config; the wizard looks at its task list;
+// otherwise fall back to the sample schema so the step is never empty.
+function saveSourceFields(config) {
+  if (config.sourceFields && config.sourceFields.length) return config.sourceFields.slice();
+  if (typeof state !== 'undefined' && state.tasks) {
+    const extract = state.tasks.filter(function (t) { return t.type === 'extract'; }).pop();
+    if (extract && extract.config.schema && extract.config.schema.length) {
+      return extract.config.schema.map(function (f) { return f.name; });
+    }
+  }
+  return EXTRACT_SAMPLE_SCHEMA.map(function (f) { return f.name; });
+}
+
 function renderSaveSubflow(panel, config, subStep) {
-  const steps = ['Choose destination', 'Map fields'];
+  const steps = ['Choose destination', 'Select object', 'Map fields'];
+
   if (subStep === 0) {
     panel.innerHTML = subflowShell('Save', steps, 0, `
       <div class="platform-grid">
@@ -1811,24 +1826,80 @@ function renderSaveSubflow(panel, config, subStep) {
     `);
     bindSubflowClose();
     document.querySelectorAll('.platform-tile').forEach(tile => {
-      tile.addEventListener('click', () => { config.platformId = tile.dataset.platform; renderSubflow('save', config, 0); });
+      tile.addEventListener('click', () => {
+        if (config.platformId !== tile.dataset.platform) {
+          // a different platform means a different object and field list
+          config.platformId = tile.dataset.platform;
+          config.objectId = null;
+          config.mappings = {};
+        }
+        renderSubflow('save', config, 0);
+      });
     });
     document.getElementById('sf-cancel')?.addEventListener('click', closeSubflow);
     document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('save', config, 1));
-  } else {
-    const fields = EXTRACT_SAMPLE_SCHEMA.map(f => f.name);
-    const destFields = ['claimant_name', 'policy_number', 'claim_amount', 'approval_status', 'claim_date', 'description'];
-    fields.forEach((f, i) => { if (!config.mappings[f]) config.mappings[f] = i < 4 ? destFields[i] : ''; });
+
+  } else if (subStep === 1) {
+    const platform = DESTINATION_PLATFORMS.find(p => p.id === config.platformId);
+    const objects = destinationObjectsFor(config.platformId);
     panel.innerHTML = subflowShell('Save', steps, 1, `
-      <p class="field-hint" style="margin-bottom:8px;">Fields were auto-mapped where possible. Review anything flagged for manual selection.</p>
+      <p class="field-hint" style="margin-bottom:14px;">
+        Which ${escapeHtml(platform ? platform.name : '')} record should this write to? The object decides
+        which fields are available to map.
+      </p>
+      <div class="sdocs-template-list">
+        ${objects.map(o => `
+          <div class="sdocs-template-row ${config.objectId === o.id ? 'selected' : ''}" data-object="${o.id}">
+            <span class="sdocs-template-radio"></span>
+            <div class="sdocs-template-body">
+              <div class="sdocs-template-name">${escapeHtml(o.name)}</div>
+              <div class="sdocs-template-meta">${escapeHtml(o.description)}</div>
+              <div class="sdocs-template-fields">
+                ${o.fields.length} fields: ${o.fields.slice(0, 5).map(f => `<code>${escapeHtml(f)}</code>`).join(' ')}${o.fields.length > 5 ? ' &hellip;' : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `, `
+      <button class="btn btn-outline" id="sf-back">Back</button>
+      <button class="btn btn-primary" id="sf-next" ${config.objectId ? '' : 'disabled'}>Next</button>
+    `);
+    bindSubflowClose();
+    panel.querySelectorAll('[data-object]').forEach(row => {
+      row.addEventListener('click', () => {
+        if (config.objectId !== row.dataset.object) {
+          config.objectId = row.dataset.object;
+          config.mappings = {}; // re-map against the new object's fields
+        }
+        renderSubflow('save', config, 1);
+      });
+    });
+    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 0));
+    document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('save', config, 2));
+
+  } else {
+    const obj = findDestinationObject(config.platformId, config.objectId);
+    const destFields = obj ? obj.fields : [];
+    const fields = saveSourceFields(config);
+    config.mappings = config.mappings || {};
+    if (!Object.keys(config.mappings).length) {
+      config.mappings = autoMapFields(fields, destFields);
+    }
+    const unmapped = fields.filter(f => !config.mappings[f]).length;
+    panel.innerHTML = subflowShell('Save', steps, 2, `
+      <p class="field-hint" style="margin-bottom:8px;">
+        Mapping the extracted fields onto <strong>${escapeHtml(obj ? obj.name : 'the destination')}</strong>.
+        ${unmapped ? `${unmapped} field${unmapped === 1 ? '' : 's'} still need${unmapped === 1 ? 's' : ''} a destination.` : 'Everything is mapped.'}
+      </p>
       ${fields.map(f => `
         <div class="mapping-row">
           <span class="map-status-icon ${config.mappings[f] ? 'mapped' : 'unmapped'}">${config.mappings[f] ? '✓' : '!'}</span>
           <span class="mapping-field">${escapeHtml(f)}</span>
           <span class="mapping-arrow">&rarr;</span>
           <select class="mapping-select" data-field="${f}">
-            <option value="">Select destination field&hellip;</option>
-            ${destFields.map(df => `<option value="${df}" ${config.mappings[f] === df ? 'selected' : ''}>${df}</option>`).join('')}
+            <option value="">Don&rsquo;t save this field&hellip;</option>
+            ${destFields.map(df => `<option value="${df}" ${config.mappings[f] === df ? 'selected' : ''}>${escapeHtml(df)}</option>`).join('')}
           </select>
         </div>
       `).join('')}
@@ -1837,9 +1908,9 @@ function renderSaveSubflow(panel, config, subStep) {
       <button class="btn btn-primary" id="sf-save">Save task</button>
     `);
     bindSubflowClose();
-    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 0));
+    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 1));
     panel.querySelectorAll('.mapping-select').forEach(sel => {
-      sel.addEventListener('change', () => { config.mappings[sel.dataset.field] = sel.value; renderSubflow('save', config, 1); });
+      sel.addEventListener('change', () => { config.mappings[sel.dataset.field] = sel.value; renderSubflow('save', config, 2); });
     });
     document.getElementById('sf-save')?.addEventListener('click', () => saveTaskConfig('save', config));
   }

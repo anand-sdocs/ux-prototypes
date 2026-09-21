@@ -124,8 +124,12 @@ function stepSummary(node) {
       }
       return 'Pick how it should analyse';
     case 'save': {
-      const p = DESTINATION_PLATFORMS.find(x => x.id === c.platformId);
-      return p ? 'To ' + p.name : 'Pick a destination';
+      const p = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
+      if (!p) return 'Pick a destination';
+      const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
+      if (!obj) return p.name + ' — choose an object';
+      const mapped = Object.keys(c.mappings || {}).filter(function (k) { return c.mappings[k]; }).length;
+      return p.name + ' — ' + obj.name + (mapped ? ', ' + mapped + ' field' + (mapped === 1 ? '' : 's') + ' mapped' : ', not mapped yet');
     }
     case 'notify': {
       const ch = NOTIFY_CHANNELS.find(x => x.id === c.channelId);
@@ -773,8 +777,21 @@ function renderStepPanel(el, node) {
     }
 
   } else if (node.type === 'save') {
-    body += '<div class="fc-insp-section-label">Where should it be saved?</div>' +
-      DESTINATION_PLATFORMS.map(p => sourceOption(p, c.platformId, 'data-dest')).join('');
+    const plat = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
+    const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
+    const mapped = Object.keys(c.mappings || {}).filter(function (k) { return c.mappings[k]; }).length;
+
+    body += '<div class="fc-insp-section-label">Destination</div>';
+    if (plat && obj) {
+      body += '<div class="fc-field-row" style="padding:10px 11px;"><strong>' + esc(plat.name) + '</strong>' +
+          '<span style="color:var(--text-muted);margin-left:6px;">' + esc(obj.name) + '</span></div>' +
+        '<div class="fc-hint">' + mapped + ' field' + (mapped === 1 ? '' : 's') + ' mapped onto ' + esc(obj.name) + '.</div>' +
+        '<button class="fc-deep-link" id="s-deep" style="margin-top:12px;">Edit destination and mapping \u2192</button>';
+    } else {
+      body += '<div class="fc-hint" style="margin-bottom:10px;">Choose the system, the record it writes to, ' +
+          'and how the extracted fields map onto it.</div>' +
+        '<button class="fc-deep-link" id="s-deep">Choose a destination \u2192</button>';
+    }
 
   } else if (node.type === 'notify') {
     body += '<div class="fc-insp-section-label">Channel</div>' +
@@ -838,10 +855,6 @@ function renderStepPanel(el, node) {
   });
   bind('s-delete', 'click', () => deleteNode(node.id));
 
-  el.querySelectorAll('[data-dest]').forEach(b => b.onclick = () => {
-    snapshot(); c.platformId = b.dataset.dest;
-    renderInspector(); softRefresh(node.id); softRefresh('agent');
-  });
   bind('s-deep', 'click', function () { openDeepSetup(node); });
   el.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => {
     snapshot(); c.channelId = b.dataset.chan;
@@ -947,9 +960,34 @@ window.saveTaskConfig = function (type, config) {
   deepNode = null;
 };
 
+// Fields produced by the nearest Extract upstream of this node, walking the
+// graph backwards — a Save step can only map what an earlier step pulled out.
+function upstreamExtractFields(nodeId) {
+  const seen = {};
+  let frontier = state.edges.filter(function (e) { return e.to === nodeId; }).map(function (e) { return e.from; });
+  while (frontier.length) {
+    const next = [];
+    for (const id of frontier) {
+      if (seen[id]) continue;
+      seen[id] = true;
+      const n = findNode(id);
+      if (n && n.type === 'extract' && (n.config.schema || []).length) {
+        return n.config.schema.map(function (f) { return f.name; });
+      }
+      state.edges.filter(function (e) { return e.to === id; }).forEach(function (e) { next.push(e.from); });
+    }
+    frontier = next;
+  }
+  return [];
+}
+
 function openDeepSetup(node) {
   if (typeof window.renderSubflow !== 'function') return toast('Setup unavailable');
   deepNode = node;
+  if (node.type === 'save') {
+    const fields = upstreamExtractFields(node.id);
+    if (fields.length) node.config.sourceFields = fields;
+  }
   // seed anything the sub-flow expects but a canvas-created node lacks
   const blank = window.defaultConfigFor ? window.defaultConfigFor(node.type) : {};
   node.config = Object.assign({}, blank, node.config || {});
@@ -1088,7 +1126,7 @@ function defaultConfig(type) {
     case 'extract': return { fileName: null, description: '', schema: [], skillId: null };
     case 'generate': return { templateId: null };
     case 'analyze': return { mode: null, rules: [] };
-    case 'save': return { platformId: null };
+    case 'save': return { platformId: null, objectId: null, mappings: {} };
     case 'notify': return { channelId: null, recipient: '', message: '' };
     default: return {};
   }
