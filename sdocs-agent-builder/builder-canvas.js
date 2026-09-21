@@ -28,6 +28,17 @@ const DECISION_KINDS = {
 };
 
 const CAUTION_LABELS = ['Act freely', 'Balanced', 'Always ask'];
+const APPROVERS = ['Deal desk', 'Legal', 'Record owner', 'Manager'];
+
+// A <select> renders its first option as selected whether or not anything was
+// chosen, so a fork could show "accuracy_score > 80" in the panel while the
+// model still had field and operator undefined — and the node's summary, which
+// needs all three, stayed on its placeholder. Commit what the panel displays.
+function defaultDecisionConfig(kind) {
+  return kind === 'approval'
+    ? { approver: APPROVERS[0], channelId: NOTIFY_CHANNELS[0].id }
+    : { field: PLAYBOOK_FIELDS[0], operator: PLAYBOOK_OPERATORS[0], value: '' };
+}
 
 let nodeSeq = 1;
 let edgeSeq = 1;
@@ -851,6 +862,12 @@ function renderStepPanel(el, node) {
 function renderDecisionPanel(el, node) {
   const k = DECISION_KINDS[node.kind];
   const c = node.config || (node.config = {});
+  // self-heal a fork built before the defaults existed
+  const seeded = defaultDecisionConfig(node.kind);
+  Object.keys(seeded).forEach(function (key) {
+    if (c[key] == null) c[key] = seeded[key];
+  });
+  softRefresh(node.id);
   const chip = '<div class="fc-hex-icon" style="width:34px;height:34px;border-radius:10px;background:' + k.tint + ';color:' + k.color + '">' +
     DECISION_ICON[node.kind] + '</div>';
   const outgoing = state.edges.filter(e => e.from === node.id);
@@ -868,7 +885,7 @@ function renderDecisionPanel(el, node) {
       '<div class="fc-hint">The data picks the path, so the same input always takes the same route.</div>';
   } else {
     body += '<div class="fc-field"><label>Who approves?</label>' +
-      '<select id="d-approver">' + ['Deal desk', 'Legal', 'Record owner', 'Manager'].map(a =>
+      '<select id="d-approver">' + APPROVERS.map(a =>
         '<option' + (c.approver === a ? ' selected' : '') + '>' + a + '</option>').join('') + '</select></div>' +
       '<div class="fc-field"><label>Ask via</label><select id="d-channel">' +
         NOTIFY_CHANNELS.map(ch => '<option value="' + ch.id + '"' + (c.channelId === ch.id ? ' selected' : '') + '>' + esc(ch.name) + '</option>').join('') +
@@ -1063,7 +1080,7 @@ function makeNode(option) {
     return { id, kind: 'task', type: option.type, title: option.label, desc: '', config: defaultConfig(option.type) };
   }
   const title = option.kind === 'approval' ? 'Approval needed?' : 'Does it meet the criteria?';
-  return { id, kind: option.kind, title: title, config: {} };
+  return { id, kind: option.kind, title: title, config: defaultDecisionConfig(option.kind) };
 }
 
 function defaultConfig(type) {
