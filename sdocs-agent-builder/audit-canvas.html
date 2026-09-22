@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run audit &mdash; canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@joint/core@4.3.3/dist/joint.css">
+  <link rel="stylesheet" href="builder-canvas.css">
+  <link rel="stylesheet" href="audit-canvas.css">
+</head>
+<body class="fc-body">
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">Mock run data &mdash; no agent actually executed.</span>
+  </div>
+
+  <header class="fc-header">
+    <div class="fc-header-left">
+      <a class="back-link" href="index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Exit
+      </a>
+      <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg>
+      <select class="ac-agent-select" id="agent-select"></select>
+      <span class="fc-header-divider"></span>
+      <span class="ac-run-meta" id="run-meta"></span>
+    </div>
+    <div class="fc-header-right">
+      <button class="btn btn-outline btn-sm" id="btn-zoom-out" title="Zoom out">&minus;</button>
+      <span class="fc-zoom-label" id="zoom-label">100%</span>
+      <button class="btn btn-outline btn-sm" id="btn-zoom-in" title="Zoom in">+</button>
+      <button class="btn btn-outline btn-sm" id="btn-fit">Fit</button>
+      <span class="fc-header-divider"></span>
+      <a class="btn btn-outline btn-sm" id="btn-open-builder" href="builder.html">Open in builder</a>
+    </div>
+  </header>
+
+  <main class="fc-main">
+    <div class="fc-canvas-wrap">
+      <div class="fc-paper" id="paper"></div>
+      <div class="ac-legend" id="legend"></div>
+      <div class="fc-minimap">
+        <div class="fc-minimap-label">Overview</div>
+        <div class="fc-minimap-paper" id="minimap"></div>
+      </div>
+    </div>
+    <aside class="fc-inspector" id="inspector"></aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@dagrejs/graphlib@2.2.4/dist/graphlib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@dagrejs/dagre@3.1.1/dist/dagre.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@joint/core@4.3.3/dist/joint.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@joint/layout-directed-graph@4.3.0/dist/DirectedGraph.min.js"></script>
+  <script src="schema.js"></script>
+  <script src="flow-canvas-core.js"></script>
+  <script src="audit-canvas.js"></script>
+</body>
+</html>

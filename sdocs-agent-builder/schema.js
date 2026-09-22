@@ -83,6 +83,77 @@ const DESTINATION_PLATFORMS = [
   { id: 'sheets', name: 'Google Sheets', initials: 'GS', color: '#0f9d58', connected: true },
 ];
 
+// What a Save step actually writes to. Picking the platform is not enough —
+// Salesforce alone has many objects, and the field list you map onto depends
+// entirely on which one, so the destination is platform + object.
+const DESTINATION_OBJECTS = {
+  salesforce: [
+    { id: 'Opportunity', name: 'Opportunity', description: 'Deals in the pipeline',
+      fields: ['Name', 'Amount', 'CloseDate', 'StageName', 'AccountId', 'Description', 'Renewal_Term_Months__c', 'Auto_Renew__c'] },
+    { id: 'Contract', name: 'Contract', description: 'Signed agreements and their terms',
+      fields: ['ContractNumber', 'AccountId', 'StartDate', 'EndDate', 'ContractTerm', 'Status', 'Description', 'Auto_Renew__c'] },
+    { id: 'Claim__c', name: 'Claim (custom)', description: 'Custom object used by the claims team',
+      fields: ['Claimant_Name__c', 'Policy_Number__c', 'Claim_Date__c', 'Claim_Amount__c', 'Incident_Description__c', 'Approval_Status__c'] },
+    { id: 'Account', name: 'Account', description: 'Companies and households',
+      fields: ['Name', 'Industry', 'AnnualRevenue', 'BillingCountry', 'OwnerId', 'Description'] },
+    { id: 'Case', name: 'Case', description: 'Support and service requests',
+      fields: ['Subject', 'Description', 'Status', 'Priority', 'ContactId', 'Origin'] },
+  ],
+  hubspot: [
+    { id: 'deal', name: 'Deal', description: 'Deals in the pipeline',
+      fields: ['dealname', 'amount', 'closedate', 'dealstage', 'pipeline', 'description'] },
+    { id: 'company', name: 'Company', description: 'Companies',
+      fields: ['name', 'domain', 'industry', 'annualrevenue', 'country'] },
+    { id: 'ticket', name: 'Ticket', description: 'Support tickets',
+      fields: ['subject', 'content', 'hs_pipeline_stage', 'hs_ticket_priority'] },
+  ],
+  servicenow: [
+    { id: 'incident', name: 'Incident', description: 'Reported incidents',
+      fields: ['short_description', 'description', 'priority', 'state', 'assigned_to', 'opened_at'] },
+    { id: 'sc_request', name: 'Request', description: 'Service catalog requests',
+      fields: ['number', 'short_description', 'requested_for', 'stage', 'due_date'] },
+  ],
+  sheets: [
+    { id: 'claims_intake', name: 'Claims Intake 2026', description: 'Sheet \u00b7 tab "Intake"',
+      fields: ['Claimant', 'Policy #', 'Date', 'Amount', 'Status', 'Notes'] },
+    { id: 'renewals', name: 'Renewals Tracker', description: 'Sheet \u00b7 tab "Q3"',
+      fields: ['Account', 'ACV', 'Renewal date', 'Term', 'Owner'] },
+  ],
+};
+
+function destinationObjectsFor(platformId) {
+  return DESTINATION_OBJECTS[platformId] || [];
+}
+
+function findDestinationObject(platformId, objectId) {
+  return destinationObjectsFor(platformId).find(function (o) { return o.id === objectId; }) || null;
+}
+
+// Loose name match so obvious pairs land automatically and the rest get
+// flagged: claimant_name -> Claimant_Name__c, claim_amount -> Amount.
+function normalizeFieldName(name) {
+  return String(name).toLowerCase().replace(/__c$/, '').replace(/[^a-z0-9]/g, '');
+}
+
+function autoMapFields(sourceFields, objectFields) {
+  const out = {};
+  const taken = {};
+  sourceFields.forEach(function (src) {
+    const n = normalizeFieldName(src);
+    let hit = objectFields.find(function (d) { return !taken[d] && normalizeFieldName(d) === n; });
+    if (!hit) {
+      hit = objectFields.find(function (d) {
+        if (taken[d]) return false;
+        const dn = normalizeFieldName(d);
+        return dn.indexOf(n) !== -1 || n.indexOf(dn) !== -1;
+      });
+    }
+    out[src] = hit || '';
+    if (hit) taken[hit] = true;
+  });
+  return out;
+}
+
 const NOTIFY_CHANNELS = [
   { id: 'email', name: 'Email', initials: 'EM', color: '#c62828' },
   { id: 'slack', name: 'Slack', initials: 'SL', color: '#611f69' },
@@ -180,6 +251,95 @@ const DOCUMENT_TEMPLATES = [
 // "Something else" search rather than the 6 built-in DOCUMENT_TEMPLATES
 // above. Same shape as a DOCUMENT_TEMPLATES entry, plus `team` for
 // provenance and `usedByCount` so search results feel like a real catalog.
+// The actual S-Docs template records in the org. A document *type* says what
+// you want produced; a template is the artifact that renders it, and its merge
+// fields are what the agent has to go and find. Picking the template is what
+// determines the required inputs — curated suggestions are added on top as
+// optional extras.
+const SDOCS_TEMPLATES = [
+  {
+    id: 'tpl-proposal-standard', name: 'Sales Proposal \u2014 Standard', docTypeId: 'sales_proposal',
+    format: 'PDF', owner: 'Sales Ops', updated: '14 Jul 2026', usedBy: 41, isDefault: true,
+    mergeFields: [
+      { key: 'prospect_name', label: 'Prospect / account name' },
+      { key: 'deal_value', label: 'Proposed deal value' },
+      { key: 'proposed_terms', label: 'Proposed terms' },
+    ],
+  },
+  {
+    id: 'tpl-proposal-enterprise', name: 'Sales Proposal \u2014 Enterprise (legal-reviewed)', docTypeId: 'sales_proposal',
+    format: 'DOCX', owner: 'Legal Ops', updated: '02 Aug 2026', usedBy: 12,
+    mergeFields: [
+      { key: 'prospect_name', label: 'Prospect / account name' },
+      { key: 'deal_value', label: 'Proposed deal value' },
+      { key: 'proposed_terms', label: 'Proposed terms' },
+      { key: 'key_differentiators', label: 'Key differentiators' },
+      { key: 'security_addendum', label: 'Security addendum reference' },
+    ],
+  },
+  {
+    id: 'tpl-scorecard-qbr', name: 'Customer Review Scorecard \u2014 QBR', docTypeId: 'scorecard',
+    format: 'PDF', owner: 'Customer Success Ops', updated: '28 Jun 2026', usedBy: 33, isDefault: true,
+    mergeFields: [
+      { key: 'customer_name', label: 'Customer name' },
+      { key: 'review_period', label: 'Review period' },
+      { key: 'csat_score', label: 'CSAT / health score' },
+      { key: 'key_wins', label: 'Key wins this period' },
+    ],
+  },
+  {
+    id: 'tpl-portfolio-review', name: 'Quarterly Portfolio Review \u2014 Wealth', docTypeId: 'investment_summary',
+    format: 'PDF', owner: 'Wealth Ops', updated: '11 Aug 2026', usedBy: 27, isDefault: true,
+    mergeFields: [
+      { key: 'household_name', label: 'Client / household name' },
+      { key: 'total_aum', label: 'Total assets under management' },
+      { key: 'account_holdings', label: 'Account holdings by fund' },
+      { key: 'fee_summary', label: 'Fee summary' },
+      { key: 'performance_returns', label: 'Annualized performance returns' },
+      { key: 'risk_disclosures', label: 'Risk disclosures' },
+    ],
+  },
+  {
+    id: 'tpl-sow-standard', name: 'Statement of Work \u2014 Standard', docTypeId: 'sow',
+    format: 'DOCX', owner: 'Delivery Ops', updated: '19 Jul 2026', usedBy: 18, isDefault: true,
+    mergeFields: [
+      { key: 'client_name', label: 'Client name' },
+      { key: 'project_scope', label: 'Project scope' },
+      { key: 'deliverables', label: 'Deliverables' },
+      { key: 'timeline', label: 'Timeline' },
+      { key: 'payment_terms', label: 'Payment terms' },
+    ],
+  },
+  {
+    id: 'tpl-sow-tm', name: 'Statement of Work \u2014 Time & Materials', docTypeId: 'sow',
+    format: 'DOCX', owner: 'Delivery Ops', updated: '05 Aug 2026', usedBy: 6,
+    mergeFields: [
+      { key: 'client_name', label: 'Client name' },
+      { key: 'project_scope', label: 'Project scope' },
+      { key: 'rate_card', label: 'Hourly rate card' },
+      { key: 'estimated_hours', label: 'Estimated hours' },
+    ],
+  },
+  {
+    id: 'tpl-i140-packet', name: 'I-140 Filing Packet', docTypeId: 'i140',
+    format: 'PDF', owner: 'Immigration Ops', updated: '30 Jun 2026', usedBy: 9, isDefault: true,
+    mergeFields: [
+      { key: 'beneficiary_name', label: 'Beneficiary name' },
+      { key: 'petitioner_company', label: 'Petitioning company' },
+      { key: 'job_title', label: 'Job title' },
+      { key: 'priority_date', label: 'Priority date' },
+      { key: 'supporting_evidence', label: 'Supporting evidence' },
+    ],
+  },
+];
+
+// Templates that render a given document type, default first.
+function sdocsTemplatesFor(docTypeId) {
+  return SDOCS_TEMPLATES
+    .filter(function (t) { return t.docTypeId === docTypeId; })
+    .sort(function (a, b) { return (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0); });
+}
+
 const OPS_TEMPLATE_LIBRARY = [
   {
     id: 'ops-nda-cover-letter',
@@ -658,6 +818,109 @@ const HITL_REQUESTS = [
 //                                     // use sourceComparison instead of a
 //                                     // single prompt/response.
 // ---------------------------------------------------------------
+
+// The flow each agent was BUILT with, as the canvas builder models it. The
+// audit needs this: a run only records the steps it executed, so without the
+// design there is no way to show the branch that was not taken.
+//
+// Node titles match the labels in AUDIT_TRAILS, and RUN_PATHS below says which
+// nodes a given run actually visited.
+const AGENT_FLOWS = {
+  a1: {
+    trigger: 'schedule',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract renewal terms' },
+      { id: 'd1', kind: 'rule', title: 'Auto-renew clause present?', config: { field: 'auto_renew_clause', operator: '=', value: 'true' } },
+      { id: 'n2', kind: 'approval', title: 'Deal desk approval', config: { approver: 'Deal desk', channelId: 'slack' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'Save to Salesforce' },
+      { id: 'n4', kind: 'task', type: 'notify', title: 'Notify deal desk' },
+    ],
+    edges: [
+      { from: 'n1', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n2', label: 'No' },
+      { from: 'n2', to: 'n3', label: 'Approved' },
+      { from: 'n3', to: 'n4' },
+    ],
+  },
+  a2: {
+    trigger: 'email',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract claim details' },
+      { id: 'n2', kind: 'task', type: 'analyze', title: 'Check against policy playbook' },
+      { id: 'd1', kind: 'rule', title: 'Confident enough to auto-file?', config: { field: 'accuracy_score', operator: '>=', value: '95' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'File the claim' },
+      { id: 'n4', kind: 'task', type: 'notify', title: 'Notify claims reviewer' },
+      { id: 'n5', kind: 'approval', title: 'Claims reviewer decision', config: { approver: 'Record owner', channelId: 'email' } },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2' },
+      { from: 'n2', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n4', label: 'No' },
+      { from: 'n4', to: 'n5' },
+    ],
+  },
+  a3: {
+    trigger: 'schedule',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'generate', title: 'Draft weekly pipeline summary' },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Post to #deal-approvals' },
+    ],
+    edges: [{ from: 'n1', to: 'n2' }],
+  },
+  a4: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'analyze', title: 'Run legal playbook' },
+      { id: 'd1', kind: 'rule', title: 'Any high-risk findings?', config: { field: 'risk_score', operator: '=', value: 'High' } },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Notify legal' },
+      { id: 'n3', kind: 'task', type: 'save', title: 'File the review' },
+    ],
+    edges: [
+      { from: 'n1', to: 'd1' },
+      { from: 'd1', to: 'n2', label: 'Yes' },
+      { from: 'd1', to: 'n3', label: 'No' },
+    ],
+  },
+  a5: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'extract', title: 'Extract expense line items' },
+      { id: 'n2', kind: 'task', type: 'analyze', title: 'Check against spend thresholds' },
+      { id: 'd1', kind: 'rule', title: 'Within the auto-approve limit?', config: { field: 'claim_amount', operator: '<', value: '2500' } },
+      { id: 'n3', kind: 'task', type: 'save', title: 'Save approved rows to Google Sheets' },
+      { id: 'n4', kind: 'approval', title: 'Manager approval', config: { approver: 'Manager', channelId: 'slack' } },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2' },
+      { from: 'n2', to: 'd1' },
+      { from: 'd1', to: 'n3', label: 'Yes' },
+      { from: 'd1', to: 'n4', label: 'No' },
+      { from: 'n4', to: 'n3', label: 'Approved' },
+    ],
+  },
+  a6: {
+    trigger: 'manual',
+    nodes: [
+      { id: 'n1', kind: 'task', type: 'generate', title: 'Draft Statement of Work' },
+      { id: 'n2', kind: 'task', type: 'notify', title: 'Notify account owner' },
+    ],
+    edges: [{ from: 'n1', to: 'n2' }],
+  },
+};
+
+// Which nodes each recorded run actually went through, in order. Stated rather
+// than inferred from step labels, so the highlight can never drift from the
+// trail it is describing.
+const RUN_PATHS = {
+  a1: ['n1', 'd1', 'n3', 'n4'],
+  a2: ['n1', 'n2', 'd1', 'n4'],
+  a3: ['n1', 'n2'],
+  a4: ['n1', 'd1', 'n2'],
+  a5: ['n1', 'n2', 'd1', 'n3'],
+  a6: ['n1', 'n2'],
+};
 
 const AUDIT_TRAILS = {
   a1: {

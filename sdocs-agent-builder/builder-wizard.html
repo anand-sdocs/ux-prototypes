@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build an Agent - UX Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <span class="proto-toolbar-badge">Prototype</span>
+    <span class="proto-toolbar-hint">Connections, schema generation, and content are simulated &mdash; nothing here calls a real system or model.</span>
+  </div>
+
+  <header class="builder-header">
+    <div class="header-left">
+      <a class="back-link" id="btn-exit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Exit
+      </a>
+      <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="6,6 40,6 54,30 40,54 6,54 20,30" fill="#f2793c"/><polygon points="56,48 56,18 76,4 96,18 96,48 76,34" fill="#8b6fe8"/><rect x="6" y="58" width="40" height="36" rx="4" fill="#2f8fe0"/><rect x="54" y="58" width="42" height="36" rx="4" fill="#6fbf73"/></svg>
+      <span class="builder-title" id="builder-title">Build an agent</span>
+    </div>
+
+    <nav class="stepper" id="stepper">
+      <div class="step" data-step="1"><span class="step-dot"></span><span class="step-label">Name &amp; role</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2"><span class="step-dot"></span><span class="step-label">Guardrails</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3"><span class="step-dot"></span><span class="step-label">Model</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="4"><span class="step-dot"></span><span class="step-label">Data sources</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="5"><span class="step-dot"></span><span class="step-label">Triggers</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="6"><span class="step-dot"></span><span class="step-label">Tasks</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="7"><span class="step-dot"></span><span class="step-label">Review</span></div>
+    </nav>
+
+    <div class="header-right">
+      <button class="btn btn-outline" id="btn-back">Back</button>
+      <button class="btn btn-primary" id="btn-next">Next</button>
+    </div>
+  </header>
+
+  <main class="wizard-body">
+
+    <!-- STEP 0: NL entry (shown first, not part of numbered stepper) -->
+    <section class="step-panel active" id="panel-0">
+      <div class="nl-entry">
+        <h1>What should this agent do?</h1>
+        <p>Describe it in a sentence or two and we'll draft the name, guardrails, data sources, triggers, and tasks for you to review &mdash; or skip ahead and build it step by step.</p>
+        <div class="nl-box">
+          <textarea class="nl-textarea" id="nl-prompt" placeholder="e.g. Monitor Slack for contract requests, extract key terms, check against my pricing playbook, and save approved deals to Salesforce."></textarea>
+          <div class="nl-examples">
+            <button class="nl-example-chip" data-example="1">Monitor Slack for contract requests, extract key terms, check against my pricing playbook, and save approved deals to Salesforce.</button>
+            <button class="nl-example-chip" data-example="2">Read incoming claim forms from email, extract the claim details, and flag anything under 95% confidence for review.</button>
+            <button class="nl-example-chip" data-example="3">Every Monday, generate a summary of the renewal pipeline and post it to Slack.</button>
+          </div>
+          <div class="nl-generating" id="nl-generating" style="display:none;">
+            <span class="spinner"></span> Drafting your agent&hellip;
+          </div>
+        </div>
+        <div class="nl-actions">
+          <button class="btn btn-primary" id="btn-nl-generate">Draft this agent</button>
+          <button class="btn btn-outline" id="btn-nl-skip">Build manually instead</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 1: Name & role -->
+    <section class="step-panel" id="panel-1">
+      <div class="panel-heading">
+        <h2>Name &amp; role</h2>
+        <p class="panel-sub">Give this agent a name and describe its role in detail &mdash; what it's responsible for, and any context it should know.</p>
+      </div>
+      <div id="ai-prefill-banner-1"></div>
+      <div class="field-group">
+        <label for="agent-name">Agent name</label>
+        <input type="text" class="text-input" id="agent-name" placeholder="e.g. Renewal Deal Extractor">
+      </div>
+      <div class="field-group">
+        <label for="agent-role">Role &amp; description</label>
+        <div class="field-hint">Describe what this agent does, when it should act, and anything else it needs to know.</div>
+        <textarea class="textarea-large" id="agent-role" placeholder="e.g. This agent watches for new signed renewal contracts, extracts the key commercial terms, and files them to Salesforce so the deal desk doesn't have to do it manually."></textarea>
+      </div>
+    </section>
+
+    <!-- STEP 2: Guardrails -->
+    <section class="step-panel" id="panel-2">
+      <div class="panel-heading">
+        <h2>Guardrails</h2>
+        <p class="panel-sub">Set the tone, voice, and boundaries this agent should stay within when it generates content or communicates on your behalf.</p>
+      </div>
+      <div id="ai-prefill-banner-2"></div>
+      <div class="guardrail-grid">
+        <div class="field-group">
+          <label>Tone</label>
+          <div class="chip-select" id="tone-select">
+            <span class="chip-option" data-value="Professional">Professional</span>
+            <span class="chip-option" data-value="Friendly">Friendly</span>
+            <span class="chip-option" data-value="Concise">Concise</span>
+            <span class="chip-option" data-value="Formal">Formal</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Voice</label>
+          <div class="chip-select" id="voice-select">
+            <span class="chip-option" data-value="First person (I/we)">First person (I/we)</span>
+            <span class="chip-option" data-value="Third person (the agent)">Third person</span>
+            <span class="chip-option" data-value="Neutral/passive">Neutral/passive</span>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Caution level <span class="field-hint" style="display:inline;">&mdash; how often should it ask you before acting?</span></label>
+        <div class="slider-row">
+          <input type="range" id="caution-slider" min="0" max="2" step="1" value="1">
+          <span class="slider-value" id="caution-value">Balanced</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="guardrail-notes">Additional guardrails</label>
+        <div class="field-hint">Anything it should never do, or topics/phrasing to avoid.</div>
+        <textarea class="textarea-large" id="guardrail-notes" style="min-height:90px;" placeholder="e.g. Never commit to a discount over 10% without approval. Avoid legal or financial advice language."></textarea>
+      </div>
+    </section>
+
+    <!-- STEP 3: Model -->
+    <section class="step-panel" id="panel-3">
+      <div class="panel-heading">
+        <h2>Model</h2>
+        <p class="panel-sub">Choose the LLM this agent uses for extraction, generation, analysis, and any content it drafts. Only models your admin has enabled show up here.</p>
+      </div>
+      <div id="ai-prefill-banner-3"></div>
+      <div class="template-list" id="model-list"></div>
+    </section>
+
+    <!-- STEP 4: Data sources -->
+    <section class="step-panel" id="panel-4">
+      <div class="panel-heading">
+        <h2>Data sources</h2>
+        <p class="panel-sub">Connect the enterprise systems this agent needs. You'll be asked to sign in as yourself for each one.</p>
+      </div>
+      <div id="ai-prefill-banner-4"></div>
+      <div class="connector-grid" id="connector-grid"></div>
+    </section>
+
+    <!-- STEP 5: Triggers -->
+    <section class="step-panel" id="panel-5">
+      <div class="panel-heading">
+        <h2>Triggers</h2>
+        <p class="panel-sub">Choose how this agent starts. You can enable more than one &mdash; any of them will kick off the same sequence of tasks.</p>
+      </div>
+      <div id="ai-prefill-banner-5"></div>
+      <div class="trigger-list" id="trigger-list"></div>
+    </section>
+
+    <!-- STEP 6: Tasks -->
+    <section class="step-panel" id="panel-6">
+      <div class="panel-heading">
+        <h2>Tasks</h2>
+        <p class="panel-sub">Build the sequence of tasks this agent runs, in order. Each task is one of five types.</p>
+      </div>
+      <div id="ai-prefill-banner-6"></div>
+      <div class="flow-canvas" id="flow-canvas"></div>
+    </section>
+
+    <!-- STEP 7: Review -->
+    <section class="step-panel" id="panel-7">
+      <div class="panel-heading">
+        <h2>Review &amp; create</h2>
+        <p class="panel-sub">Check everything below before you create this agent. You can jump back to any step to make changes.</p>
+      </div>
+      <div id="review-content"></div>
+    </section>
+
+  </main>
+
+  <!-- Connector fake-login modal -->
+  <div class="modal-overlay" id="connector-modal">
+    <div class="modal-box">
+      <div class="modal-icon" id="connector-modal-icon"></div>
+      <h3 id="connector-modal-title">Connect to Slack</h3>
+      <p>Sign in with your own account to let this agent access <span id="connector-modal-name">Slack</span> on your behalf.</p>
+      <div class="modal-user-row">
+        <div class="agent-avatar" style="border-radius:50%;">AN</div>
+        <div>
+          <div style="font-weight:700;">Anand Narasimhan</div>
+          <div style="color:var(--text-muted);">anarasimhan@sdocs.com</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="connector-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="connector-modal-confirm">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom data source modal -->
+  <div class="modal-overlay" id="custom-connector-modal">
+    <div class="modal-box">
+      <div class="custom-connector-modal-icon">+</div>
+      <h3>Add a custom data source</h3>
+      <p>Connect anything with an API &mdash; an off-the-shelf product or a home-grown system.</p>
+      <div class="field-group" style="text-align:left;">
+        <label for="custom-connector-name">Name</label>
+        <input type="text" class="text-input" id="custom-connector-name" placeholder="e.g. Internal Billing API">
+      </div>
+      <div class="field-group" style="text-align:left;">
+        <label for="custom-connector-url">API base URL</label>
+        <input type="text" class="text-input" id="custom-connector-url" placeholder="https://api.example.com/v1">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="custom-connector-cancel">Cancel</button>
+        <button class="btn btn-primary" id="custom-connector-confirm">Add source</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task type sub-flow overlay -->
+  <div class="subflow-overlay" id="subflow-overlay">
+    <div class="subflow-panel" id="subflow-panel"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="schema.js"></script>
+  <script src="builder.js"></script>
+</body>
+</html>

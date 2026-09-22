@@ -29,6 +29,9 @@ let currentStep = 0; // 0 = NL entry, 1-6 = wizard steps
 let editingTaskId = null;
 let taskIdCounter = 1;
 
+// Readable by other scripts on the page (the canvas builder reads connections).
+window.wizardState = state;
+
 function slugify(name) {
   return (name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'agent';
 }
@@ -289,6 +292,9 @@ function renderModelStep() {
 // ---------------------------------------------------------------
 
 let pendingConnectorId = null;
+// Set by callers that need to refresh themselves once a connection lands
+// (e.g. the Generate source-priority step, which lists connection status).
+let connectorModalOnDone = null;
 
 function renderConnectors() {
   if (!document.getElementById('connector-grid')) return; // no connector grid on this page (e.g. the AI conversational builder)
@@ -332,9 +338,10 @@ function renderConnectors() {
   document.getElementById('add-custom-connector-tile')?.addEventListener('click', openCustomConnectorModal);
 }
 
-function openConnectorModal(id) {
+function openConnectorModal(id, onDone) {
   const c = CONNECTORS.find(x => x.id === id);
   pendingConnectorId = id;
+  connectorModalOnDone = onDone || null;
   document.getElementById('connector-modal-icon').style.background = c.color;
   document.getElementById('connector-modal-icon').classList.toggle('has-logo', !!c.logo);
   document.getElementById('connector-modal-icon').innerHTML = connectorIconInner(c);
@@ -345,12 +352,16 @@ function openConnectorModal(id) {
 document.getElementById('connector-modal-cancel')?.addEventListener('click', () => {
   document.getElementById('connector-modal').classList.remove('show');
   pendingConnectorId = null;
+  connectorModalOnDone = null;
 });
 document.getElementById('connector-modal-confirm')?.addEventListener('click', () => {
   if (pendingConnectorId) state.connectors[pendingConnectorId] = true;
   document.getElementById('connector-modal').classList.remove('show');
   pendingConnectorId = null;
   renderConnectors();
+  const done = connectorModalOnDone;
+  connectorModalOnDone = null;
+  if (done) done();
 });
 
 // "Custom data source" — a lightweight named entry (name + API base URL)
@@ -817,7 +828,7 @@ function defaultConfigFor(type) {
     case 'extract': return { fileName: '', schema: [], skillIds: [] };
     case 'generate': return { templateId: null, dataElements: {}, visualizations: {}, customDataElements: [], customVisualizations: [], customLabel: '', pickerMode: 'list', pickerSearch: '', sourcePriority: computeDefaultSourcePriority(), skillIds: [] };
     case 'analyze': return { mode: null, rules: [], combinator: 'AND', playbook: [], skillIds: [] };
-    case 'save': return { platformId: null, mappings: {} };
+    case 'save': return { platformId: null, objectId: null, mappings: {} };
     case 'notify': return { channelId: null, recipient: '', message: '', condition: '' };
     default: return {};
   }
@@ -1032,7 +1043,7 @@ function renderDocTypeListStep(panel, config, steps) {
     renderSubflow('generate', config, 0);
   });
   document.getElementById('sf-cancel')?.addEventListener('click', closeSubflow);
-  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('generate', config, 1));
+  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('generate', config, 0.5));
 }
 
 // GENERATE, step 0 (search view) — search OPS_TEMPLATE_LIBRARY by name,
@@ -1059,7 +1070,7 @@ function renderDocTypeSearchStep(panel, config, steps) {
     renderOpsTemplateResults(panel, config);
   });
   document.getElementById('sf-cancel')?.addEventListener('click', closeSubflow);
-  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('generate', config, 1));
+  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('generate', config, 0.5));
 }
 
 function renderOpsTemplateResults(panel, config) {
@@ -1105,18 +1116,33 @@ function renderOpsTemplateResults(panel, config) {
 
 // GENERATE — always produces a document from an S-Docs template.
 function renderGenerateSubflow(panel, config, subStep) {
-  const steps = ['Choose document type', 'Confirm data elements', 'Prioritize data sources', 'Preview'];
+  const steps = ['Choose document type', 'Select template', 'Confirm data elements', 'Prioritize data sources', 'Preview'];
   if (subStep === 0) {
     if (config.pickerMode === 'search') {
       renderDocTypeSearchStep(panel, config, steps);
     } else {
       renderDocTypeListStep(panel, config, steps);
     }
+  } else if (subStep === 0.5) {
+    renderTemplatePickStep(panel, config, steps);
   } else if (subStep === 1) {
     const isCustom = config.templateId === 'custom';
     const template = getTemplateForConfig(config);
-    template.dataElements.forEach(el => {
-      if (!config.dataElements[el.key]) config.dataElements[el.key] = { included: true, prompt: el.suggestedPrompt };
+    // The chosen S-Docs template's merge fields are what must be collected;
+    // the curated suggestions for this document type ride along as optional
+    // extras, off by default so the template stays the source of truth.
+    const required = isCustom ? [] : templateMergeElements(config);
+    const requiredKeys = new Set(required.map(el => el.key));
+    const extras = template.dataElements.filter(el => !requiredKeys.has(el.key));
+    const elements = required.concat(extras);
+    elements.forEach(el => {
+      if (!config.dataElements[el.key]) {
+        config.dataElements[el.key] = {
+          included: el.required ? true : !required.length,
+          prompt: el.suggestedPrompt,
+        };
+      }
+      if (el.required) config.dataElements[el.key].included = true;
     });
     const hasViz = isCustom || !!(template.visualizations && template.visualizations.length);
     if (hasViz) {
@@ -1125,7 +1151,7 @@ function renderGenerateSubflow(panel, config, subStep) {
         if (!config.visualizations[v.key]) config.visualizations[v.key] = { included: v.included !== false, prompt: v.suggestedPrompt };
       });
     }
-    panel.innerHTML = subflowShell('Generate', steps, 1, `
+    panel.innerHTML = subflowShell('Generate', steps, 2, `
       ${isCustom ? `
         <div class="field-group">
           <label for="custom-doc-label">What should this document be called?</label>
@@ -1133,17 +1159,22 @@ function renderGenerateSubflow(panel, config, subStep) {
         </div>
         <p class="field-hint" style="margin-bottom:14px;">Add the things you want this document to collect. Each one gets a prompt S-Docs uses to go find it.</p>
       ` : `
-        <p class="field-hint" style="margin-bottom:14px;">S-Docs knows "${escapeHtml(template.label)}" needs these data elements. Confirm them and adjust the prompt used to go find each one.</p>
+        <p class="field-hint" style="margin-bottom:14px;">${
+          required.length
+            ? `The <strong>${escapeHtml((SDOCS_TEMPLATES.find(t => t.id === config.sdocsTemplateId) || {}).name || '')}</strong> template needs the fields marked required. Anything else is optional \u2014 tick it to collect it too.`
+            : `S-Docs knows "${escapeHtml(template.label)}" needs these data elements. Confirm them and adjust the prompt used to go find each one.`
+        }</p>
       `}
-      ${template.dataElements.map(el => {
+      ${elements.map(el => {
         const cfg = config.dataElements[el.key];
         return `
-          <div class="data-element-row">
+          <div class="data-element-row${el.required ? ' required-by-template' : ''}">
             <div class="data-element-head">
-              <input type="checkbox" data-el-include="${el.key}" ${cfg.included ? 'checked' : ''}>
+              <input type="checkbox" data-el-include="${el.key}" ${cfg.included ? 'checked' : ''} ${el.required ? 'disabled' : ''}>
               ${isCustom
                 ? `<input type="text" class="inline-label-input" data-el-label="${el.key}" value="${escapeHtml(el.label)}" placeholder="e.g. Deal value">`
                 : `<label>${escapeHtml(el.label)}</label>`}
+              ${el.required ? '<span class="el-required-tag">Required by template</span>' : ''}
               ${isCustom ? `<button class="row-delete-btn" data-el-remove="${el.key}" title="Remove">&times;</button>` : ''}
             </div>
             <textarea class="data-element-prompt" data-el-prompt="${el.key}" placeholder="${isCustom ? 'Describe what to look for and where, e.g. “Pull the vendor’s annual contract value from the signed order form.”' : ''}" ${cfg.included ? '' : 'disabled'}>${escapeHtml(cfg.prompt)}</textarea>
@@ -1237,7 +1268,7 @@ function renderGenerateSubflow(panel, config, subStep) {
       addCustomVisualization(config);
       renderSubflow('generate', config, 1);
     });
-    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('generate', config, 0));
+    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('generate', config, 0.5));
     document.getElementById('sf-next')?.addEventListener('click', () => {
       syncFieldsIntoConfig();
       if (!config.sourcePriority || !config.sourcePriority.length) config.sourcePriority = computeDefaultSourcePriority();
@@ -1250,7 +1281,7 @@ function renderGenerateSubflow(panel, config, subStep) {
     const preview = mockGeneratedDocument(template, config.dataElements, config.sourcePriority);
     const topSources = config.sourcePriority.slice(0, 2).map(id => findConnector(id).name).join(', then ');
     const includedViz = (template.visualizations || []).filter(v => config.visualizations && config.visualizations[v.key] && config.visualizations[v.key].included);
-    panel.innerHTML = subflowShell('Generate', steps, 3, `
+    panel.innerHTML = subflowShell('Generate', steps, 4, `
       <div class="preview-source-note">Sourced primarily from ${escapeHtml(topSources)}.</div>
       <div class="generated-preview">${escapeHtml(preview)}</div>
       ${includedViz.length ? `
@@ -1275,8 +1306,85 @@ function renderGenerateSubflow(panel, config, subStep) {
   }
 }
 
+// A document type says what you want; an S-Docs template is the artifact that
+// renders it. The template's merge fields are what the agent must actually go
+// and find, so this step sits between the two and drives the next one.
+function renderTemplatePickStep(panel, config, steps) {
+  const docTypeId = config.templateId === 'custom' ? null : config.templateId;
+  const available = docTypeId ? sdocsTemplatesFor(docTypeId) : [];
+  const docLabel = config.templateId === 'custom'
+    ? (config.customLabel || 'your custom document')
+    : ((getTemplateForConfig(config) || {}).label || 'this document');
+
+  if (!config.sdocsTemplateId && available.length) {
+    config.sdocsTemplateId = available[0].id; // the org default
+  }
+
+  panel.innerHTML = subflowShell('Generate', steps, 1, `
+    ${available.length ? `
+      <p class="field-hint" style="margin-bottom:14px;">
+        Which S-Docs template should render ${escapeHtml(docLabel)}? Its merge fields become the
+        inputs this step has to collect.
+      </p>
+      <div class="sdocs-template-list">
+        ${available.map(t => `
+          <div class="sdocs-template-row ${config.sdocsTemplateId === t.id ? 'selected' : ''}" data-sdocs-template="${t.id}">
+            <span class="sdocs-template-radio"></span>
+            <div class="sdocs-template-body">
+              <div class="sdocs-template-name">
+                ${escapeHtml(t.name)}
+                ${t.isDefault ? '<span class="sdocs-template-default">Org default</span>' : ''}
+              </div>
+              <div class="sdocs-template-meta">
+                ${t.format} &middot; ${escapeHtml(t.owner)} &middot; updated ${escapeHtml(t.updated)} &middot; used by ${t.usedBy} agents
+              </div>
+              <div class="sdocs-template-fields">
+                ${t.mergeFields.length} merge field${t.mergeFields.length === 1 ? '' : 's'}:
+                ${t.mergeFields.map(f => `<code>${escapeHtml(f.key)}</code>`).join(' ')}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `
+      <p class="field-hint" style="margin-bottom:14px;">
+        No published S-Docs template targets ${escapeHtml(docLabel)} yet. You can still define the
+        data elements to collect, and map them onto a template later.
+      </p>
+      <div class="dropzone" style="padding:26px 20px;">Nothing to pick &mdash; continue and define the inputs yourself.</div>
+    `}
+  `, `
+    <button class="btn btn-outline" id="sf-back">Back</button>
+    <button class="btn btn-primary" id="sf-next">Next</button>
+  `);
+  bindSubflowClose();
+
+  panel.querySelectorAll('[data-sdocs-template]').forEach(row => {
+    row.addEventListener('click', () => {
+      config.sdocsTemplateId = row.dataset.sdocsTemplate;
+      // the template defines the required inputs, so a change invalidates them
+      config.dataElements = {};
+      renderSubflow('generate', config, 0.5);
+    });
+  });
+  document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('generate', config, 0));
+  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('generate', config, 1));
+}
+
+// The merge fields of the chosen template, as data elements.
+function templateMergeElements(config) {
+  const t = SDOCS_TEMPLATES.find(x => x.id === config.sdocsTemplateId);
+  if (!t) return [];
+  return t.mergeFields.map(f => ({
+    key: f.key,
+    label: f.label,
+    required: true,
+    suggestedPrompt: 'Find ' + f.label.toLowerCase() + ' for this record.',
+  }));
+}
+
 function renderSourcePriorityStep(panel, config, steps) {
-  panel.innerHTML = subflowShell('Generate', steps, 2, `
+  panel.innerHTML = subflowShell('Generate', steps, 3, `
     <p class="field-hint" style="margin-bottom:12px;">Set the order S-Docs should check when looking for each data element. Connected sources are checked first by default.</p>
     <div class="source-priority-list" id="source-priority-list"></div>
   `, `
@@ -1299,7 +1407,9 @@ function renderSourcePriorityList(config) {
         <span class="priority-rank">${i + 1}</span>
         <span class="connector-icon-sm ${c.logo ? 'has-logo' : ''}" style="background:${c.color}">${connectorIconInner(c)}</span>
         <span class="source-name">${escapeHtml(c.name)}</span>
-        <span class="${connected ? 'source-connected-badge' : 'source-disconnected-badge'}">${connected ? '● Connected' : '○ Not connected'}</span>
+        ${connected
+          ? `<span class="source-connected-badge">&#9679; Connected</span>`
+          : `<button class="source-connect-btn" data-connect-source="${id}">Connect</button>`}
         <div class="priority-controls">
           <button class="priority-up" ${i === 0 ? 'disabled' : ''} title="Move up">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
@@ -1311,6 +1421,14 @@ function renderSourcePriorityList(config) {
       </div>
     `;
   }).join('');
+  // Sources can be connected right here. The wizard had a separate Data
+  // sources step earlier in the flow, but the canvas builder has no such
+  // step — and even in the wizard you may have skipped one you now need.
+  list.querySelectorAll('[data-connect-source]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openConnectorModal(btn.dataset.connectSource, () => renderSourcePriorityList(config));
+    });
+  });
   list.querySelectorAll('.priority-up').forEach((btn, i) => btn.addEventListener('click', () => moveSourcePriority(config, i, -1)));
   list.querySelectorAll('.priority-down').forEach((btn, i) => btn.addEventListener('click', () => moveSourcePriority(config, i, 1)));
 }
@@ -1674,8 +1792,23 @@ function finishPlaybookAnalyze(config, suggestions) {
 }
 
 // SAVE (destination + field mapping)
+// Which fields a Save step can read: whatever an upstream Extract produced.
+// The canvas passes them on the config; the wizard looks at its task list;
+// otherwise fall back to the sample schema so the step is never empty.
+function saveSourceFields(config) {
+  if (config.sourceFields && config.sourceFields.length) return config.sourceFields.slice();
+  if (typeof state !== 'undefined' && state.tasks) {
+    const extract = state.tasks.filter(function (t) { return t.type === 'extract'; }).pop();
+    if (extract && extract.config.schema && extract.config.schema.length) {
+      return extract.config.schema.map(function (f) { return f.name; });
+    }
+  }
+  return EXTRACT_SAMPLE_SCHEMA.map(function (f) { return f.name; });
+}
+
 function renderSaveSubflow(panel, config, subStep) {
-  const steps = ['Choose destination', 'Map fields'];
+  const steps = ['Choose destination', 'Select object', 'Map fields'];
+
   if (subStep === 0) {
     panel.innerHTML = subflowShell('Save', steps, 0, `
       <div class="platform-grid">
@@ -1693,24 +1826,80 @@ function renderSaveSubflow(panel, config, subStep) {
     `);
     bindSubflowClose();
     document.querySelectorAll('.platform-tile').forEach(tile => {
-      tile.addEventListener('click', () => { config.platformId = tile.dataset.platform; renderSubflow('save', config, 0); });
+      tile.addEventListener('click', () => {
+        if (config.platformId !== tile.dataset.platform) {
+          // a different platform means a different object and field list
+          config.platformId = tile.dataset.platform;
+          config.objectId = null;
+          config.mappings = {};
+        }
+        renderSubflow('save', config, 0);
+      });
     });
     document.getElementById('sf-cancel')?.addEventListener('click', closeSubflow);
     document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('save', config, 1));
-  } else {
-    const fields = EXTRACT_SAMPLE_SCHEMA.map(f => f.name);
-    const destFields = ['claimant_name', 'policy_number', 'claim_amount', 'approval_status', 'claim_date', 'description'];
-    fields.forEach((f, i) => { if (!config.mappings[f]) config.mappings[f] = i < 4 ? destFields[i] : ''; });
+
+  } else if (subStep === 1) {
+    const platform = DESTINATION_PLATFORMS.find(p => p.id === config.platformId);
+    const objects = destinationObjectsFor(config.platformId);
     panel.innerHTML = subflowShell('Save', steps, 1, `
-      <p class="field-hint" style="margin-bottom:8px;">Fields were auto-mapped where possible. Review anything flagged for manual selection.</p>
+      <p class="field-hint" style="margin-bottom:14px;">
+        Which ${escapeHtml(platform ? platform.name : '')} record should this write to? The object decides
+        which fields are available to map.
+      </p>
+      <div class="sdocs-template-list">
+        ${objects.map(o => `
+          <div class="sdocs-template-row ${config.objectId === o.id ? 'selected' : ''}" data-object="${o.id}">
+            <span class="sdocs-template-radio"></span>
+            <div class="sdocs-template-body">
+              <div class="sdocs-template-name">${escapeHtml(o.name)}</div>
+              <div class="sdocs-template-meta">${escapeHtml(o.description)}</div>
+              <div class="sdocs-template-fields">
+                ${o.fields.length} fields: ${o.fields.slice(0, 5).map(f => `<code>${escapeHtml(f)}</code>`).join(' ')}${o.fields.length > 5 ? ' &hellip;' : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `, `
+      <button class="btn btn-outline" id="sf-back">Back</button>
+      <button class="btn btn-primary" id="sf-next" ${config.objectId ? '' : 'disabled'}>Next</button>
+    `);
+    bindSubflowClose();
+    panel.querySelectorAll('[data-object]').forEach(row => {
+      row.addEventListener('click', () => {
+        if (config.objectId !== row.dataset.object) {
+          config.objectId = row.dataset.object;
+          config.mappings = {}; // re-map against the new object's fields
+        }
+        renderSubflow('save', config, 1);
+      });
+    });
+    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 0));
+    document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('save', config, 2));
+
+  } else {
+    const obj = findDestinationObject(config.platformId, config.objectId);
+    const destFields = obj ? obj.fields : [];
+    const fields = saveSourceFields(config);
+    config.mappings = config.mappings || {};
+    if (!Object.keys(config.mappings).length) {
+      config.mappings = autoMapFields(fields, destFields);
+    }
+    const unmapped = fields.filter(f => !config.mappings[f]).length;
+    panel.innerHTML = subflowShell('Save', steps, 2, `
+      <p class="field-hint" style="margin-bottom:8px;">
+        Mapping the extracted fields onto <strong>${escapeHtml(obj ? obj.name : 'the destination')}</strong>.
+        ${unmapped ? `${unmapped} field${unmapped === 1 ? '' : 's'} still need${unmapped === 1 ? 's' : ''} a destination.` : 'Everything is mapped.'}
+      </p>
       ${fields.map(f => `
         <div class="mapping-row">
           <span class="map-status-icon ${config.mappings[f] ? 'mapped' : 'unmapped'}">${config.mappings[f] ? '✓' : '!'}</span>
           <span class="mapping-field">${escapeHtml(f)}</span>
           <span class="mapping-arrow">&rarr;</span>
           <select class="mapping-select" data-field="${f}">
-            <option value="">Select destination field&hellip;</option>
-            ${destFields.map(df => `<option value="${df}" ${config.mappings[f] === df ? 'selected' : ''}>${df}</option>`).join('')}
+            <option value="">Don&rsquo;t save this field&hellip;</option>
+            ${destFields.map(df => `<option value="${df}" ${config.mappings[f] === df ? 'selected' : ''}>${escapeHtml(df)}</option>`).join('')}
           </select>
         </div>
       `).join('')}
@@ -1719,9 +1908,9 @@ function renderSaveSubflow(panel, config, subStep) {
       <button class="btn btn-primary" id="sf-save">Save task</button>
     `);
     bindSubflowClose();
-    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 0));
+    document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('save', config, 1));
     panel.querySelectorAll('.mapping-select').forEach(sel => {
-      sel.addEventListener('change', () => { config.mappings[sel.dataset.field] = sel.value; renderSubflow('save', config, 1); });
+      sel.addEventListener('change', () => { config.mappings[sel.dataset.field] = sel.value; renderSubflow('save', config, 2); });
     });
     document.getElementById('sf-save')?.addEventListener('click', () => saveTaskConfig('save', config));
   }
