@@ -126,6 +126,16 @@ function stepSummary(node) {
       if (!c.fileName) return 'Upload a sample, or start from a skill';
       return 'From "' + c.fileName + '" — ' + (n ? n + ' field' + (n === 1 ? '' : 's') : 'no schema yet');
     }
+    case 'identify': {
+      const p = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
+      if (!p) return 'Choose where to look';
+      const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
+      if (!obj) return p.name + ' \u2014 choose a record type';
+      const on = (c.criteria || []).filter(function (r) { return r.field && r.value; });
+      return p.name + ' \u00b7 ' + obj.name + (on.length
+        ? ', matched on ' + on.map(function (r) { return r.value; }).join(' + ')
+        : ' \u2014 no match criteria yet');
+    }
     case 'generate': {
       if (!c.templateId) return 'Choose a document type';
       // ops-library templates aren't in DOCUMENT_TEMPLATES; the wizard's
@@ -146,6 +156,12 @@ function stepSummary(node) {
       return cats.length + ' categor' + (cats.length === 1 ? 'y' : 'ies') + ', ' + qs + ' question' + (qs === 1 ? '' : 's');
     }
     case 'save': {
+      if (c.writeKind === 'comment') return 'Comments on the identified record';
+      if (c.writeKind === 'attachment') return 'Attaches the document to the identified record';
+      if (c.target === 'identified') {
+        const mappedN = Object.keys(c.mappings || {}).filter(function (k) { return c.mappings[k]; }).length;
+        return 'Updates the identified record' + (mappedN ? ', ' + mappedN + ' field' + (mappedN === 1 ? '' : 's') : '');
+      }
       const p = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
       if (!p) return 'Pick a destination';
       const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
@@ -810,6 +826,20 @@ function sourceOption(c, selectedId, attr) {
     '</button>';
 }
 
+// The comment/attachment variants of Save return early, so their handlers are
+// bound here rather than at the bottom of renderStepPanel.
+function bindSaveHandlers(el, node, c) {
+  bind('s-title', 'input', function (e) { node.title = e.target.value; softRefresh(node.id); });
+  bind('s-comment', 'input', function (e) { c.comment = e.target.value; softRefresh(node.id); });
+  bind('s-delete', 'click', function () { deleteNode(node.id); });
+  el.querySelectorAll('[data-target]').forEach(function (b) {
+    b.onclick = function () { snapshot(); c.target = b.dataset.target; renderInspector(); softRefresh(node.id); };
+  });
+  el.querySelectorAll('[data-writekind]').forEach(function (b) {
+    b.onclick = function () { snapshot(); c.writeKind = b.dataset.writekind; renderInspector(); softRefresh(node.id); };
+  });
+}
+
 function renderStepPanel(el, node) {
   const t = TASK_TYPES[node.type];
   const c = node.config || (node.config = {});
@@ -857,6 +887,62 @@ function renderStepPanel(el, node) {
               'style="padding:1px 7px;line-height:1.3;">&times;</button></td></tr>';
         }).join('') +
         '</tbody></table>';
+    }
+
+  } else if (node.type === 'identify') {
+    const plat = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
+    const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
+    const sourceFields = upstreamExtractFields(node.id);
+    c.criteria = c.criteria || [];
+
+    body += '<div class="fc-hint" style="margin-bottom:12px;">Finds the record this run is about, so later ' +
+      'steps can write to it instead of creating something new.</div>';
+
+    body += '<div class="fc-insp-section-label">Where to look</div>' +
+      DESTINATION_PLATFORMS.map(function (x) { return sourceOption(x, c.platformId, 'data-idplat'); }).join('');
+
+    if (plat) {
+      const objects = window.destinationObjectsFor ? window.destinationObjectsFor(c.platformId) : [];
+      body += '<div class="fc-insp-section-label">What kind of record</div>' +
+        '<div class="fc-field"><select id="id-object">' +
+          '<option value="">\u2014 choose \u2014</option>' +
+          objects.map(function (o) {
+            return '<option value="' + o.id + '"' + (c.objectId === o.id ? ' selected' : '') + '>' + esc(o.name) + '</option>';
+          }).join('') +
+        '</select></div>';
+    }
+
+    if (obj) {
+      body += '<div class="fc-insp-section-label">Match on</div>';
+      if (!sourceFields.length) {
+        body += '<div class="fc-muted-note">Add an Extract step before this one and its fields become available to match against.</div>';
+      } else {
+        body += c.criteria.map(function (r, i) {
+          return '<div class="fc-path-row">' +
+            '<select data-crit-field="' + i + '" style="flex:1 1 auto;min-width:0;">' +
+              obj.fields.map(function (f) {
+                return '<option' + (r.field === f ? ' selected' : '') + '>' + esc(f) + '</option>';
+              }).join('') +
+            '</select>' +
+            '<span style="color:var(--text-muted);">=</span>' +
+            '<select data-crit-value="' + i + '" style="flex:1 1 auto;min-width:0;">' +
+              sourceFields.map(function (f) {
+                return '<option' + (r.value === f ? ' selected' : '') + '>' + esc(f) + '</option>';
+              }).join('') +
+            '</select>' +
+            '<button class="fc-chip" data-crit-remove="' + i + '" title="Remove" style="padding:1px 7px;">&times;</button>' +
+          '</div>';
+        }).join('') +
+        '<button class="fc-deep-link" id="id-addcrit">Add a match rule</button>';
+      }
+
+      body += '<div class="fc-insp-section-label">Fields it makes available</div>' +
+        '<div class="fc-field-list">' +
+          obj.fields.slice(0, 6).map(function (f) {
+            return '<div class="fc-field-row"><code>' + esc(f) + '</code></div>';
+          }).join('') +
+        '</div>' +
+        '<div class="fc-muted-note">Later steps can read these, and a Save step can update this record.</div>';
     }
 
   } else if (node.type === 'generate') {
@@ -914,6 +1000,40 @@ function renderStepPanel(el, node) {
     const obj = window.findDestinationObject ? window.findDestinationObject(c.platformId, c.objectId) : null;
     const mapped = Object.keys(c.mappings || {}).filter(function (k) { return c.mappings[k]; }).length;
 
+    const ident = upstreamIdentify(node.id);
+    if (ident) {
+      const identObj = window.findDestinationObject(ident.config.platformId, ident.config.objectId);
+      body += '<div class="fc-insp-section-label">What to write to</div>' +
+        '<button class="fc-option' + (c.target === 'identified' ? ' on' : '') + '" data-target="identified">' +
+          '<div class="fc-option-body"><div class="fc-option-title">The record &ldquo;' + esc(ident.title) + '&rdquo; found</div>' +
+            '<div class="fc-option-desc">' + esc(identObj ? identObj.name : 'the identified record') + ' \u2014 updates it in place.</div></div></button>' +
+        '<button class="fc-option' + (c.target !== 'identified' ? ' on' : '') + '" data-target="create">' +
+          '<div class="fc-option-body"><div class="fc-option-title">A new record</div>' +
+            '<div class="fc-option-desc">Creates one rather than updating anything.</div></div></button>';
+
+      body += '<div class="fc-insp-section-label">What to write</div>' +
+        SAVE_WRITE_KINDS.map(function (k) {
+          return '<button class="fc-option' + ((c.writeKind || 'fields') === k.id ? ' on' : '') + '" data-writekind="' + k.id + '">' +
+            '<div class="fc-option-body"><div class="fc-option-title">' + esc(k.label) + '</div>' +
+              '<div class="fc-option-desc">' + esc(k.desc) + '</div></div></button>';
+        }).join('');
+
+      if (c.writeKind === 'comment') {
+        body += '<div class="fc-field" style="margin-top:12px;"><label>Comment</label>' +
+          '<textarea id="s-comment" rows="3" placeholder="e.g. Risk score 82 \u2014 routed to legal for review.">' +
+          esc(c.comment || '') + '</textarea></div>';
+      } else if (c.writeKind === 'attachment') {
+        body += '<div class="fc-muted-note" style="margin-top:12px;">Attaches the document the nearest Generate step produced.</div>';
+      }
+    }
+
+    if (c.writeKind === 'comment' || c.writeKind === 'attachment') {
+      body += '<button class="fc-deep-link fc-danger" id="s-delete" style="margin-top:20px;">Delete this step</button>';
+      el.innerHTML = panelShell(chip, node.title, t.label + ' step', body);
+      bindSaveHandlers(el, node, c);
+      return;
+    }
+
     body += '<div class="fc-insp-section-label">Destination</div>';
     if (plat && obj) {
       body += '<div class="fc-field-row" style="padding:10px 11px;"><strong>' + esc(plat.name) + '</strong>' +
@@ -968,6 +1088,14 @@ function renderStepPanel(el, node) {
     renderInspector(); softRefresh(node.id);
     toast('Generated a ' + c.schema.length + '-field schema');
   });
+  el.querySelectorAll('[data-target]').forEach(function (b) {
+    b.onclick = function () { snapshot(); c.target = b.dataset.target; renderInspector(); softRefresh(node.id); };
+  });
+  el.querySelectorAll('[data-writekind]').forEach(function (b) {
+    b.onclick = function () { snapshot(); c.writeKind = b.dataset.writekind; renderInspector(); softRefresh(node.id); };
+  });
+  bind('s-comment', 'input', function (e) { c.comment = e.target.value; softRefresh(node.id); });
+
   el.querySelectorAll('[data-skill]').forEach(function (b) {
     b.onclick = function () {
       snapshot();
@@ -990,6 +1118,39 @@ function renderStepPanel(el, node) {
   bind('s-delete', 'click', () => deleteNode(node.id));
 
   bind('s-deep', 'click', function () { openDeepSetup(node); });
+
+  el.querySelectorAll('[data-idplat]').forEach(function (b) {
+    b.onclick = function () {
+      snapshot();
+      if (c.platformId !== b.dataset.idplat) { c.platformId = b.dataset.idplat; c.objectId = null; c.criteria = []; }
+      renderInspector(); softRefresh(node.id); softRefresh('agent');
+    };
+  });
+  bind('id-object', 'change', function (e) {
+    snapshot();
+    c.objectId = e.target.value || null;
+    c.criteria = [];   // the old fields belong to a different object
+    renderInspector(); softRefresh(node.id);
+  });
+  bind('id-addcrit', 'click', function () {
+    snapshot();
+    const obj = window.findDestinationObject(c.platformId, c.objectId);
+    const src = upstreamExtractFields(node.id);
+    c.criteria.push({ field: obj.fields[0], value: src[0] || '' });
+    renderInspector(); softRefresh(node.id);
+  });
+  el.querySelectorAll('[data-crit-field]').forEach(function (sel) {
+    sel.onchange = function () { c.criteria[+sel.dataset.critField].field = sel.value; softRefresh(node.id); };
+  });
+  el.querySelectorAll('[data-crit-value]').forEach(function (sel) {
+    sel.onchange = function () { c.criteria[+sel.dataset.critValue].value = sel.value; softRefresh(node.id); };
+  });
+  el.querySelectorAll('[data-crit-remove]').forEach(function (b) {
+    b.onclick = function () {
+      snapshot(); c.criteria.splice(+b.dataset.critRemove, 1);
+      renderInspector(); softRefresh(node.id);
+    };
+  });
   el.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => {
     snapshot(); c.channelId = b.dataset.chan;
     c.recipient = (NOTIFY_RECIPIENTS[c.channelId] || [])[0] || '';
@@ -1107,6 +1268,25 @@ function upstreamExtractFields(nodeId) {
   return [];
 }
 
+// The nearest Identify above this node, if any — a Save can update the record
+// it found instead of creating a new one.
+function upstreamIdentify(nodeId) {
+  const seen = {};
+  let frontier = state.edges.filter(function (e) { return e.to === nodeId; }).map(function (e) { return e.from; });
+  while (frontier.length) {
+    const next = [];
+    for (const id of frontier) {
+      if (seen[id]) continue;
+      seen[id] = true;
+      const n = findNode(id);
+      if (n && n.type === 'identify' && n.config.objectId) return n;
+      state.edges.filter(function (e) { return e.to === id; }).forEach(function (e) { next.push(e.from); });
+    }
+    frontier = next;
+  }
+  return null;
+}
+
 function openDeepSetup(node) {
   if (typeof window.renderSubflow !== 'function') return toast('Setup unavailable');
   deepNode = node;
@@ -1126,6 +1306,7 @@ function openDeepSetup(node) {
 // ---------------------------------------------------------------------
 const INSERT_OPTIONS = [
   { kind: 'task', type: 'extract',  label: 'Extract' },
+  { kind: 'task', type: 'identify', label: 'Identify' },
   { kind: 'task', type: 'generate', label: 'Generate' },
   { kind: 'task', type: 'analyze',  label: 'Analyze' },
   { kind: 'task', type: 'save',     label: 'Save' },
@@ -1238,6 +1419,18 @@ document.addEventListener('mousedown', (e) => {
   if (!e.target.closest('.fc-insert-menu') && !e.target.closest('.joint-link')) closeMenus();
 });
 
+// Nodes that fork, and the labels their paths get. Identify is a task that
+// branches: a search can find one record, none, or several, and each needs
+// somewhere to go.
+function branchLabels(option) {
+  if (option.kind === 'approval') return ['Approved', 'Rejected'];
+  if (option.kind === 'rule') return ['Yes', 'No'];
+  if (option.kind === 'task' && option.type === 'identify') {
+    return IDENTIFY_OUTCOMES.map(function (o) { return o.label; });
+  }
+  return null;
+}
+
 function makeNode(option) {
   const id = nid('n');
   if (option.kind === 'task') {
@@ -1250,9 +1443,10 @@ function makeNode(option) {
 function defaultConfig(type) {
   switch (type) {
     case 'extract': return { fileName: null, description: '', schema: [], skillId: null };
+    case 'identify': return { platformId: null, objectId: null, criteria: [] };
     case 'generate': return { templateId: null };
     case 'analyze': return { mode: 'playbook', playbook: [], skillIds: [] };
-    case 'save': return { platformId: null, objectId: null, mappings: {} };
+    case 'save': return { platformId: null, objectId: null, mappings: {}, target: 'create', writeKind: 'fields', comment: '' };
     case 'notify': return { channelId: null, recipient: '', message: '', notifyInvoker: false };
     default: return {};
   }
@@ -1284,17 +1478,17 @@ function insertNode(option) {
     }
   }
 
-  if (isDecision(node.kind)) {
-    // A decision needs at least two paths, and they must be DISTINCT edges.
-    // Pointing both at one End made dagre stack them on top of each other,
-    // which read as a single branch. `to: null` marks a path that hasn't been
-    // filled in yet; buildCells gives each one its own "Add a step".
-    const yes = node.kind === 'approval' ? 'Approved' : 'Yes';
-    const no = node.kind === 'approval' ? 'Rejected' : 'No';
+  const labels = branchLabels(option);
+  if (labels) {
+    // Every path must be a DISTINCT edge — pointing them at one node made
+    // dagre stack them, which read as a single branch. `to: null` marks a path
+    // not filled in yet; buildCells gives each its own "Add a step".
     const outs = state.edges.filter(function (e) { return e.from === node.id; });
-    if (outs.length) outs[0].label = yes;
-    else state.edges.push({ from: node.id, to: null, label: yes });
-    state.edges.push({ from: node.id, to: null, label: no });
+    if (outs.length) outs[0].label = labels[0];
+    else state.edges.push({ from: node.id, to: null, label: labels[0] });
+    labels.slice(outs.length ? 1 : 1).forEach(function (l) {
+      state.edges.push({ from: node.id, to: null, label: l });
+    });
   }
 
   closeMenus();

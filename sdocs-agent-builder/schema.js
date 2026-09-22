@@ -3,6 +3,7 @@
 
 const TASK_TYPES = {
   extract: { key: 'extract', label: 'Extract', color: '#0176d3', icon: 'download' },
+  identify: { key: 'identify', label: 'Identify', color: '#00838f', icon: 'search' },
   generate: { key: 'generate', label: 'Generate', color: '#7d3ac1', icon: 'sparkles' },
   analyze: { key: 'analyze', label: 'Analyze', color: '#b8860b', icon: 'search' },
   save: { key: 'save', label: 'Save', color: '#2e7d32', icon: 'save' },
@@ -86,6 +87,24 @@ const DESTINATION_PLATFORMS = [
 // What a Save step actually writes to. Picking the platform is not enough —
 // Salesforce alone has many objects, and the field list you map onto depends
 // entirely on which one, so the destination is platform + object.
+// An Identify step looks up the record an agent is acting on, so later steps
+// can write to that record rather than creating a new one. A search has three
+// possible outcomes and each gets its own path on the canvas — "found several"
+// is the interesting one, and hiding it in a panel is how agents quietly act
+// on the wrong record.
+const IDENTIFY_OUTCOMES = [
+  { id: 'one', label: 'Found one' },
+  { id: 'none', label: 'Found none' },
+  { id: 'many', label: 'Found several' },
+];
+
+// What a Save step can write to the record it was given.
+const SAVE_WRITE_KINDS = [
+  { id: 'fields', label: 'Field values', desc: 'Map extracted values onto the record\u2019s fields.' },
+  { id: 'comment', label: 'A comment or note', desc: 'Post a note on the record, e.g. what the agent found and why.' },
+  { id: 'attachment', label: 'An attachment', desc: 'Attach a document an earlier Generate step produced.' },
+];
+
 const DESTINATION_OBJECTS = {
   salesforce: [
     { id: 'Opportunity', name: 'Opportunity', description: 'Deals in the pipeline',
