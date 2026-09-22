@@ -401,7 +401,7 @@ function renderHeader() {
     '<span>' + esc(trail.startedAt) + '</span><span>&middot;</span>' +
     '<span>' + esc(trail.totalDuration) + '</span><span>&middot;</span>' +
     '<span>' + esc(trail.trigger) + '</span>';
-  document.getElementById('btn-open-builder').href = 'builder-canvas.html';
+  document.getElementById('btn-open-builder').href = 'builder.html';
 }
 
 const sel = document.getElementById('agent-select');
