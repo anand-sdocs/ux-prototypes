@@ -185,7 +185,7 @@ function draftFromPrompt(prompt) {
     state.tasks.push(makeTask('generate', { templateId: template.id, dataElements, sourcePriority: computeDefaultSourcePriority() }));
   }
   if (p.includes('playbook') || p.includes('threshold') || p.includes('check') || p.includes('flag') || p.includes('review') || p.includes('criteria')) {
-    state.tasks.push(makeTask('analyze', { mode: 'threshold', rules: [{ field: PLAYBOOK_FIELDS[1], operator: '<', value: '95', action: PLAYBOOK_ACTIONS[0] }], combinator: 'AND', playbook: [] }));
+    state.tasks.push(makeTask('analyze', { mode: 'playbook', playbook: [], skillIds: [] }));
   }
   if (p.includes('save') || p.includes('file') || p.includes('crm') || p.includes('salesforce') || p.includes('sheet') || p.includes('spreadsheet')) {
     const platform = DESTINATION_PLATFORMS.find(pl => p.includes(pl.id)) || DESTINATION_PLATFORMS[0];
@@ -628,16 +628,10 @@ function taskSummary(task) {
       return `${template.label} &mdash; ${n} data element${n === 1 ? '' : 's'}${vn ? `, ${vn} chart${vn === 1 ? '' : 's'}` : ''}${skillTag(cfg)}`;
     }
     case 'analyze': {
-      if (cfg.mode === 'playbook') {
-        const categories = cfg.playbook || [];
-        const questionCount = categories.reduce((sum, c) => sum + c.questions.length, 0);
-        return categories.length ? `Playbook &mdash; ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}, ${questionCount} question${questionCount === 1 ? '' : 's'}${skillTag(cfg)}` : 'Playbook has no categories yet';
-      }
-      if (cfg.mode === 'threshold') {
-        const n = (cfg.rules || []).length;
-        return n ? `${n} condition${n > 1 ? 's' : ''} defined` : 'No conditions defined yet';
-      }
-      return 'Analysis type not set';
+      const categories = cfg.playbook || [];
+      if (!categories.length) return 'Playbook has no categories yet';
+      const questionCount = categories.reduce((sum, c) => sum + c.questions.length, 0);
+      return `Playbook &mdash; ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}, ${questionCount} question${questionCount === 1 ? '' : 's'}${skillTag(cfg)}`;
     }
     case 'save': {
       const platform = DESTINATION_PLATFORMS.find(p => p.id === cfg.platformId);
@@ -827,7 +821,7 @@ function defaultConfigFor(type) {
   switch (type) {
     case 'extract': return { fileName: '', schema: [], skillIds: [] };
     case 'generate': return { templateId: null, dataElements: {}, visualizations: {}, customDataElements: [], customVisualizations: [], customLabel: '', pickerMode: 'list', pickerSearch: '', sourcePriority: computeDefaultSourcePriority(), skillIds: [] };
-    case 'analyze': return { mode: null, rules: [], combinator: 'AND', playbook: [], skillIds: [] };
+    case 'analyze': return { mode: 'playbook', playbook: [], skillIds: [] };
     case 'save': return { platformId: null, objectId: null, mappings: {} };
     case 'notify': return { channelId: null, recipient: '', message: '', condition: '' };
     default: return {};
@@ -1455,143 +1449,23 @@ function mockGeneratedDocument(template, dataElements, sourcePriority) {
 
 let pbOpenAddQuestionFor = null; // which category's inline "add question" form is open
 
+// Analyze reviews a document against a playbook — the qualitative judgement
+// an agent is actually for. Comparing a number against a threshold used to
+// live here too, but that is what "Evaluate criteria" does on the canvas, and
+// one way to express a threshold is better than two.
+const ANALYZE_STEPS = ['Build the playbook', 'What to do with the score'];
+
 function renderAnalyzeSubflow(panel, config, subStep) {
-  if (subStep === 0) {
-    renderAnalyzeModeChoice(panel, config);
-  } else if (config.mode === 'playbook') {
-    if (subStep === 1) renderPlaybookBuilderStep(panel, config);
-    else renderPlaybookSuggestionsStep(panel, config);
-  } else {
-    renderThresholdStep(panel, config);
-  }
+  config.mode = 'playbook';
+  if (subStep >= 2) renderPlaybookSuggestionsStep(panel, config);
+  else renderPlaybookBuilderStep(panel, config);
 }
-
-function renderAnalyzeModeChoice(panel, config) {
-  const options = [
-    { id: 'threshold', title: 'Check data against thresholds', desc: 'Compare extracted fields or scores against rules you define (e.g. flag if accuracy_score < 95%).' },
-    { id: 'playbook', title: 'Review a document against a playbook', desc: "Ask yes/no questions about a contract or document, each weighted into an overall risk score (e.g. IP protection, termination for convenience)." },
-  ];
-  panel.innerHTML = `
-    <div class="subflow-header">
-      <h3>Analyze</h3>
-      <button class="icon-btn" id="subflow-close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="subflow-body">
-      <p class="field-hint" style="margin-bottom:12px;">What is this task analyzing?</p>
-      <div class="template-list">
-        ${options.map(o => `
-          <div class="template-option ${config.mode === o.id ? 'selected' : ''}" data-mode="${o.id}">
-            <span class="template-radio"></span>
-            <div>
-              <div class="ct-title">${escapeHtml(o.title)}</div>
-              <div class="ct-desc">${escapeHtml(o.desc)}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-    <div class="subflow-footer">
-      <button class="btn btn-outline" id="sf-cancel">Cancel</button>
-      <button class="btn btn-primary" id="sf-next" ${config.mode ? '' : 'disabled'}>Next</button>
-    </div>
-  `;
-  bindSubflowClose();
-  document.getElementById('sf-cancel')?.addEventListener('click', closeSubflow);
-  panel.querySelectorAll('.template-option').forEach(card => {
-    card.addEventListener('click', () => { config.mode = card.dataset.mode; renderAnalyzeModeChoice(panel, config); });
-  });
-  document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('analyze', config, 1));
-}
-
-// -- Threshold mode (the original IF/THEN condition builder) --
-
-function renderThresholdStep(panel, config) {
-  panel.innerHTML = `
-    <div class="subflow-header">
-      <h3>Analyze &mdash; thresholds</h3>
-      <button class="icon-btn" id="subflow-close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="subflow-body">
-      <p class="field-hint" style="margin-bottom:14px;">Define the conditions this agent checks extracted data against.</p>
-      <div id="rules-container"></div>
-      <button class="add-rule-btn" id="add-rule-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add condition
-      </button>
-    </div>
-    <div class="subflow-footer">
-      <button class="btn btn-outline" id="sf-back">Back</button>
-      <button class="btn btn-primary" id="sf-save">Save task</button>
-    </div>
-  `;
-  bindSubflowClose();
-  document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('analyze', config, 0));
-  document.getElementById('sf-save')?.addEventListener('click', () => {
-    readRulesFromDom(config);
-    saveTaskConfig('analyze', config);
-  });
-  if (!config.rules.length) config.rules.push({ field: PLAYBOOK_FIELDS[0], operator: '>', value: '', action: PLAYBOOK_ACTIONS[0] });
-  renderRules(config);
-  document.getElementById('add-rule-btn')?.addEventListener('click', () => {
-    readRulesFromDom(config);
-    config.rules.push({ field: PLAYBOOK_FIELDS[0], operator: '>', value: '', action: PLAYBOOK_ACTIONS[0] });
-    renderRules(config);
-  });
-}
-
-function readRulesFromDom(config) {
-  document.querySelectorAll('.rule-row').forEach((row, i) => {
-    config.rules[i] = {
-      field: row.querySelector('.rule-field').value,
-      operator: row.querySelector('.rule-operator').value,
-      value: row.querySelector('.rule-value').value,
-      action: row.querySelector('.rule-action').value,
-    };
-  });
-}
-
-function renderRules(config) {
-  const container = document.getElementById('rules-container');
-  container.innerHTML = config.rules.map((r, i) => `
-    <div class="rule-row">
-      <span class="rule-connector">${i === 0 ? 'IF' : 'AND'}</span>
-      <select class="rule-field">${PLAYBOOK_FIELDS.map(f => `<option value="${f}" ${r.field === f ? 'selected' : ''}>${f}</option>`).join('')}</select>
-      <select class="rule-operator">${PLAYBOOK_OPERATORS.map(o => `<option value="${o}" ${r.operator === o ? 'selected' : ''}>${o}</option>`).join('')}</select>
-      <input type="text" class="rule-value" value="${escapeHtml(r.value)}" placeholder="value">
-      <span class="rule-then">THEN</span>
-      <select class="rule-action">${PLAYBOOK_ACTIONS.map(a => `<option value="${a}" ${r.action === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
-      <button class="remove-rule-btn" data-idx="${i}" title="Remove rule">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-  `).join('');
-  container.querySelectorAll('.remove-rule-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      readRulesFromDom(config);
-      config.rules.splice(Number(btn.dataset.idx), 1);
-      renderRules(config);
-    });
-  });
-}
-
-// -- Playbook mode --
 
 function renderPlaybookBuilderStep(panel, config) {
   const analyzeSkills = skillsFor('analyze');
   const usedSkillIds = config.skillIds || [];
-  panel.innerHTML = `
-    <div class="subflow-header">
-      <h3>Analyze &mdash; playbook</h3>
-      <button class="icon-btn" id="subflow-close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="subflow-body">
-      <p class="field-hint">Group your questions into categories (e.g. "IP Protection," "Termination for Convenience"). Each question is weighted into an overall risk score when the agent runs.</p>
+  panel.innerHTML = subflowShell('Analyze \u2014 playbook', ANALYZE_STEPS, 0, `
+      <p class="field-hint">Group your checks into categories (e.g. "IP Protection," "Termination for Convenience"). Each one asks whether a clause or phrase is present and how it reads, and is weighted into an overall risk score \u2014 which a later step can act on to approve, reject or escalate.</p>
       <p class="field-hint" style="margin-bottom:14px;"><a href="../contract-analyze/index.html" target="_blank" rel="noopener">Preview what this looks like against a sample contract &rarr;</a></p>
       ${analyzeSkills.length ? `
         <p class="field-hint" style="margin-bottom:8px;"><strong>Add from a skill</strong> &mdash; brings in that skill's categories and questions. You can add more than one.</p>
@@ -1613,12 +1487,10 @@ function renderPlaybookBuilderStep(panel, config) {
         <input type="text" class="text-input" id="pb-new-category-name" placeholder="e.g. Data Privacy &amp; Security" style="flex:1;">
         <button class="btn btn-outline btn-sm" id="pb-add-category-btn">Add category</button>
       </div>
-    </div>
-    <div class="subflow-footer">
+  `, `
       <button class="btn btn-outline" id="sf-back">Back</button>
       <button class="btn btn-primary" id="sf-next">Next</button>
-    </div>
-  `;
+  `);
   bindSubflowClose();
   document.getElementById('sf-back')?.addEventListener('click', () => { pbOpenAddQuestionFor = null; renderSubflow('analyze', config, 0); });
   document.getElementById('sf-next')?.addEventListener('click', () => renderSubflow('analyze', config, 2));
@@ -1724,14 +1596,7 @@ function renderPlaybookCategories(config) {
 }
 
 function renderPlaybookSuggestionsStep(panel, config) {
-  panel.innerHTML = `
-    <div class="subflow-header">
-      <h3>Analyze &mdash; playbook</h3>
-      <button class="icon-btn" id="subflow-close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="subflow-body">
+  panel.innerHTML = subflowShell('Analyze \u2014 playbook', ANALYZE_STEPS, 1, `
       <p class="field-hint" style="margin-bottom:14px;">Since this agent now scores a risk level, want to wire up what happens with that score?</p>
       <div class="data-element-row">
         <div class="data-element-head">
@@ -1746,12 +1611,10 @@ function renderPlaybookSuggestionsStep(panel, config) {
         </div>
       </div>
       <p class="field-hint">Both are added as separate tasks right after this one &mdash; you can edit or remove them afterward.</p>
-    </div>
-    <div class="subflow-footer">
+  `, `
       <button class="btn btn-outline" id="sf-back">Back</button>
       <button class="btn btn-primary" id="sf-finish">Finish</button>
-    </div>
-  `;
+  `);
   bindSubflowClose();
   document.getElementById('sf-back')?.addEventListener('click', () => renderSubflow('analyze', config, 1));
   document.getElementById('sf-finish')?.addEventListener('click', () => {

@@ -139,13 +139,12 @@ function stepSummary(node) {
       return (label || 'Document') + (els ? ' — ' + els + ' data element' + (els === 1 ? '' : 's') : '') +
         (vz ? ', ' + vz + ' chart' + (vz === 1 ? '' : 's') : '');
     }
-    case 'analyze':
-      if (c.mode === 'playbook') return 'Playbook — ' + (c.playbookName || 'not chosen yet');
-      if (c.mode === 'threshold') {
-        const n = (c.rules || []).length;
-        return n ? n + ' condition' + (n === 1 ? '' : 's') : 'No conditions yet';
-      }
-      return 'Pick how it should analyse';
+    case 'analyze': {
+      const cats = c.playbook || [];
+      if (!cats.length) return 'Build the playbook';
+      const qs = cats.reduce(function (n, cat) { return n + cat.questions.length; }, 0);
+      return cats.length + ' categor' + (cats.length === 1 ? 'y' : 'ies') + ', ' + qs + ' question' + (qs === 1 ? '' : 's');
+    }
     case 'save': {
       const p = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
       if (!p) return 'Pick a destination';
@@ -883,24 +882,32 @@ function renderStepPanel(el, node) {
     }
 
   } else if (node.type === 'analyze') {
-    body += '<div class="fc-insp-section-label">How should it analyse?</div>' +
-      '<div class="fc-chips" style="margin-bottom:14px;">' +
-        '<button class="fc-chip' + (c.mode === 'threshold' ? ' on' : '') + '" data-mode="threshold">Thresholds</button>' +
-        '<button class="fc-chip' + (c.mode === 'playbook' ? ' on' : '') + '" data-mode="playbook">Playbook</button>' +
-      '</div>';
-    if (c.mode === 'threshold') {
-      body += (c.rules || []).map((r, i) =>
-        '<div class="fc-path-row"><select data-rule-field="' + i + '">' +
-          PLAYBOOK_FIELDS.map(f => '<option' + (r.field === f ? ' selected' : '') + '>' + f + '</option>').join('') +
-        '</select><select data-rule-op="' + i + '" style="width:64px;">' +
-          PLAYBOOK_OPERATORS.map(o => '<option' + (r.operator === o ? ' selected' : '') + '>' + o + '</option>').join('') +
-        '</select><input data-rule-val="' + i + '" value="' + esc(r.value) + '" style="width:60px;"></div>').join('') +
-        '<button class="fc-deep-link" id="s-addrule">Add a condition</button>';
-    } else if (c.mode === 'playbook') {
-      body += '<div class="fc-field"><label>Playbook</label><input type="text" id="s-playbook" value="' +
-        esc(c.playbookName || '') + '" placeholder="e.g. Pricing playbook"></div>' +
-        '<div class="fc-muted-note">Authoring the categories and weighted questions opens the full playbook editor.</div>';
+    // Analyze reads a document against a playbook of clause and keyword checks
+    // and produces a risk score. Acting on that score is a separate fork
+    // ("Evaluate criteria"), which is why there is no threshold mode here.
+    const cats = c.playbook || [];
+    const questions = cats.reduce(function (n, cat) { return n + cat.questions.length; }, 0);
+
+    body += '<div class="fc-insp-section-label">Playbook</div>';
+    if (cats.length) {
+      body += '<div class="fc-field-row" style="padding:10px 11px;"><strong>' + cats.length +
+          ' categor' + (cats.length === 1 ? 'y' : 'ies') + '</strong>' +
+          '<span style="color:var(--text-muted);margin-left:6px;">' + questions +
+          ' weighted question' + (questions === 1 ? '' : 's') + '</span></div>' +
+        '<div class="fc-field-list" style="margin-top:8px;">' +
+          cats.slice(0, 4).map(function (cat) {
+            return '<div class="fc-field-row"><strong>' + esc(cat.name) + '</strong>' +
+              '<span class="fc-field-type">' + cat.questions.length + '</span></div>';
+          }).join('') +
+        '</div>' +
+        '<button class="fc-deep-link" id="s-deep" style="margin-top:12px;">Edit the playbook \u2192</button>';
+    } else {
+      body += '<div class="fc-hint" style="margin-bottom:10px;">Checks a document for the clauses and ' +
+          'wording you care about, each weighted into a risk score. Start from a skill or build your own.</div>' +
+        '<button class="fc-deep-link" id="s-deep">Build the playbook \u2192</button>';
     }
+    body += '<div class="fc-muted-note">The score it produces is what a later <strong>Evaluate criteria</strong> ' +
+      'fork acts on \u2014 to approve, reject or send for review.</div>';
 
   } else if (node.type === 'save') {
     const plat = DESTINATION_PLATFORMS.find(function (x) { return x.id === c.platformId; });
@@ -945,7 +952,6 @@ function renderStepPanel(el, node) {
   el.innerHTML = panelShell(chip, node.title, t.label + ' step', body);
 
   bind('s-title', 'input', e => { node.title = e.target.value; softRefresh(node.id); });
-  bind('s-playbook', 'input', e => { c.playbookName = e.target.value; softRefresh(node.id); });
   bind('s-msg', 'input', e => { c.message = e.target.value; });
   bind('s-recip', 'change', e => { c.recipient = e.target.value; softRefresh(node.id); });
   bind('s-invoker', 'change', e => { c.notifyInvoker = e.target.checked; softRefresh(node.id); });
@@ -981,11 +987,6 @@ function renderStepPanel(el, node) {
       renderInspector(); softRefresh(node.id);
     };
   });
-  bind('s-addrule', 'click', () => {
-    snapshot();
-    c.rules = (c.rules || []).concat([{ field: PLAYBOOK_FIELDS[1], operator: '<', value: '95' }]);
-    renderInspector(); softRefresh(node.id);
-  });
   bind('s-delete', 'click', () => deleteNode(node.id));
 
   bind('s-deep', 'click', function () { openDeepSetup(node); });
@@ -994,14 +995,6 @@ function renderStepPanel(el, node) {
     c.recipient = (NOTIFY_RECIPIENTS[c.channelId] || [])[0] || '';
     renderInspector(); softRefresh(node.id);
   });
-  el.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
-    snapshot(); c.mode = b.dataset.mode;
-    if (c.mode === 'threshold' && !c.rules) c.rules = [{ field: PLAYBOOK_FIELDS[4], operator: '=', value: 'High' }];
-    renderInspector(); softRefresh(node.id);
-  });
-  el.querySelectorAll('[data-rule-field]').forEach(s => s.onchange = () => { c.rules[+s.dataset.ruleField].field = s.value; softRefresh(node.id); });
-  el.querySelectorAll('[data-rule-op]').forEach(s => s.onchange = () => { c.rules[+s.dataset.ruleOp].operator = s.value; softRefresh(node.id); });
-  el.querySelectorAll('[data-rule-val]').forEach(s => s.oninput = () => { c.rules[+s.dataset.ruleVal].value = s.value; softRefresh(node.id); });
 }
 
 // --- decision ----------------------------------------------------------
@@ -1258,7 +1251,7 @@ function defaultConfig(type) {
   switch (type) {
     case 'extract': return { fileName: null, description: '', schema: [], skillId: null };
     case 'generate': return { templateId: null };
-    case 'analyze': return { mode: null, rules: [] };
+    case 'analyze': return { mode: 'playbook', playbook: [], skillIds: [] };
     case 'save': return { platformId: null, objectId: null, mappings: {} };
     case 'notify': return { channelId: null, recipient: '', message: '', notifyInvoker: false };
     default: return {};
@@ -1360,9 +1353,13 @@ function draftFromPrompt(text) {
       config: { sourceId: has('slack') ? 'slack' : has('email', 'mail') ? 'email' : 'gdrive', fields: EXTRACT_SAMPLE_SCHEMA.slice(0, 4) } });
   }
   if (has('playbook', 'check', 'risk', 'score', 'confidence', 'criteria', 'against')) {
-    push({ id: nid('n'), kind: 'task', type: 'analyze', title: 'Score it',
-      config: has('playbook') ? { mode: 'playbook', playbookName: 'Pricing playbook' }
-                              : { mode: 'threshold', rules: [{ field: 'accuracy_score', operator: '<', value: '95' }] } });
+    const seedSkill = SKILLS.find(function (x) { return x.taskType === 'analyze'; });
+    push({ id: nid('n'), kind: 'task', type: 'analyze', title: 'Score against the playbook',
+      config: {
+        mode: 'playbook',
+        playbook: seedSkill ? JSON.parse(JSON.stringify(seedSkill.payload.playbook)) : [],
+        skillIds: seedSkill ? [seedSkill.id] : [],
+      } });
   }
   if (has('summary', 'summarize', 'generate', 'draft', 'quote', 'proposal', 'report')) {
     push({ id: nid('n'), kind: 'task', type: 'generate', title: 'Draft the document',
