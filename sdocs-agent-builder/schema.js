@@ -803,7 +803,7 @@ const HITL_REQUESTS = [
 // Audit trails — one detailed run per agent, mirroring that agent's task
 // chain (see AGENTS[i].tasks). Each step records what was actually sent to
 // the LLM, what came back, and the discrete decisions the agent made along
-// the way. This is what the audit-trail view (audit.html) renders — the
+// the way. This is what the audit-trail view (audit-canvas.html) renders — the
 // left-hand flow is this run's steps in order, the right-hand panel is one
 // step's detail.
 //

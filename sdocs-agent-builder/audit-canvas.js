@@ -424,6 +424,14 @@ document.getElementById('legend').innerHTML = [
   return '<div class="ac-legend-row"><span class="ac-status ac-status--' + r.s + '"></span>' + r.label + '</div>';
 }).join('');
 
+// A row in the gallery links to a specific step ("...  ANALYZE  9 min ago"),
+// so land on that step rather than making the reader find it again.
+const wantedStep = new URLSearchParams(location.search).get('step');
+if (wantedStep) {
+  const match = flowFor(agentId).nodes.find(function (n) { return n.type === wantedStep; });
+  if (match) selectedNodeId = match.id;
+}
+
 renderHeader();
 build();
 renderDetail();

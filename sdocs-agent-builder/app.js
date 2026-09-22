@@ -80,7 +80,7 @@ function renderErrorsBarChart() {
 
 function auditHref(agentId, stepType) {
   if (!agentId || !AUDIT_TRAILS[agentId]) return null;
-  return `audit.html?agent=${encodeURIComponent(agentId)}&step=${encodeURIComponent(stepType || '')}`;
+  return `audit-canvas.html?agent=${encodeURIComponent(agentId)}&step=${encodeURIComponent(stepType || '')}`;
 }
 
 function renderRecentActions() {
