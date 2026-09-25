@@ -15,6 +15,8 @@
     period: "7",
     feedDays: 2,
     categories: new Set(), // empty = All
+    query: "",        // applied search term (set on Enter)
+    searching: false, // spinner while a search "runs"
   };
 
   const $ = (id) => document.getElementById(id);
@@ -262,6 +264,19 @@
     return inWindow;
   }
 
+  // Plain text of a feed row (sentence, who, category) for free-form search.
+  const catLabel = Object.fromEntries(FEED_CATEGORIES.map((c) => [c.key, c.label]));
+  function searchText(e) {
+    const html = RENDER[e.type](e).text;
+    return `${html.replace(/<[^>]+>/g, "")} ${e.by || ""} ${catLabel[EVENT_TYPES[e.type].category]}`
+      .replace(/&amp;/g, "&").toLowerCase();
+  }
+
+  function matchesQuery(e) {
+    const q = state.query.trim().toLowerCase();
+    return !q || q.split(/\s+/).every((w) => searchText(e).includes(w));
+  }
+
   function renderChips(events) {
     const chipsEl = $("feed-chips");
     if (state.role !== "admin") {
@@ -280,7 +295,13 @@
   }
 
   function renderFeed() {
-    const events = visibleEvents();
+    const list = $("feed-list");
+    $("feed-search-clear").hidden = !($("feed-search-input").value || state.query);
+    if (state.searching) {
+      list.innerHTML = `<li class="feed-loading"><span class="mini-spinner"></span>Searching activity…</li>`;
+      return;
+    }
+    const events = visibleEvents().filter(matchesQuery);
     renderChips(events);
     const shown = state.role === "admin" && state.categories.size
       ? events.filter((e) => state.categories.has(EVENT_TYPES[e.type].category))
@@ -290,13 +311,16 @@
       ? "Everything happening in this workspace"
       : "Activity on your requests and documents";
 
-    const list = $("feed-list");
+    const summary = state.query
+      ? `<li class="feed-results">${shown.length} result${shown.length === 1 ? "" : "s"} for “${esc(state.query)}”</li>`
+      : "";
     if (!shown.length) {
-      list.innerHTML = `<li class="feed-empty"><strong>No activity</strong>Nothing matches these filters in the last ${state.feedDays} days.</li>`;
+      list.innerHTML = summary + (state.query
+        ? `<li class="feed-empty"><strong>No results</strong>Nothing in the last ${state.feedDays} days matches “${esc(state.query)}”.</li>`
+        : `<li class="feed-empty"><strong>No activity</strong>Nothing matches these filters in the last ${state.feedDays} days.</li>`);
       return;
     }
-    const catLabel = Object.fromEntries(FEED_CATEGORIES.map((c) => [c.key, c.label]));
-    list.innerHTML = shown.map((e, i) => {
+    list.innerHTML = summary + shown.map((e, i) => {
       const r = RENDER[e.type](e);
       return `
         <li class="feed-item" data-i="${i}" tabindex="0">
@@ -330,6 +354,35 @@
 
   $("period-select").addEventListener("change", (e) => { state.period = e.target.value; renderMetrics(); });
   $("feed-period").addEventListener("change", (e) => { state.feedDays = Number(e.target.value); renderFeed(); });
+
+  // Search runs on Enter (with a short spinner, as if hitting the server);
+  // the x clears the term and shows everything again.
+  const searchInput = $("feed-search-input");
+  let searchT;
+  $("feed-search").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const term = searchInput.value.trim();
+    if (term === state.query) return;
+    clearTimeout(searchT);
+    state.searching = true;
+    renderFeed();
+    searchT = setTimeout(() => {
+      state.searching = false;
+      state.query = term;
+      renderFeed();
+    }, 700);
+  });
+  function clearSearch() {
+    clearTimeout(searchT);
+    searchInput.value = "";
+    state.searching = false;
+    state.query = "";
+    renderFeed();
+    searchInput.focus();
+  }
+  $("feed-search-clear").addEventListener("click", clearSearch);
+  searchInput.addEventListener("input", () => { $("feed-search-clear").hidden = !(searchInput.value || state.query); });
+  searchInput.addEventListener("keydown", (e) => { if (e.key === "Escape") clearSearch(); });
 
   $("feed-chips").addEventListener("click", (e) => {
     const chip = e.target.closest(".chip");
