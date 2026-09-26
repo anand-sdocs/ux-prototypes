@@ -22,6 +22,7 @@
     handleTarget: null,
     at: null,                // active @-mention: { node, offset, items, hl }
     preview: { source: 'sample', recordId: DEALS[0].id, outlines: true },
+    features: { repeat: true }, // false = today's editor, before Repeating Sections
   };
   const uid = (p) => `${p}${++state.uid}`;
 
@@ -47,6 +48,7 @@
     flag: svg('<path d="M4 22V4a1 1 0 0 1 1-1h11l-2 4 2 4H5"/>'),
     file: svg('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
     upload: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><line x1="12" y1="3" x2="12" y2="15"/>'),
+    warn: svg('<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
     lock: svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/>'),
     alignL: svg('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="10" x2="14" y2="10"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="4" y1="18" x2="14" y2="18"/>'),
     alignC: svg('<line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="7" y1="18" x2="17" y2="18"/>'),
@@ -97,9 +99,10 @@
   const opsFor = (type) => OPS[type === 'currency' || type === 'percent' ? 'number' : type] || OPS.text;
   const NO_VALUE_OPS = new Set(['empty', 'notempty', 'true', 'false', 'first', 'last', 'notfirst', 'notlast', 'odd', 'even']);
 
+  const humanize = (key) => { const t = String(key).replace(/^\$/, '').replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); };
   function ruleText(rule, listKey) {
     const f = fieldFor(rule.scope, rule.field, listKey);
-    if (!f) return '(missing field)';
+    if (!f) return `${humanize(rule.field)} (not on ${listDef(listKey)?.label || 'this list'})`;
     const op = (opsFor(f.type).find((o) => o[0] === rule.op) || ['', rule.op])[1];
     const name = rule.scope === 'record' ? f.label : f.label;
     if (NO_VALUE_OPS.has(rule.op)) return `${name} ${op}`;
@@ -237,22 +240,24 @@
   function refreshChips(root = doc) {
     $$('.mf', root).forEach((ch) => {
       const scope = ch.dataset.scope, key = ch.dataset.field;
-      let f, label;
+      let f, label, l;
       if (scope === 'record') { f = recordField(key); label = f ? f.label : key; }
       else {
         const rs = ch.closest('.rs');
         const src = rs && state.sections[rs.dataset.rs]?.source;
-        const l = listDef(src);
+        l = listDef(src);
         f = l && itemFields(src).find((x) => x.key === key);
-        label = `${l ? l.singular : 'Item'}.${f ? f.label : key}`;
-        if (!f) label += ' (not on ' + (l ? l.label : 'this list') + ')';
+        // a field that no longer fits keeps the name it had, so the author can tell what it was
+        label = f ? `${l.singular}.${f.label}` : (ch.dataset.label || `Item.${humanize(key)}`);
+        if (f) { ch.dataset.label = label; ch.dataset.type = f.type; }
       }
       ch.classList.toggle('mf-invalid', !f);
-      ch.classList.toggle('mf-image', f?.type === 'image');
+      ch.classList.toggle('mf-image', (f?.type || (!f && ch.dataset.type)) === 'image');
       ch.classList.toggle('has-fallback', !!ch.dataset.fallback);
-      ch.querySelector('.mf-ico').innerHTML = typeIcon(f?.type);
+      ch.querySelector('.mf-ico').innerHTML = f ? typeIcon(f.type) : ICON.warn;
       ch.querySelector('.mf-label').textContent = label;
-      ch.title = ch.dataset.fallback ? `If empty, shows “${ch.dataset.fallback}”` : 'Click to format or set a fallback';
+      ch.title = !f ? `${l ? l.label : 'This list'} has no ${humanize(key).toLowerCase()} field. Documents will leave this blank.`
+        : ch.dataset.fallback ? `If empty, shows “${ch.dataset.fallback}”` : 'Click to format or set a fallback';
     });
   }
 
@@ -277,6 +282,7 @@
           <button class="rs-btn" data-act="rs-delete" title="Delete section">${ICON.trash}</button>
         </span>
       </div>
+      <div class="rs-warn" hidden></div>
       <div class="rs-picker"></div>
       <div class="rs-body" contenteditable="true"><p><br></p></div>
       <div class="rs-foot"><span>${ICON.repeat} End of repeat</span></div>
@@ -316,6 +322,24 @@
     }
     refreshChips(el);
     $$('.cond', el).forEach((c) => updateCondChrome(c.dataset.cond));
+    updateSectionWarning(el, cfg);
+  }
+  function brokenRules(el, cfg) {
+    const valid = new Set(itemFields(cfg.source).map((f) => f.key));
+    return $$('.cond', el).flatMap((c) => (state.conds[c.dataset.cond]?.rules || []).filter((r) => r.scope === 'item' && !valid.has(r.field)).map((r) => ({ cond: c.dataset.cond, rule: r })));
+  }
+  function updateSectionWarning(el, cfg) {
+    const warn = el.querySelector('.rs-warn');
+    const l = listDef(cfg.source);
+    const fields = l ? $$('.mf-invalid', el).length : 0;
+    const rules = l ? brokenRules(el, cfg).length : 0;
+    warn.hidden = !fields && !rules;
+    if (warn.hidden) return;
+    const what = [fields && `${fields} field${fields > 1 ? 's' : ''}`, rules && `${rules} condition${rules > 1 ? 's' : ''}`].filter(Boolean).join(' and ');
+    const prev = listDef(cfg.prevSource);
+    warn.innerHTML = `${ICON.warn}<span><b>${what}</b> ${fields + rules > 1 ? 'use' : 'uses'} fields that ${esc(l.label)} doesn't have. Documents will leave them blank.</span>
+      ${prev ? `<button data-act="rs-revert">Switch back to ${esc(prev.label)}</button>` : ''}
+      <button data-act="rs-clean">Remove them</button>`;
   }
 
   function condEl(id) {
@@ -340,13 +364,15 @@
     const c = state.conds[id];
     const src = sectionOf(el)?.cfg?.source;
     el.classList.toggle('is-empty', !c.rules.length);
+    el.classList.toggle('is-broken', c.rules.some((r) => !fieldFor(r.scope, r.field, src)));
     el.querySelector('.cond-summary').textContent = c.rules.length
       ? c.rules.map((r) => ruleText(r, src)).join(c.match === 'any' ? ' or ' : ' and ')
       : 'Click to add a condition…';
   }
 
   // ---------------------------------------------------------------- seed document
-  function seed() {
+  // variant: 'today' (current editor), 'build' (today's doc + an empty slot to build in), 'full' (finished template)
+  function seed(variant = 'full') {
     const rsId = uid('rs');
     state.sections[rsId] = {
       ...defaultSection('line_items'),
@@ -376,8 +402,7 @@
         <table><thead><tr><th>Product type</th><th>Name</th><th>Quantity</th><th>Net price</th><th>Create Date</th></tr></thead>
         <tbody><tr><td class="lbl"></td><td>Name</td><td>Quantity</td><td>Net price</td><td>Create Date</td></tr></tbody></table>
       </div>
-      <h2>Product details</h2>
-      <div id="seed-rs"></div>
+      ${variant === 'today' ? '' : `<h2>Product details</h2>${variant === 'build' ? '<p data-slot="rs"><br></p>' : '<div id="seed-rs"></div>'}`}
       <ol>
         <li>Notice of Termination
           <ol><li>By Customer ( ${chip('record', 'company')} )</li><li>By S-Docs</li><li>Amount not exceeding ${chip('record', 'amount')}</li></ol>
@@ -392,6 +417,7 @@
       <p>${sig('Signature', 'picklist')}</p>
       <p><br></p>`;
 
+    if (variant !== 'full') { refreshChips(); return; }
     const rs = sectionEl(rsId);
     $('#seed-rs', doc).replaceWith(rs);
     const body = rs.querySelector('.rs-body');
@@ -415,6 +441,15 @@
 
     updateSectionChrome(rsId);
     refreshChips();
+  }
+
+  function pickSource(id, listKey) {
+    const rsEl = doc.querySelector(`[data-rs="${id}"]`);
+    state.sections[id].source = listKey;
+    updateSectionChrome(id);
+    state.selected = null;
+    select('rs', id);
+    caretInto(rsEl.querySelector('.rs-body').firstElementChild);
   }
 
   // ---------------------------------------------------------------- selection + panel
@@ -656,13 +691,12 @@
     const cfg = state.sections[s.id];
     switch (k) {
       case 'source': {
+        if (cfg.source && cfg.source !== t.value) rememberSource(cfg);
         cfg.source = t.value || null;
         const valid = new Set(itemFields(cfg.source).map((f) => f.key));
         cfg.filters = cfg.filters.filter((r) => r.scope !== 'item' || valid.has(r.field));
         if (!valid.has(cfg.sort.field)) cfg.sort.field = '';
         afterConfigChange(true);
-        const bad = $$('.mf-invalid', doc.querySelector(`[data-rs="${s.id}"]`)).length;
-        if (bad) toast(`${bad} field${bad > 1 ? 's' : ''} in this section don't exist on ${listDef(cfg.source).label} — shown in red.`);
         return;
       }
       case 'filterMatch': cfg.filterMatch = t.value; afterConfigChange(true); return;
@@ -823,16 +857,29 @@
       switch (act.dataset.act) {
         case 'rs-settings': select('rs', rsEl.dataset.rs); return;
         case 'rs-delete': deleteSection(rsEl); return;
-        case 'rs-pick': {
+        case 'rs-pick': pickSource(rsEl.dataset.rs, act.dataset.list); return;
+        case 'cond-delete': deleteCond(act.closest('.cond')); return;
+        case 'rs-revert': {
           const id = rsEl.dataset.rs;
-          state.sections[id].source = act.dataset.list;
+          const cfg = state.sections[id];
+          const back = cfg.prevSource, data = cfg.prevData;
+          setSectionSource(id, back);
+          Object.assign(cfg, data);
+          delete cfg.prevSource; delete cfg.prevData;
           updateSectionChrome(id);
-          state.selected = null;
-          select('rs', id);
-          caretInto(rsEl.querySelector('.rs-body').firstElementChild);
+          renderPanel();
           return;
         }
-        case 'cond-delete': deleteCond(act.closest('.cond')); return;
+        case 'rs-clean': {
+          const id = rsEl.dataset.rs, cfg = state.sections[id];
+          const n = $$('.mf-invalid', rsEl).length;
+          $$('.mf-invalid', rsEl).forEach((ch) => ch.remove());
+          brokenRules(rsEl, cfg).forEach(({ cond, rule }) => { const rs = state.conds[cond].rules; rs.splice(rs.indexOf(rule), 1); });
+          updateSectionChrome(id);
+          renderPanel();
+          toast(`Removed ${n} field${n === 1 ? '' : 's'} and the conditions that used them`);
+          return;
+        }
       }
     }
     const ch = e.target.closest('.mf');
@@ -842,7 +889,9 @@
     const chead = e.target.closest('.cond-head');
     if (chead) { select('cond', chead.parentElement.dataset.cond); return; }
     const leg = e.target.closest('.legacy-rl');
-    if (leg) toast('This is the existing Related List table widget. Insert a Repeating Section for free-form layouts.');
+    if (leg) toast(state.features.repeat
+      ? 'This is the existing Related List table widget. Insert a Repeating Section for free-form layouts.'
+      : 'Related List widget: one table row (or list item) per record, with the columns you pick.');
   });
 
   doc.addEventListener('keydown', (e) => {
@@ -923,6 +972,13 @@
   pageWrap.addEventListener('mousemove', (e) => {
     if (!insertMenu.hidden) return;
     if (e.target.closest('.block-handle')) return;
+    // Heading left toward the handle crosses the section's padding, which would retarget it to the
+    // outer section; hold it while the pointer stays level with the current block and left of it.
+    const cur = state.handleTarget;
+    if (cur && handle.classList.contains('show') && doc.contains(cur)) {
+      const cr = cur.getBoundingClientRect();
+      if (e.clientX < cr.left && e.clientY >= cr.top - 6 && e.clientY <= cr.bottom + 6) return;
+    }
     const b = blockOf(e.target);
     if (!b) return;
     showHandleFor(b);
@@ -983,7 +1039,7 @@
   }
   function renderInsertList(q) {
     const inside = !!insertMenu.dataset.inside;
-    const list = BLOCKS.filter((b) => (inside ? !b.outsideOnly : !b.insideOnly) && b.label.toLowerCase().includes(q.toLowerCase()));
+    const list = BLOCKS.filter((b) => (inside ? !b.outsideOnly : !b.insideOnly) && (state.features.repeat || !b.feat) && b.label.toLowerCase().includes(q.toLowerCase()));
     $('#im-list').innerHTML = list.length ? list.map((b, i) => `
       ${inside && b.k === 'cond' ? `<div class="im-sep"></div><div class="im-group">Inside this repeat</div>` : ''}
       ${!inside && b.k === 'related' ? `<div class="im-sep"></div><div class="im-group">Related data</div>` : ''}
@@ -1082,7 +1138,7 @@
       <div class="fp-head"><span class="at-dot ${scope}">${typeIcon(f?.type)}</span>${esc(ch.querySelector('.mf-label').textContent)}</div>
       <span class="fp-scope">${scope === 'item' ? `Changes for each ${l ? l.singular.toLowerCase() : 'item'} in the repeat` : 'From the Deal (same value in every repeat)'}</span>
       ${f ? `<label class="fp-field"><span>Format</span><select data-fp="format">${fmts.map(([k, t]) => `<option value="${k}" ${ch.dataset.format === k ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : ''}
-      ${f?.type !== 'image' ? `<label class="fp-field"><span>If empty, show</span><input data-fp="fallback" value="${esc(ch.dataset.fallback)}" placeholder="Nothing (leave blank)"><div class="fp-help">Shown when this ${scope === 'item' ? l?.singular.toLowerCase() || 'item' : 'deal'} has no value.</div></label>` : ''}
+      ${f?.type !== 'image' && state.features.repeat ? `<label class="fp-field"><span>If empty, show</span><input data-fp="fallback" value="${esc(ch.dataset.fallback)}" placeholder="Nothing (leave blank)"><div class="fp-help">Shown when this ${scope === 'item' ? l?.singular.toLowerCase() || 'item' : 'deal'} has no value.</div></label>` : ''}
       <div class="fp-actions"><button class="btn-ghost-danger" data-act="fp-remove">Remove field</button><button class="btn-primary" data-act="fp-done">Done</button></div>`;
     fieldPop.hidden = false;
     positionFieldPop(ch);
@@ -1475,11 +1531,52 @@
     });
   }
 
-  // ---------------------------------------------------------------- init
-  seed();
-  // Start with the caret nowhere; nudge the user toward the seeded section.
-  setTimeout(() => {
-    const rs = doc.querySelector('.rs');
-    if (rs) select('rs', rs.dataset.rs);
-  }, 50);
+  // ---------------------------------------------------------------- scenarios (driven by tour.js)
+  function loadScenario(variant) {
+    setMode('edit');
+    closeAt();
+    handle.classList.remove('show');
+    Object.assign(state, { sections: {}, conds: {}, selected: null, savedRange: null, handleTarget: null });
+    state.preview = { source: 'sample', recordId: DEALS[0].id, outlines: true };
+    state.features.repeat = variant !== 'today';
+    $('#pv-outlines').checked = true;
+    $('#toast').hidden = true;
+    panel.hidden = true;
+    getSelection().removeAllRanges();
+    seed(variant);
+    $('#canvas').scrollTop = 0;
+  }
+  // what "Switch back" restores: the list plus the filter and sort that switching drops
+  function rememberSource(cfg) {
+    cfg.prevSource = cfg.source;
+    cfg.prevData = { filters: cfg.filters.map((r) => ({ ...r })), sort: { ...cfg.sort } };
+  }
+  function setSectionSource(id, listKey) {
+    const cfg = state.sections[id];
+    if (cfg.source && cfg.source !== listKey) rememberSource(cfg);
+    cfg.source = listKey;
+    const valid = new Set(itemFields(listKey).map((f) => f.key));
+    cfg.filters = cfg.filters.filter((r) => r.scope !== 'item' || valid.has(r.field));
+    if (!valid.has(cfg.sort.field)) cfg.sort.field = '';
+    state.selected = null;
+    select('rs', id);
+    updateSectionChrome(id);
+  }
+  function setPreviewSource(source, recordId) {
+    state.preview.source = source;
+    if (recordId) state.preview.recordId = recordId;
+    syncPreviewBar();
+    renderPreview(source === 'live');
+  }
+  function openInsertMenuAt(target) {
+    const rr = $('#rail-add').getBoundingClientRect();
+    openInsertMenu({ left: rr.right + 8, top: rr.top, bottom: rr.top }, target);
+  }
+
+  window.RS = {
+    state, doc, panel, insertMenu, fieldPop,
+    loadScenario, insertBlock, select, setMode, pickSource, setSectionSource, setPreviewSource,
+    insertFieldFromPanel, openFieldPop, openInsertMenuAt, closeInsertMenu, caretInto,
+    updateSectionChrome, updateCondChrome, renderPanel, refreshChips,
+  };
 })();
