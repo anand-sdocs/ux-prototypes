@@ -173,3 +173,38 @@ const SAMPLE = (() => {
   if (lists.line_items) lists.line_items.forEach((it, i) => { it.term_months = it.is_recurring ? 12 : null; });
   return { record, lists, sample: true };
 })();
+
+// Enough related lists to show why the picker needs search. The first four have sample data; these
+// have fields only (previews show zero records for them).
+RELATED_LISTS.forEach((l) => { l.group = 'Standard objects'; });
+(() => {
+  const base = (extra) => [
+    { key: 'name', label: 'Name', type: 'text' },
+    ...extra,
+    { key: 'owner', label: 'Owner', type: 'text' },
+    { key: 'create_date', label: 'Create Date', type: 'date' },
+  ];
+  const status = (...o) => ({ key: 'status', label: 'Status', type: 'picklist', options: o });
+  const more = [
+    ['contacts', 'Contacts', 'Contact', 'users', 'All contacts associated with the deal', [{ key: 'email', label: 'Email', type: 'text' }, { key: 'job_title', label: 'Job title', type: 'text' }]],
+    ['companies', 'Companies', 'Company', 'related', 'Companies associated with the deal', [{ key: 'domain', label: 'Domain', type: 'text' }, { key: 'industry', label: 'Industry', type: 'text' }]],
+    ['tickets', 'Tickets', 'Ticket', 'file', 'Support tickets on this deal', [status('New', 'Waiting', 'Closed'), { key: 'priority', label: 'Priority', type: 'picklist', options: ['Low', 'Medium', 'High'] }]],
+    ['invoices', 'Invoices', 'Invoice', 'file', 'Invoices raised against the deal', [status('Draft', 'Open', 'Paid'), { key: 'amount', label: 'Amount', type: 'currency' }, { key: 'due_date', label: 'Due date', type: 'date' }]],
+    ['payments', 'Payments', 'Payment', 'flag', 'Payments received for the deal', [{ key: 'amount', label: 'Amount', type: 'currency' }, { key: 'paid_on', label: 'Paid on', type: 'date' }]],
+    ['subscriptions', 'Subscriptions', 'Subscription', 'box', 'Recurring subscriptions from this deal', [status('Active', 'Paused', 'Cancelled'), { key: 'mrr', label: 'MRR', type: 'currency' }]],
+    ['meetings', 'Meetings', 'Meeting', 'users', 'Meetings logged on the deal', [{ key: 'start', label: 'Start time', type: 'date' }, { key: 'outcome', label: 'Outcome', type: 'text' }]],
+    ['tasks', 'Tasks', 'Task', 'flag', 'Open and completed tasks', [status('Not started', 'In progress', 'Completed'), { key: 'due_date', label: 'Due date', type: 'date' }]],
+    ['notes', 'Notes', 'Note', 'file', 'Notes added to the deal', [{ key: 'body', label: 'Body', type: 'text' }]],
+    ['calls', 'Calls', 'Call', 'users', 'Calls logged on the deal', [{ key: 'duration', label: 'Duration (min)', type: 'number' }]],
+    ['emails', 'Emails', 'Email', 'file', 'Emails logged on the deal', [{ key: 'subject', label: 'Subject', type: 'text' }]],
+    ['discounts', 'Discounts', 'Discount', 'box', 'Discounts applied to the deal', [{ key: 'percent', label: 'Percent', type: 'percent' }]],
+    ['shipments', 'Shipments', 'Shipment', 'box', 'Custom object · deliveries for this deal', [status('Pending', 'Shipped', 'Delivered'), { key: 'carrier', label: 'Carrier', type: 'text' }], 'Custom objects'],
+    ['licenses', 'Licenses', 'License', 'file', 'Custom object · software licenses issued', [{ key: 'seats', label: 'Seats', type: 'number' }, { key: 'expires', label: 'Expires on', type: 'date' }], 'Custom objects'],
+    ['service_contracts', 'Service Contracts', 'Service Contract', 'file', 'Custom object · support and maintenance terms', [{ key: 'tier', label: 'Tier', type: 'picklist', options: ['Basic', 'Premium', 'Enterprise'] }, { key: 'end_date', label: 'End date', type: 'date' }], 'Custom objects'],
+    ['sites', 'Installation Sites', 'Site', 'flag', 'Custom object · where the products are installed', [{ key: 'address', label: 'Address', type: 'text' }], 'Custom objects'],
+    ['assets', 'Assets', 'Asset', 'box', 'Custom object · equipment covered by the deal', [{ key: 'serial', label: 'Serial number', type: 'text' }], 'Custom objects'],
+    ['renewals', 'Renewals', 'Renewal', 'flag', 'Custom object · upcoming renewal dates', [{ key: 'renewal_date', label: 'Renewal date', type: 'date' }, { key: 'amount', label: 'Amount', type: 'currency' }], 'Custom objects'],
+  ];
+  more.forEach(([key, label, singular, icon, description, fields, group = 'Standard objects']) =>
+    RELATED_LISTS.push({ key, label, singular, icon, description, group, fields: base(fields) }));
+})();

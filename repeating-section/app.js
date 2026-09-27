@@ -263,7 +263,8 @@
 
   function defaultSection(source = null) {
     return {
-      source, filters: [], filterMatch: 'all', sort: { field: '', dir: 'asc' }, limit: '',
+      source, setup: !source, // a new section is set up in the panel, then applied, before it can be edited
+      filters: [], filterMatch: 'all', sort: { field: '', dir: 'asc' }, limit: '',
       separator: 'none', zebra: false, zebraColor: '#f4f6fb', emptyMode: 'hide', emptyText: 'No items to show.',
     };
   }
@@ -305,19 +306,21 @@
     if (!el) return;
     const cfg = state.sections[id];
     const l = listDef(cfg.source);
-    el.classList.toggle('is-unbound', !l);
+    const unbound = !l || cfg.setup;
+    el.classList.toggle('is-unbound', unbound);
     el.querySelector('.rs-title').innerHTML = l ? `Repeat for each <b>${l.singular}</b>` : 'Repeating Section';
-    el.querySelector('.rs-summary').textContent = l ? sectionSummary(cfg) : '';
-    if (!l) {
+    el.querySelector('.rs-summary').textContent = !l ? '' : cfg.setup ? 'Not applied yet' : sectionSummary(cfg);
+    if (unbound) {
       el.querySelector('.rs-picker').innerHTML = `
-        <div class="rs-picker-title">What should this section repeat for?</div>
-        <div class="rs-picker-sub">Pick a related list on Deal. Everything you put in this section repeats once per record in that list.</div>
-        <div class="rs-picker-grid">
-          ${RELATED_LISTS.map((x) => `
-            <button class="rs-pick" data-act="rs-pick" data-list="${x.key}">
-              <span class="rs-pick-ico">${ICON[x.icon]}</span>
-              <span><b>${x.label}</b><small>${x.description}</small></span>
-            </button>`).join('')}
+        <div class="rs-setup">
+          <span class="rs-setup-ico">${ICON.gear}</span>
+          <div>
+            <div class="rs-picker-title">${l ? `Repeating for each ${esc(l.singular.toLowerCase())}. Click Apply to start editing` : 'Set up this section in the panel'}</div>
+            <div class="rs-picker-sub">${l
+              ? 'Add filters, a sort or a limit if you need them, then click <b>Apply</b> in the panel.'
+              : 'Choose which related list it repeats for, narrow the records if needed, then click <b>Apply</b>. You can add content after that.'}</div>
+          </div>
+          <button class="rs-setup-btn" data-act="rs-settings">${l ? 'Open setup' : 'Choose a related list'} →</button>
         </div>`;
     }
     refreshChips(el);
@@ -443,19 +446,26 @@
     refreshChips();
   }
 
-  function pickSource(id, listKey) {
+  // Finish setup: the section becomes editable and the caret goes into it.
+  function applySection(id) {
     const rsEl = doc.querySelector(`[data-rs="${id}"]`);
-    state.sections[id].source = listKey;
+    const cfg = state.sections[id];
+    if (!listDef(cfg.source)) return;
+    cfg.setup = false;
+    state.rlPicking = false;
     updateSectionChrome(id);
     state.selected = null;
     select('rs', id);
     caretInto(rsEl.querySelector('.rs-body').firstElementChild);
+    flash(rsEl);
   }
 
   // ---------------------------------------------------------------- selection + panel
   function select(type, id) {
     if (state.selected?.type === type && state.selected?.id === id) return;
     state.selected = type ? { type, id } : null;
+    state.rlPicking = false;
+    state.rlQuery = '';
     $$('.rs.is-selected, .cond.is-selected', doc).forEach((e) => e.classList.remove('is-selected'));
     if (type === 'rs') doc.querySelector(`[data-rs="${id}"]`)?.classList.add('is-selected');
     if (type === 'cond') doc.querySelector(`[data-cond="${id}"]`)?.classList.add('is-selected');
@@ -466,7 +476,7 @@
     const s = state.selected;
     if (!s || state.mode !== 'edit') { panel.hidden = true; return; }
     panel.hidden = false;
-    if (s.type === 'rs') renderSectionPanel(s.id);
+    if (s.type === 'rs') { renderSectionPanel(s.id); if (state.rlPicking) focusRlSearch(); }
     else renderCondPanel(s.id);
   }
 
@@ -513,34 +523,46 @@
     }).join('<br>');
   }
 
-  function renderSectionPanel(id) {
-    const cfg = state.sections[id];
-    const l = listDef(cfg.source);
-    if (!l) {
-      panel.innerHTML = `
-        <div class="sp-head"><div><div class="sp-title rs-c">${ICON.repeat}<span>Repeating Section</span></div>
-        <div class="sp-sub">Choose a related list to repeat over</div></div>
-        <button class="sp-close" data-act="panel-close">${ICON.x}</button></div>
-        <div class="sp-scroll"><div class="sp-sec">
-          <div class="sp-row"><label>Source</label><select data-k="source"><option value="">Select a related list</option>${RELATED_LISTS.map((x) => `<option value="${x.key}">${x.label}</option>`).join('')}</select></div>
-          <div class="sp-hint" style="margin-top:6px">A Repeating Section is like the Related List table, but free-form: add headings, paragraphs, images, fields and conditional blocks. They repeat once per related record.</div>
-        </div></div>`;
-      return;
-    }
+  // Searchable list of every related list on the record, grouped. Scales to dozens of lists.
+  function listPickerHTML(cfg, cancellable) {
+    const groups = [...new Set(RELATED_LISTS.map((x) => x.group || 'Related lists'))];
+    return `
+      <div class="rl-picker">
+        <div class="rl-search">${ICON.search}<input data-rl-search placeholder="Search ${RELATED_LISTS.length} related lists" value="${esc(state.rlQuery || '')}" autocomplete="off"></div>
+        <div class="rl-list">
+          ${groups.map((g) => `<div class="rl-group" data-group="${esc(g)}">${esc(g)}</div>
+            ${RELATED_LISTS.filter((x) => (x.group || 'Related lists') === g).map((x) => `
+              <button class="rl-opt ${x.key === cfg.source ? 'on' : ''}" data-act="rl-pick" data-list="${x.key}" data-group="${esc(g)}" data-text="${esc((x.label + ' ' + x.description).toLowerCase())}">
+                <span class="rl-ico">${ICON[x.icon] || ICON.related}</span>
+                <span class="rl-text"><b>${esc(x.label)}</b><small>${esc(x.description)}</small></span>
+                <span class="rl-n">${x.fields.length} fields</span>
+              </button>`).join('')}`).join('')}
+          <div class="rl-empty" hidden>No related list matches that search.</div>
+        </div>
+        ${cancellable ? '<button class="link-btn" data-act="rl-cancel">Cancel</button>' : ''}
+      </div>`;
+  }
+  function sourceRowHTML(cfg, l) {
+    return `
+      <div class="rl-current">
+        <span class="rl-ico">${ICON[l.icon] || ICON.related}</span>
+        <span class="rl-text"><b>${esc(l.label)}</b><small>${l.fields.length} fields · ${esc(l.group || '')}</small></span>
+        <button class="link-btn" data-act="rl-change">Change</button>
+      </div>`;
+  }
+  function filterRlList(q) {
+    state.rlQuery = q;
+    const t = q.trim().toLowerCase();
+    const opts = $$('.rl-opt', panel);
+    opts.forEach((o) => { o.hidden = !!t && !o.dataset.text.includes(t); });
+    $$('.rl-group', panel).forEach((g) => { g.hidden = !opts.some((o) => o.dataset.group === g.dataset.group && !o.hidden); });
+    const empty = $('.rl-empty', panel);
+    if (empty) empty.hidden = opts.some((o) => !o.hidden);
+  }
+  function dataControlsHTML(cfg, l) {
     const fields = l.fields;
     const filterRules = cfg.filters.map((r, i) => ruleRowHTML(r, i, cfg.source, [{ label: `${l.singular} fields`, scope: 'item', fields }, { label: 'Deal fields', scope: 'record', fields: DEAL_FIELDS }], 'filter')).join('');
-    const seps = [['none', 'None'], ['divider', 'Divider'], ['space', 'Space'], ['pagebreak', 'Page break']];
-    const zebraColors = ['#f4f6fb', '#f6f6f6', '#fdf7ec', '#eef8f2', '#fbf0f7'];
-    panel.innerHTML = `
-      <div class="sp-head">
-        <div><div class="sp-title rs-c">${ICON.repeat}<span>Repeating Section</span></div>
-        <div class="sp-sub">Content repeats once for each ${l.singular.toLowerCase()}</div></div>
-        <button class="sp-close" data-act="panel-close">${ICON.x}</button>
-      </div>
-      <div class="sp-scroll">
-        <div class="sp-sec">
-          <div class="sp-sec-title">Data</div>
-          <div class="sp-row"><label>Source</label><select data-k="source">${RELATED_LISTS.map((x) => `<option value="${x.key}" ${x.key === cfg.source ? 'selected' : ''}>${x.label}</option>`).join('')}</select></div>
+    return `
           <div class="sp-row top"><label>Filter</label>
             <div class="rules">
               ${cfg.filters.length > 1 ? `<div class="match-row">Include records matching <select data-k="filterMatch"><option value="all" ${cfg.filterMatch === 'all' ? 'selected' : ''}>all</option><option value="any" ${cfg.filterMatch === 'any' ? 'selected' : ''}>any</option></select> of these</div>` : ''}
@@ -555,7 +577,56 @@
             </div>
           </div>
           <div class="sp-row"><label>Limit</label><input type="number" min="1" data-k="limit" value="${esc(cfg.limit)}" placeholder="All records"></div>
-          <div class="sp-stat" id="sp-stat">${ICON.info}<div>${statLine(cfg)}</div></div>
+          <div class="sp-stat" id="sp-stat">${ICON.info}<div>${statLine(cfg)}</div></div>`;
+  }
+  function focusRlSearch() {
+    const i = $('[data-rl-search]', panel);
+    if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(i.value.length, i.value.length); filterRlList(i.value); }
+  }
+
+  function renderSetupPanel(id) {
+    const cfg = state.sections[id];
+    const l = listDef(cfg.source);
+    const picking = !l || state.rlPicking;
+    panel.innerHTML = `
+      <div class="sp-head">
+        <div><div class="sp-title rs-c">${ICON.repeat}<span>Set up Repeating Section</span></div>
+        <div class="sp-sub">${picking ? 'Step 1 of 2 · Choose a related list' : 'Step 2 of 2 · Narrow the records (optional)'}</div></div>
+        <button class="sp-close" data-act="panel-close">${ICON.x}</button>
+      </div>
+      <div class="sp-scroll">
+        <div class="sp-sec">
+          <div class="sp-sec-title">Repeat for each record in</div>
+          ${picking ? listPickerHTML(cfg, !!l) : sourceRowHTML(cfg, l)}
+        </div>
+        ${l && !picking ? `<div class="sp-sec"><div class="sp-sec-title">Which records</div>${dataControlsHTML(cfg, l)}</div>` : ''}
+      </div>
+      <div class="sp-foot sp-foot-split">
+        <button class="btn-outline btn-sm" data-act="setup-cancel">Cancel</button>
+        <button class="btn-primary" data-act="setup-apply" ${l ? '' : 'disabled'}>Apply</button>
+      </div>`;
+    if (picking) focusRlSearch();
+  }
+
+  function renderSectionPanel(id) {
+    const cfg = state.sections[id];
+    const l = listDef(cfg.source);
+    if (!l || cfg.setup) { renderSetupPanel(id); return; }
+    const fields = l.fields;
+    const filterRules = cfg.filters.map((r, i) => ruleRowHTML(r, i, cfg.source, [{ label: `${l.singular} fields`, scope: 'item', fields }, { label: 'Deal fields', scope: 'record', fields: DEAL_FIELDS }], 'filter')).join('');
+    const seps = [['none', 'None'], ['divider', 'Divider'], ['space', 'Space'], ['pagebreak', 'Page break']];
+    const zebraColors = ['#f4f6fb', '#f6f6f6', '#fdf7ec', '#eef8f2', '#fbf0f7'];
+    panel.innerHTML = `
+      <div class="sp-head">
+        <div><div class="sp-title rs-c">${ICON.repeat}<span>Repeating Section</span></div>
+        <div class="sp-sub">Content repeats once for each ${l.singular.toLowerCase()}</div></div>
+        <button class="sp-close" data-act="panel-close">${ICON.x}</button>
+      </div>
+      <div class="sp-scroll">
+        <div class="sp-sec">
+          <div class="sp-sec-title">Data</div>
+          <div class="sp-row top"><label>Source</label><div>${state.rlPicking ? listPickerHTML(cfg, true) : sourceRowHTML(cfg, l)}</div></div>
+          ${dataControlsHTML(cfg, l)}
         </div>
 
         <div class="sp-sec">
@@ -710,6 +781,7 @@
   });
   panel.addEventListener('input', (e) => {
     const t = e.target;
+    if (t.matches('[data-rl-search]')) { filterRlList(t.value); return; }
     if (t.dataset.r === 'value' && t.tagName === 'INPUT') {
       const i = Number(t.closest('.rule').dataset.i);
       currentRules()[i].value = t.value;
@@ -719,6 +791,12 @@
       afterConfigChange(false);
     } else if (t.dataset.k === 'emptyText' && state.selected?.type === 'rs') {
       state.sections[state.selected.id].emptyText = t.value;
+    }
+  });
+  panel.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-rl-search]')) {
+      e.preventDefault();
+      $$('.rl-opt', panel).find((o) => !o.hidden)?.click();
     }
   });
   panel.addEventListener('mousedown', (e) => {
@@ -736,6 +814,18 @@
     const s = state.selected;
     switch (b.dataset.act) {
       case 'panel-close': select(null); break;
+      case 'rl-change': state.rlPicking = true; state.rlQuery = ''; renderPanel(); break;
+      case 'rl-cancel': state.rlPicking = false; renderPanel(); break;
+      case 'rl-pick': {
+        const cfg = state.sections[s.id];
+        const key = b.dataset.list;
+        state.rlPicking = false;
+        if (key !== cfg.source) setSectionSource(s.id, key);
+        renderPanel();
+        break;
+      }
+      case 'setup-apply': applySection(s.id); break;
+      case 'setup-cancel': deleteSection(doc.querySelector(`[data-rs="${s.id}"]`)); break;
       case 'add-filter': { const cfg = state.sections[s.id]; cfg.filters.push(newRule('filter', cfg.source)); afterConfigChange(true); break; }
       case 'add-cond-rule': {
         const src = sectionOf(doc.querySelector(`[data-cond="${s.id}"]`))?.cfg?.source;
@@ -857,7 +947,6 @@
       switch (act.dataset.act) {
         case 'rs-settings': select('rs', rsEl.dataset.rs); return;
         case 'rs-delete': deleteSection(rsEl); return;
-        case 'rs-pick': pickSource(rsEl.dataset.rs, act.dataset.list); return;
         case 'cond-delete': deleteCond(act.closest('.cond')); return;
         case 'rs-revert': {
           const id = rsEl.dataset.rs;
@@ -1443,7 +1532,7 @@
     $$('.rs', out).forEach((rsEl) => {
       const cfg = state.sections[rsEl.dataset.rs];
       const l = listDef(cfg?.source);
-      if (!l) { rsEl.remove(); return; }
+      if (!l || cfg.setup) { rsEl.remove(); return; }
       const { items, total, filteredOut, limitedOut } = itemsFor(cfg, ctx);
       const wrap = document.createElement('div');
       wrap.className = 'rs-out';
@@ -1541,6 +1630,7 @@
     state.features.repeat = variant !== 'today';
     $('#pv-outlines').checked = true;
     $('#toast').hidden = true;
+    $('#tb-ctx').hidden = true;
     panel.hidden = true;
     getSelection().removeAllRanges();
     seed(variant);
@@ -1553,7 +1643,7 @@
   }
   function setSectionSource(id, listKey) {
     const cfg = state.sections[id];
-    if (cfg.source && cfg.source !== listKey) rememberSource(cfg);
+    if (cfg.source && cfg.source !== listKey && !cfg.setup) rememberSource(cfg);
     cfg.source = listKey;
     const valid = new Set(itemFields(listKey).map((f) => f.key));
     cfg.filters = cfg.filters.filter((r) => r.scope !== 'item' || valid.has(r.field));
@@ -1575,7 +1665,7 @@
 
   window.RS = {
     state, doc, panel, insertMenu, fieldPop,
-    loadScenario, insertBlock, select, setMode, pickSource, setSectionSource, setPreviewSource,
+    loadScenario, insertBlock, select, setMode, applySection, setSectionSource, setPreviewSource,
     insertFieldFromPanel, openFieldPop, openInsertMenuAt, closeInsertMenu, caretInto,
     updateSectionChrome, updateCondChrome, renderPanel, refreshChips,
   };

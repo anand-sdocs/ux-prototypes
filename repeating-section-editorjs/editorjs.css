@@ -52,7 +52,7 @@ objectdata::before { content: '{{'; }
 objectdata::after { content: '}}'; }
 objectdata:hover { background: var(--tok-tint-hover); text-decoration-color: var(--tok-text); }
 objectdata[data-active] { outline: 2px solid var(--tok-sel-ring); outline-offset: 2px; }
-objectdata[data-invalid] { --tok-tint: #FCEEEE; --tok-tint-hover: #F8DCDC; --tok-text: #B3261E; --tok-underline: #E06666; text-decoration-style: wavy; }
+objectdata[data-invalid] { --tok-tint: #FDF0F0; --tok-tint-hover: #F8DCDC; --tok-text: #B3261E; --tok-underline: #D9534F; text-decoration-style: dashed; }
 objectdata[datatype="image"] {
   display: inline-flex; align-items: center; justify-content: center; width: 112px; height: 84px; vertical-align: top;
   border: 1.5px dashed var(--tok-underline); border-radius: 4px; font-size: 10.5px; white-space: normal; text-align: center; padding: 6px;
@@ -290,3 +290,6 @@ commentanchor.is-resolved, commentanchor.is-draft-none { background: transparent
 .bj-label { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--faint); margin: 10px 0 6px; }
 .bj-toggle { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 11.5px; }
 .bj-pre { border-radius: 6px; border: 1px solid var(--border-soft); white-space: pre-wrap; word-break: break-word; font-size: 11px; max-height: none; flex: none; }
+
+/* Show if that uses a field the section's list no longer has */
+.cw.is-broken .cond-summary { color: #b3261e; }

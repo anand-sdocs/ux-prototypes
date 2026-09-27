@@ -114,25 +114,25 @@
         },
         {
           title: 'Choose what to repeat over',
-          body: `A new section asks one question first: which related list? Everything you put inside repeats <b>once per record</b> in that list.`,
-          action: 'Pick <b>Line Items</b>.',
-          target: () => doc.querySelector('.rs-pick[data-list="line_items"]'),
+          body: `A new section is set up in the panel first. A record can have dozens of related lists, so the list is <b>searchable</b> and grouped into standard and custom objects.<br><br>Everything you put in the section repeats <b>once per record</b> in the list you pick.`,
+          action: 'In the panel, search for <b>line</b> and pick <b>Line Items</b>.',
+          enter: ensureRsSelected,
+          target: () => panelEl('.rl-opt[data-list="line_items"]') || panelEl('.rl-search'),
           done: () => !!rsCfg()?.source,
-          show: () => window.RS.pickSource(rsId(), 'line_items'),
+          show: () => { ensureRsSelected(); window.RS.setSectionSource(rsId(), 'line_items'); },
         },
         {
-          title: 'Filter and sort the records',
-          body: `The panel on the right holds the section settings: <b>Filter</b>, <b>Sort</b> and <b>Limit</b>, like the Related List today. The grey box shows how many records come through on sample data and on a real deal.<br><br>Rules are combined with AND.`,
-          action: 'Add a filter (for example <b>Quantity &gt; 0</b>) or set <b>Sort</b> to Net price.',
+          title: 'Narrow the records, then Apply',
+          body: `Before any content goes in, you can set <b>Filter</b>, <b>Sort</b> and <b>Limit</b>, like the Related List today. The grey box shows how many records come through on sample data and on a real deal. Rules are combined with AND.<br><br><b>Apply</b> unlocks the section for editing. You can change all of this later.`,
+          action: 'Add a filter (for example <b>Quantity &gt; 0</b>) if you like, then click <b>Apply</b>.',
           enter: ensureRsSelected,
-          target: () => [panelEl('[data-act="add-filter"]'), panelEl('[data-k="sortField"]')],
-          done: () => { const c = rsCfg(); return !!c && (c.filters.some((r) => r.value !== '') || !!c.sort.field); },
+          target: () => [panelEl('[data-act="add-filter"]'), panelEl('[data-act="setup-apply"]')],
+          done: () => !!rsCfg() && !rsCfg().setup,
           show: () => {
             const c = rsCfg();
             c.filters = [{ scope: 'item', field: 'quantity', op: 'gt', value: '0' }];
             c.sort = { field: 'net_price', dir: 'desc' };
-            window.RS.updateSectionChrome(rsId());
-            window.RS.renderPanel();
+            window.RS.applySection(rsId());
           },
         },
         {
@@ -291,8 +291,8 @@
         {
           title: 'Guardrail: changing the source',
           body: `If you point the section at a different list, fields it doesn't have turn <b>red</b> but keep their names, and a banner offers to <b>switch back</b> or <b>remove them</b>. Filters that no longer apply are dropped, so nothing breaks silently.`,
-          action: 'Click <b>Back to editor</b>, click the section header, then change <b>Source</b> to <b>Contact Roles</b>.',
-          target: () => state.mode === 'preview' ? $('#pv-exit') : (panelEl('[data-k="source"]') || firstRs()?.querySelector('.rs-head')),
+          action: 'Click <b>Back to editor</b>, click the section header, click <b>Change</b> next to the source and pick <b>Contact Roles</b>.',
+          target: () => state.mode === 'preview' ? $('#pv-exit') : (panelEl('.rl-opt[data-list="contact_roles"]') || panelEl('[data-act="rl-change"]') || firstRs()?.querySelector('.rs-head')),
           done: () => state.mode === 'edit' && !!doc.querySelector('.rs .mf-invalid'),
           show: () => { ensureEdit(); window.RS.setSectionSource(rsId(), 'contact_roles'); },
         },

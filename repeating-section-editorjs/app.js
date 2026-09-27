@@ -50,6 +50,8 @@
     flag: svg('<path d="M4 22V4a1 1 0 0 1 1-1h11l-2 4 2 4H5"/>'),
     file: svg('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
     upload: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><line x1="12" y1="3" x2="12" y2="15"/>'),
+    warn: svg('<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
+    search: svg('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>'),
     lock: svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/>'),
     alignL: svg('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="10" x2="14" y2="10"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="4" y1="18" x2="14" y2="18"/>'),
     alignC: svg('<line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="7" y1="18" x2="17" y2="18"/>'),
@@ -94,9 +96,10 @@
   const opsFor = (type) => OPS[type === 'currency' || type === 'percent' ? 'number' : type] || OPS.text;
   const NO_VALUE_OPS = new Set(['empty', 'notempty', 'true', 'false', 'first', 'last', 'notfirst', 'notlast', 'odd', 'even']);
 
+  const humanize = (key) => { const t = String(key).replace(/^\$/, '').replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); };
   function ruleText(rule, listKey) {
     const f = fieldFor(rule.scope, rule.field, listKey);
-    if (!f) return '(missing field)';
+    if (!f) return `${humanize(rule.field)} (not on ${listDef(listKey)?.label || 'this list'})`;
     const op = (opsFor(f.type).find((o) => o[0] === rule.op) || ['', rule.op])[1];
     if (NO_VALUE_OPS.has(rule.op)) return `${f.label} ${op}`;
     let v = rule.value === '' || rule.value == null ? '…' : rule.value;
@@ -299,7 +302,9 @@
       if (ch.textContent !== label) ch.textContent = label;
       if (fa(ch, 'label') !== label) ch.setAttribute('label', label);
       ch.toggleAttribute('data-invalid', !valid); // UI-only attribute: not whitelisted, so never saved
-      ch.title = `${m.scope === 'item' ? 'Changes for each record in the repeat' : 'From the Deal'}${m.fallback ? ` · if empty: “${m.fallback}”` : ''}`;
+      ch.title = !valid && sec && m.scope === 'item'
+        ? `A ${listDef(m.listKey)?.label || 'different list'} field, but this section repeats ${listDef(sec.cfg.source)?.label || 'another list'}. Documents will leave it blank.`
+        : `${m.scope === 'item' ? 'Changes for each record in the repeat' : 'From the Deal'}${m.fallback ? ` · if empty: “${m.fallback}”` : ''}`;
     });
   }
 
@@ -613,7 +618,8 @@
   // ---------------------------------------------------------------- Repeating Section (relatedList, displayConfig.type = "repeatingSection")
   function defaultSection(source = null) {
     return {
-      source, filters: [], filterMatch: 'all', sort: { field: '', dir: 'asc' }, limit: '',
+      source, setup: !source, // UI-only: a new section is set up in the panel and applied before it can be edited
+      filters: [], filterMatch: 'all', sort: { field: '', dir: 'asc' }, limit: '',
       separator: 'none', zebra: false, zebraColor: '#f4f6fb', emptyMode: 'hide', emptyText: 'No items to show.',
     };
   }
@@ -667,6 +673,7 @@
             <button type="button" class="rs-btn" data-act="rs-delete" title="Delete section">${ICON.trash}</button>
           </span>
         </div>
+        <div class="rs-warn" hidden></div>
         <div class="rs-picker"></div>
         <div class="rs-body"><div class="rs-holder"></div></div>
         <div class="rs-foot"><span>${ICON.repeat} End of repeat</span></div>
@@ -680,20 +687,64 @@
         if (body.contains(e.target)) return;
         const a = e.target.closest('[data-act]');
         if (a?.dataset.act === 'rs-delete') { this.remove(); return; }
-        if (a?.dataset.act === 'rs-pick') { this.bind(a.dataset.list); return; }
-        if (e.target.closest('.rs-head') || a?.dataset.act === 'rs-settings') select('rs', this.id);
+        if (a?.dataset.act === 'rs-revert') { this.revertSource(); return; }
+        if (a?.dataset.act === 'rs-clean') { this.removeBroken(); return; }
+        if (e.target.closest('.rs-head, .rs-picker') || a?.dataset.act === 'rs-settings') select('rs', this.id);
       });
       this.updateChrome();
-      if (this.cfg.source) this.mountInner();
+      if (this.cfg.source && !this.cfg.setup) this.mountInner();
       return el;
     }
-    bind(source) {
-      this.cfg.source = source;
+    rendered() {
+      // a freshly inserted section opens its setup in the panel (not the toolbox's throwaway render)
+      if (this.cfg.setup && this.block) setTimeout(() => { if (this.el.closest('#editor') && SECTIONS.get(this.id) === this) select('rs', this.id); }, 0);
+    }
+    // Pick or change the related list. Filters and sort that don't fit the new list are dropped.
+    setSource(source) {
+      const cfg = this.cfg;
+      if (cfg.source && cfg.source !== source && !cfg.setup) {
+        cfg.prevSource = cfg.source; // what "Switch back" restores
+        cfg.prevData = { filters: cfg.filters.map((r) => ({ ...r })), sort: { ...cfg.sort } };
+      }
+      cfg.source = source;
+      const valid = new Set(itemFields(source).map((f) => f.key));
+      cfg.filters = cfg.filters.filter((r) => r.scope !== 'item' || valid.has(r.field));
+      if (!valid.has(cfg.sort.field)) cfg.sort.field = '';
+      this.changed();
+    }
+    // Finish setup: mount the nested editor and put the caret in it.
+    apply() {
+      if (!listDef(this.cfg.source)) return;
+      this.cfg.setup = false;
+      state.rlPicking = false;
       this.updateChrome();
       this.mountInner(true);
       state.selected = null;
       select('rs', this.id);
       this.block?.dispatchChange();
+      this.el.classList.remove('flash'); void this.el.offsetWidth; this.el.classList.add('flash');
+    }
+    revertSource() {
+      const cfg = this.cfg, back = cfg.prevSource, data = cfg.prevData;
+      if (!back) return;
+      this.setSource(back);
+      Object.assign(cfg, data);
+      delete cfg.prevSource; delete cfg.prevData;
+      this.changed();
+      renderPanel();
+    }
+    brokenRules() {
+      const valid = new Set(itemFields(this.cfg.source).map((f) => f.key));
+      return [...COND.values()].filter((t) => t.el && this.el.contains(t.el))
+        .flatMap((t) => t.data.rules.filter((r) => r.scope === 'item' && !valid.has(r.field)).map((rule) => ({ t, rule })));
+    }
+    removeBroken() {
+      const chips = $$(`${FIELD_TAG}[data-invalid]`, this.el);
+      chips.forEach((ch) => ch.remove());
+      this.brokenRules().forEach(({ t, rule }) => { t.data.rules.splice(t.data.rules.indexOf(rule), 1); t.update(); });
+      this.changed();
+      renderPanel();
+      toast(`Removed ${chips.length} field${chips.length === 1 ? '' : 's'} and the conditions that used them`);
     }
     mountInner(focus) {
       if (this.inner) return;
@@ -717,20 +768,42 @@
     }
     updateChrome() {
       const el = this.el, cfg = this.cfg, l = listDef(cfg.source);
-      el.classList.toggle('is-unbound', !l);
+      const unbound = !l || cfg.setup;
+      el.classList.toggle('is-unbound', unbound);
       el.querySelector('.rs-title').innerHTML = l ? `Repeat for each <b>${l.singular}</b>` : 'Repeating Section';
-      el.querySelector('.rs-summary').textContent = l ? sectionSummary(cfg) : '';
-      if (!l) {
+      el.querySelector('.rs-summary').textContent = !l ? '' : cfg.setup ? 'Not applied yet' : sectionSummary(cfg);
+      if (unbound) {
         el.querySelector('.rs-picker').innerHTML = `
-          <div class="rs-picker-title">What should this section repeat for?</div>
-          <div class="rs-picker-sub">Pick a related list on Deal. Everything you put in this section repeats once per record in that list.</div>
-          <div class="rs-picker-grid">${RELATED_LISTS.map((x) => `
-            <button type="button" class="rs-pick" data-act="rs-pick" data-list="${x.key}">
-              <span class="rs-pick-ico">${ICON[x.icon]}</span><span><b>${x.label}</b><small>${x.description}</small></span>
-            </button>`).join('')}</div>`;
+          <div class="rs-setup">
+            <span class="rs-setup-ico">${ICON.gear}</span>
+            <div>
+              <div class="rs-picker-title">${l ? `Repeating for each ${esc(l.singular.toLowerCase())}. Click Apply to start editing` : 'Set up this section in the panel'}</div>
+              <div class="rs-picker-sub">${l
+                ? 'Add filters, a sort or a limit if you need them, then click <b>Apply</b> in the panel.'
+                : 'Choose which related list it repeats for, narrow the records if needed, then click <b>Apply</b>. You can add content after that.'}</div>
+            </div>
+            <button type="button" class="rs-setup-btn" data-act="rs-settings">${l ? 'Open setup' : 'Choose a related list'} →</button>
+          </div>`;
       }
       refreshChips(el);
-      COND.forEach((t) => { if (t.el && el.contains(t.el)) t.update(false); });
+      COND.forEach((t) => {
+        if (!t.el || !el.contains(t.el)) return;
+        t.update(false);
+        t.el.classList.toggle('is-broken', t.data.rules.some((r) => !fieldFor(r.scope, r.field, cfg.source)));
+      });
+      this.updateWarning();
+    }
+    updateWarning() {
+      const warn = this.el.querySelector('.rs-warn'), cfg = this.cfg, l = listDef(cfg.source);
+      const fields = l && !cfg.setup ? $$(`${FIELD_TAG}[data-invalid]`, this.el).length : 0;
+      const rules = l && !cfg.setup ? this.brokenRules().length : 0;
+      warn.hidden = !fields && !rules;
+      if (warn.hidden) return;
+      const what = [fields && `${fields} field${fields > 1 ? 's' : ''}`, rules && `${rules} condition${rules > 1 ? 's' : ''}`].filter(Boolean).join(' and ');
+      const prev = listDef(cfg.prevSource);
+      warn.innerHTML = `${ICON.warn}<span><b>${what}</b> ${fields + rules > 1 ? 'use' : 'uses'} fields that ${esc(l.label)} doesn't have. Documents will leave them blank.</span>
+        ${prev ? `<button type="button" data-act="rs-revert">Switch back to ${esc(prev.label)}</button>` : ''}
+        <button type="button" data-act="rs-clean">Remove them</button>`;
     }
     changed() { this.updateChrome(); this.block?.dispatchChange(); }
     remove() {
@@ -893,6 +966,8 @@
   function select(type, id) {
     if (state.selected?.type === type && state.selected?.id === id) return;
     state.selected = type ? { type, id } : null;
+    state.rlPicking = false;
+    state.rlQuery = '';
     $$('.rs.is-selected, .cw.is-selected').forEach((e) => e.classList.remove('is-selected'));
     if (type === 'rs') SECTIONS.get(id)?.el.classList.add('is-selected');
     if (type === 'cond') COND.get(id)?.el?.classList.add('is-selected');
@@ -913,7 +988,7 @@
     if (s.type === 'rs' && !SECTIONS.get(s.id)) { panel.hidden = true; return; }
     if (s.type === 'cond' && !COND.get(s.id)) { panel.hidden = true; return; }
     panel.hidden = false;
-    if (s.type === 'rs') renderSectionPanel(SECTIONS.get(s.id));
+    if (s.type === 'rs') { renderSectionPanel(SECTIONS.get(s.id)); if (state.rlPicking) focusRlSearch(); }
     else renderCondPanel(COND.get(s.id));
   }
 
@@ -959,25 +1034,49 @@
     return { scope: 'item', field: f.key, op: opsFor(f.type)[0][0], value: '' };
   }
 
-  function renderSectionPanel(sec) {
-    const cfg = sec.cfg;
-    const l = listDef(cfg.source);
-    const head = (sub) => `<div class="sp-head"><div><div class="sp-title rs-c">${ICON.repeat}<span>Repeating Section</span></div><div class="sp-sub">${sub}</div></div><button class="bj-link" data-act="view-json" title="Show the JSON for this block">{ } JSON</button><button class="sp-close" data-act="panel-close">${ICON.x}</button></div>`;
-    if (!l) {
-      panel.innerHTML = `${head('Choose a related list to repeat over')}
-        <div class="sp-scroll"><div class="sp-sec">
-          <div class="sp-row"><label>Source</label><select data-k="source"><option value="">Select a related list</option>${RELATED_LISTS.map((x) => `<option value="${x.key}">${x.label}</option>`).join('')}</select></div>
-        </div></div>`;
-      return;
-    }
-    const seps = [['none', 'None'], ['space', 'Space'], ['pagebreak', 'Page break']]; // no divider: not something production renders
-    const zebraColors = ['#f4f6fb', '#f6f6f6', '#fdf7ec', '#eef8f2', '#fbf0f7'];
+  // Searchable list of every related list on the record, grouped. Scales to dozens of lists.
+  function listPickerHTML(cfg, cancellable) {
+    const groups = [...new Set(RELATED_LISTS.map((x) => x.group || 'Related lists'))];
+    return `
+      <div class="rl-picker">
+        <div class="rl-search">${ICON.search}<input data-rl-search placeholder="Search ${RELATED_LISTS.length} related lists" value="${esc(state.rlQuery || '')}" autocomplete="off"></div>
+        <div class="rl-list">
+          ${groups.map((g) => `<div class="rl-group" data-group="${esc(g)}">${esc(g)}</div>
+            ${RELATED_LISTS.filter((x) => (x.group || 'Related lists') === g).map((x) => `
+              <button class="rl-opt ${x.key === cfg.source ? 'on' : ''}" data-act="rl-pick" data-list="${x.key}" data-group="${esc(g)}" data-text="${esc((x.label + ' ' + x.description).toLowerCase())}">
+                <span class="rl-ico">${ICON[x.icon] || ICON.related}</span>
+                <span class="rl-text"><b>${esc(x.label)}</b><small>${esc(x.description)}</small></span>
+                <span class="rl-n">${x.fields.length} fields</span>
+              </button>`).join('')}`).join('')}
+          <div class="rl-empty" hidden>No related list matches that search.</div>
+        </div>
+        ${cancellable ? '<button class="link-btn" data-act="rl-cancel">Cancel</button>' : ''}
+      </div>`;
+  }
+  function sourceRowHTML(l) {
+    return `
+      <div class="rl-current">
+        <span class="rl-ico">${ICON[l.icon] || ICON.related}</span>
+        <span class="rl-text"><b>${esc(l.label)}</b><small>${l.fields.length} fields · ${esc(l.group || '')}</small></span>
+        <button class="link-btn" data-act="rl-change">Change</button>
+      </div>`;
+  }
+  function filterRlList(q) {
+    state.rlQuery = q;
+    const t = q.trim().toLowerCase();
+    const opts = $$('.rl-opt', panel);
+    opts.forEach((o) => { o.hidden = !!t && !o.dataset.text.includes(t); });
+    $$('.rl-group', panel).forEach((g) => { g.hidden = !opts.some((o) => o.dataset.group === g.dataset.group && !o.hidden); });
+    const empty = $('.rl-empty', panel);
+    if (empty) empty.hidden = opts.some((o) => !o.hidden);
+  }
+  function focusRlSearch() {
+    const i = $('[data-rl-search]', panel);
+    if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(i.value.length, i.value.length); filterRlList(i.value); }
+  }
+  function dataControlsHTML(cfg, l) {
     const groups = [{ label: `${l.singular} fields`, scope: 'item', fields: l.fields }, { label: 'Deal fields', scope: 'record', fields: DEAL_FIELDS }];
-    panel.innerHTML = `${head(`Content repeats once for each ${l.singular.toLowerCase()}`)}
-      <div class="sp-scroll">
-        <div class="sp-sec">
-          <div class="sp-sec-title">Data</div>
-          <div class="sp-row"><label>Source</label><select data-k="source">${RELATED_LISTS.map((x) => `<option value="${x.key}" ${x.key === cfg.source ? 'selected' : ''}>${x.label}</option>`).join('')}</select></div>
+    return `
           <div class="sp-row top"><label>Filter</label>
             <div class="rules">
               ${cfg.filters.map((r, i) => ruleRowHTML(r, i, cfg.source, groups, cfg.filterMatch)).join('')}
@@ -991,7 +1090,44 @@
             </div>
           </div>
           <div class="sp-row"><label>Limit</label><input type="number" min="1" data-k="limit" value="${esc(cfg.limit)}" placeholder="All records"></div>
-          <div class="sp-stat" id="sp-stat">${ICON.info}<div>${statLine(cfg)}</div></div>
+          <div class="sp-stat" id="sp-stat">${ICON.info}<div>${statLine(cfg)}</div></div>`;
+  }
+  function renderSetupPanel(sec) {
+    const cfg = sec.cfg, l = listDef(cfg.source);
+    const picking = !l || state.rlPicking;
+    panel.innerHTML = `
+      <div class="sp-head">
+        <div><div class="sp-title rs-c">${ICON.repeat}<span>Set up Repeating Section</span></div>
+        <div class="sp-sub">${picking ? 'Step 1 of 2 · Choose a related list' : 'Step 2 of 2 · Narrow the records (optional)'}</div></div>
+        <button class="sp-close" data-act="panel-close">${ICON.x}</button>
+      </div>
+      <div class="sp-scroll">
+        <div class="sp-sec">
+          <div class="sp-sec-title">Repeat for each record in</div>
+          ${picking ? listPickerHTML(cfg, !!l) : sourceRowHTML(l)}
+        </div>
+        ${l && !picking ? `<div class="sp-sec"><div class="sp-sec-title">Which records</div>${dataControlsHTML(cfg, l)}</div>` : ''}
+      </div>
+      <div class="sp-foot sp-foot-split">
+        <button class="btn-outline btn-sm" data-act="setup-cancel">Cancel</button>
+        <button class="btn-primary" data-act="setup-apply" ${l ? '' : 'disabled'}>Apply</button>
+      </div>`;
+    if (picking) focusRlSearch();
+  }
+
+  function renderSectionPanel(sec) {
+    const cfg = sec.cfg;
+    const l = listDef(cfg.source);
+    if (!l || cfg.setup) { renderSetupPanel(sec); return; }
+    const head = (sub) => `<div class="sp-head"><div><div class="sp-title rs-c">${ICON.repeat}<span>Repeating Section</span></div><div class="sp-sub">${sub}</div></div><button class="bj-link" data-act="view-json" title="Show the JSON for this block">{ } JSON</button><button class="sp-close" data-act="panel-close">${ICON.x}</button></div>`;
+    const seps = [['none', 'None'], ['space', 'Space'], ['pagebreak', 'Page break']]; // no divider: not something production renders
+    const zebraColors = ['#f4f6fb', '#f6f6f6', '#fdf7ec', '#eef8f2', '#fbf0f7'];
+    panel.innerHTML = `${head(`Content repeats once for each ${l.singular.toLowerCase()}`)}
+      <div class="sp-scroll">
+        <div class="sp-sec">
+          <div class="sp-sec-title">Data</div>
+          <div class="sp-row top"><label>Source</label><div>${state.rlPicking ? listPickerHTML(cfg, true) : sourceRowHTML(l)}</div></div>
+          ${dataControlsHTML(cfg, l)}
         </div>
         <div class="sp-sec">
           <div class="sp-sec-title">Layout</div>
@@ -1096,17 +1232,6 @@
     if (tune) { tune.data[k] = t.value; afterChange(true); return; }
     const cfg = sec.cfg;
     switch (k) {
-      case 'source': {
-        if (!sec.inner && t.value) { sec.bind(t.value); return; }
-        cfg.source = t.value || null;
-        const valid = new Set(itemFields(cfg.source).map((f) => f.key));
-        cfg.filters = cfg.filters.filter((r) => r.scope !== 'item' || valid.has(r.field));
-        if (!valid.has(cfg.sort.field)) cfg.sort.field = '';
-        afterChange(true);
-        const bad = $$(`${FIELD_TAG}[data-invalid]`, sec.el).length;
-        if (bad) toast(`${bad} field${bad > 1 ? 's' : ''} in this section don't exist on ${listDef(cfg.source).label}, shown in red.`);
-        return;
-      }
       case 'filterMatch': cfg.filterMatch = t.value; afterChange(true); return;
       case 'sortField': cfg.sort.field = t.value; afterChange(true); return;
       case 'sortDir': cfg.sort.dir = t.value; afterChange(false); return;
@@ -1118,12 +1243,16 @@
   });
   panel.addEventListener('input', (e) => {
     const t = e.target;
+    if (t.matches('[data-rl-search]')) { filterRlList(t.value); return; }
     const { sec, rules } = currentTarget();
     if (t.dataset.r === 'value' && t.tagName === 'INPUT') { rules[Number(t.closest('.rule').dataset.i)].value = t.value; afterChange(false); }
     else if (sec && t.dataset.k === 'limit') { sec.cfg.limit = t.value; afterChange(false); }
     else if (sec && t.dataset.k === 'emptyText') { sec.cfg.emptyText = t.value; sec.block?.dispatchChange(); }
   });
   panel.addEventListener('mousedown', (e) => { if (e.target.closest('[data-act="insert-field"]')) e.preventDefault(); });
+  panel.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-rl-search]')) { e.preventDefault(); $$('.rl-opt', panel).find((o) => !o.hidden)?.click(); }
+  });
   panel.addEventListener('click', (e) => {
     const segBtn = e.target.closest('[data-seg] button');
     if (segBtn) { currentTarget().sec.cfg[segBtn.parentElement.dataset.seg] = segBtn.dataset.v; afterChange(true); return; }
@@ -1134,6 +1263,15 @@
       case 'panel-close':
         if (state.panelView) { state.panelView = null; syncHeaderButtons(); renderPanel(); } else select(null);
         break;
+      case 'rl-change': state.rlPicking = true; state.rlQuery = ''; renderPanel(); break;
+      case 'rl-cancel': state.rlPicking = false; renderPanel(); break;
+      case 'rl-pick':
+        state.rlPicking = false;
+        if (b.dataset.list !== sec.cfg.source) sec.setSource(b.dataset.list);
+        renderPanel(); scheduleJson();
+        break;
+      case 'setup-apply': sec.apply(); break;
+      case 'setup-cancel': sec.remove(); break;
       case 'add-filter': rules.push(newRule('filter', listKey)); afterChange(true); break;
       case 'add-cond-rule': rules.push(listKey ? newRule('cond', listKey) : { scope: 'pos', field: '$position', op: 'last', value: '' }); afterChange(true); break;
       case 'rm-rule': rules.splice(Number(b.dataset.i), 1); afterChange(true); break;
