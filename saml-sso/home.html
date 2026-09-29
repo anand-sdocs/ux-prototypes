@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - S-Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="header-slot"></div>
+  <div class="home-wrap" id="home"></div>
+  <script src="shared.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const email = params.get('email') || 'anarasimhan@sdocs.com';
+    const via = params.get('via') || 'sso';
+    const flow = params.get('flow');
+    const user = SDOCS_USERS.find(u => u.email === email) || SDOCS_USERS[0];
+    document.getElementById('header-slot').replaceWith(renderAppHeader('Signature requests', user.name[0]));
+
+    const method = via === 'sso'
+      ? `${END_USER_SSO.idpLabel} SAML SSO (${flow === 'idp' ? 'IdP-initiated from the Okta dashboard' : 'SP-initiated from the S-Docs sign-in page'})`
+      : via === 'google' ? 'Google' : 'Microsoft';
+    const expires = new Date(Date.now() + 8 * 3600000);
+
+    document.getElementById('home').innerHTML = `
+      <h1>Welcome back, ${escapeHtml(user.name.split(' ')[0])}</h1>
+      <p style="color:var(--text-muted);">You're signed in to ${escapeHtml(CUSTOMER.name)}.</p>
+      <div class="card session-card">
+        <h4 style="margin-bottom:12px;">Session details</h4>
+        <div class="kv-list">
+          <div class="kv"><span>Signed in as</span><span>${escapeHtml(user.name)} &middot; ${escapeHtml(user.email)} &middot; ${user.role}</span></div>
+          <div class="kv"><span>Method</span><span>${escapeHtml(method)}</span></div>
+          ${via === 'sso' ? `<div class="kv"><span>SAML Name ID</span><span class="mono">${escapeHtml(email)}</span></div>
+          <div class="kv"><span>Matched by</span><span>Email on existing S-Docs user</span></div>` : ''}
+          <div class="kv"><span>Session</span><span>S-Docs auth token issued, expires ${fmtDateTime(expires.toISOString())}</span></div>
+        </div>
+        <div class="download-row">
+          <a class="btn btn-sm" href="login.html?signed_out=1">Sign out</a>
+          ${user.role === 'Admin' ? '<a class="btn btn-sm" href="admin.html">Settings &rarr; Single sign-on</a>' : ''}
+        </div>
+      </div>`;
+    renderToolbar('home.html', 'Signed in');
+  </script>
+</body>
+</html>

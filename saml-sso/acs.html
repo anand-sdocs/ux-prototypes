@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signing in - S-Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card" style="text-align:center;">
+      <div class="logo"></div>
+      <div class="spinner" style="width:28px; height:28px; border-width:3px; margin:8px auto 18px;"></div>
+      <h1 style="font-size:17px;">Signing you in&hellip;</h1>
+    </div>
+  </div>
+  <script src="shared.js"></script>
+  <script>
+    // Assertion Consumer Service. The real checks happen server-side; the user only sees a spinner.
+    document.querySelector('.logo').innerHTML = `${LOGO_SVG}<span class="logo-word">s-docs</span>`;
+    const params = new URLSearchParams(location.search);
+    const flow = params.get('flow') || 'sp'; // sp | idp | test
+    const email = (params.get('email') || '').toLowerCase();
+
+    let next;
+    if (flow === 'test') {
+      next = `admin.html?test=ok&email=${encodeURIComponent(email)}`;
+    } else {
+      const domain = email.split('@')[1] || '';
+      const user = SDOCS_USERS.find(u => u.email === email);
+      if (!END_USER_SSO.domains.includes(domain)) next = `login.html?error=sso_not_configured&email=${encodeURIComponent(email)}`;
+      else if (!user) next = `login.html?error=no_account&email=${encodeURIComponent(email)}`;
+      else next = `home.html?via=sso&flow=${flow}&email=${encodeURIComponent(email)}`;
+    }
+
+    renderToolbar('acs.html', 'Assertion Consumer Service');
+    setTimeout(() => { location.href = next; }, 1400);
+  </script>
+</body>
+</html>

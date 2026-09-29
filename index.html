@@ -190,7 +190,7 @@
         <span>PDF Upload Template Editor</span><span class="count">2</span>
       </button>
       <button class="category-btn" data-target="platform">
-        <span>S-Docs Platform</span><span class="count">6</span>
+        <span>S-Docs Platform</span><span class="count">8</span>
       </button>
       <button class="category-btn" data-target="support">
         <span>Support</span><span class="count">1</span>
@@ -356,8 +356,16 @@
 
     <section class="group" id="platform">
       <h2 class="section-title">S-Docs Platform</h2>
-      <p class="section-count">6 prototypes</p>
+      <p class="section-count">8 prototypes</p>
       <div class="grid">
+        <a class="card" href="saml-sso/admin.html">
+          <h3>SAML SSO: Admin Setup</h3>
+          <p>Settings &rarr; Single sign-on for account admins: generate a self-signed X.509 certificate, download SAML metadata, connect Okta (metadata URL, XML upload, or manual), verify email domains, choose user matching, test the connection, and enable. Includes the enabled state with require-SSO, certificate rotation, and a sign-in log.</p>
+        </a>
+        <a class="card" href="saml-sso/login.html">
+          <h3>SAML SSO: End-User Sign-in (Okta)</h3>
+          <p>The user side of SSO with Okta as the IdP: SP-initiated sign-in from the S-Docs login page with email-domain discovery, IdP-initiated sign-in from the Okta dashboard tile, and a return to the login page with an error when an Okta user has no matching S-Docs account.</p>
+        </a>
         <a class="card" href="repeating-section/index.html">
           <h3>Repeating Section</h3>
           <p>Template editor widget that repeats free-form content (text, images, fields, conditional blocks) for each record in a related list, with filter, sort, limit, and a preview using sample or live data.</p>
