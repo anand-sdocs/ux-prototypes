@@ -851,3 +851,9 @@ body.has-tour .lab,body.has-tour .fb{height:calc(100vh - 52px - 37px)}
   .persona-chip{padding:3px}
   .persona-chip > span:last-child{display:none}
 }
+
+/* Builder details: the business admin's own switch on the configurations page */
+.ad-bd-toggle{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--sd-line-strong);border-radius:8px;padding:5px 12px 5px 8px;background:#fff;cursor:pointer}
+.ad-bd-toggle b{display:block;font-size:12.5px;color:var(--sd-ink);line-height:1.2}
+.ad-bd-toggle small{display:block;font-size:11px;color:var(--sd-muted);line-height:1.2}
+.ad-bd-toggle:hover{border-color:#a7c8ec}

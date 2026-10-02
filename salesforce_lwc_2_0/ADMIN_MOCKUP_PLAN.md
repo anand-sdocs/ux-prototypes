@@ -6,14 +6,15 @@
 
 `admin.html` now opens with a guided walkthrough (`tour.js`), built like the Repeating Section prototype: a scenario bar at the top and a step guide with **Show me**. Deep links: `admin.html?scenario=bizadmin|sfadmin|rep|flow`.
 
-1. **Priya Shah, business admin:** creates *Mid-Market Deals* (Amount ≥ 25,000 and < 100,000; Proposal, Order Form, NDA; adds Email and Request signature), previews, activates, tests Sam on Initech, finds that *Sales — Standard* wins, moves the new configuration up and tests again.
-2. **Marco Diaz, Salesforce admin:** in App Builder, finds and drags *S-Docs Documents* onto the Opportunity page, sets Title, leaves Configuration on Automatic, checks Builder mode as Sam on Initech, switches back to User and saves.
+1. **Priya Shah, business admin:** (ends by turning on her own **Builder details** and opening Initech to see them) creates *Mid-Market Deals* (Amount ≥ 25,000 and < 100,000; Proposal, Order Form, NDA; adds Email and Request signature), previews, activates, tests Sam on Initech, finds that *Sales — Standard* wins, moves the new configuration up and tests again.
+2. **Marco Diaz, Salesforce admin:** in App Builder, finds and drags *S-Docs Documents* onto the Opportunity page, sets the **Title** (the only property), previews as Sam on Initech and saves.
 3. **Sam Rivera, sales rep:** on Initech – Partner Resale, generates the proposal and order form, requests a signature, and sees the documents flip to Signed. An event panel shows the lifecycle events.
-4. **Bonus, Marco in Flow Builder:** adds the component to a screen, maps `{!recordId}`, pins *Mid-Market Deals*, stores `{!docIds}` and `{!lastEvent}`, then debugs as Sam.
+4. **Bonus, Marco in Flow Builder:** adds the component to a screen, maps `{!recordId}`, stores `{!docIds}` and `{!lastEvent}`, then debugs as Sam. The component picks *Mid-Market Deals* by priority, as on the record page.
 
 The object list on the left only shows objects with saved configurations (there's no "Add object"); New configuration lets you pick any object.
 
 
+- **App Builder has one property, Title** (2026-10-02). No Configuration or Mode properties: the component always uses the first match, and **Builder details** is the business admin's own per-person switch on the Document Configurations page.
 - **Phase 1 has no advanced settings** (2026-10-02). `PHASE1 = true` in `admin.js` hides the wizard and strips the seed data down to when-to-show, templates and actions. The wizard code is kept for later phases; set the flag to `false` to see it.
 - **The simple editor is the default** (2026-10-02). It has three cards: *When to show* (field conditions with all/any, plus optional advanced logic; no conditions means everyone), *Templates* (an ordered list) and *Actions* (one checklist; bulk-capable actions also show on the toolbar). The six-step wizard is kept behind **Advanced settings**, and the simple view lists which advanced settings a configuration uses.
 - **Placement keys are dropped from v1** (2026-10-02). Configurations target placement types only.

@@ -282,6 +282,8 @@
       f: { Department: 'Sales', Title: 'Account Executive', Region__c: 'EMEA', LanguageLocaleKey: 'de', Id: 'u2', 'Manager.Department': 'Sales' } },
     { id: 'u3', name: 'Pat Lee', title: 'Partner rep, Initech', profile: 'Partner Community User', role: '', permsets: [], custperms: [], groups: [],
       f: { Department: 'Partner', Title: 'Partner Sales Rep', Region__c: 'North America', LanguageLocaleKey: 'en_US', Id: 'u3', 'Manager.Department': '' } },
+    { id: 'u5', name: 'Priya Shah', title: 'Sales Operations Manager', cfgManager: true, profile: 'Sales User', role: 'Sales_Manager', permsets: ['SDocs_User', 'SDocs_Configuration_Manager'], custperms: ['SDocs_Configuration_Manager'], groups: [],
+      f: { Department: 'Sales Operations', Title: 'Sales Operations Manager', Region__c: 'North America', LanguageLocaleKey: 'en_US', Id: 'u5', 'Manager.Department': 'Sales' } },
     { id: 'u4', name: 'Jordan Kim', title: 'Support Agent', profile: 'Service User', role: 'Support_Agent', permsets: ['SDocs_User'], custperms: [], groups: ['Support'],
       f: { Department: 'Support', Title: 'Support Agent', Region__c: 'APAC', LanguageLocaleKey: 'en_US', Id: 'u4', 'Manager.Department': 'Support' } }
   ];
@@ -719,8 +721,8 @@
   /* =======================================================================
      STATE
      ======================================================================= */
-  const freshLab = placed => ({ object: 'Opportunity', mode: 'new', source: 'auto', pin: '', title: 'S-Docs', show: 'both', dmode: 'user', user: 'u1', rec: 0, placed, q: '', listOpened: false, saved: false });
-  const freshFlow = () => ({ open: false, added: false, q: '', recordId: '', config: '', title: 'S-Docs', mode: 'user', outDocs: '', outEvent: '', debug: false, runDone: false, saved: false });
+  const freshLab = placed => ({ object: 'Opportunity', mode: 'new', title: 'S-Docs', user: 'u1', rec: 0, placed, q: '', saved: false });
+  const freshFlow = () => ({ open: false, added: false, q: '', recordId: '', title: 'S-Docs', outDocs: '', outEvent: '', debug: false, runDone: false, saved: false });
   const state = {
     configs: seed(),
     view: 'list',
@@ -732,6 +734,7 @@
     recv: { rec: 3, user: 'u2' },
     flow: freshFlow(),
     genCount: {},
+    builderDetails: false, // per person: the business admin's own troubleshooting switch
     persona: null,
     modal: null,
     events: []
@@ -875,6 +878,8 @@
           <div class="ad-hsub">Decide which templates, actions and steps people get on each record — no page layout changes needed.</div>
         </div>
         <div class="ad-hactions">
+          <div class="ad-bd-toggle" title="Shows which configuration applied and why, under the S-Docs card on record pages. Only you see it.">${sw(state.builderDetails, 'data-bd-toggle aria-label="Builder details on record pages"')}<span><b>Builder details</b><small>On record pages, just for you</small></span></div>
+          ${state.builderDetails ? `<button class="ad-btn ad-btn-sm" data-open-record title="Opens Initech – Partner Resale as you">${ic('record', 14)} Open a record</button>` : ''}
           <button class="ad-btn" data-go-test>${ic('flask', 15)} Test a record</button>
           <button class="ad-btn" data-go-lab>${ic('record', 15)} See it in App Builder</button>
           <button class="ad-btn ad-btn-primary" data-new>${ic('plus', 15, 2.2)} New configuration</button>
@@ -2124,20 +2129,8 @@
   function labResolve() {
     const L = state.lab, obj = L.object;
     const recs = recordsOf(obj), rec = recs[L.rec] || recs[0], user = userById(L.user);
-    const list = state.configs[obj] || [];
-    const ctx = { rec, user, placement: 'record' };
-    if (L.source === 'pin') {
-      const i = list.findIndex(x => x.key === L.pin), c = list[i];
-      if (!c) return { c: null, rec, user, why: 'Choose the configuration to pin.' };
-      // Design time: always show the chosen configuration's card; say separately whether this person would see it.
-      const sc = scopeCheck(c, ctx);
-      const met = evalConditions(c.logic, c.customLogic, c.conditions, obj, rec, user).pass;
-      const why = !sc.ok ? (c.status === 'Draft' ? 'It’s a draft, so nobody sees it until it’s activated.' : `Nobody sees it right now: ${sc.reason}`)
-        : !met ? `At run time ${user.name} wouldn’t see it on ${rec.Name} — it only shows when ${condSummaryText(c.logic, c.customLogic, c.conditions, obj)}.` : '';
-      return { c, rec, user, prio: i + 1, pinned: true, live: sc.ok && met, why };
-    }
-    const res = resolve(list, obj, ctx);
-    return res.winner ? { c: res.winner.cfg, rec, user, prio: res.winner.prio } : { c: null, rec, user, why: `No configuration matches ${user.name} on ${rec.Name}.` };
+    const res = resolve(state.configs[obj] || [], obj, { rec, user, placement: 'record' });
+    return res.winner ? { c: res.winner.cfg, rec, user, prio: res.winner.prio } : { c: null, rec, user, why: `No configuration matches ${user.name} on ${rec.Name}, so the component shows an empty state.` };
   }
   const labInfo = t => `<span class="lab-i" title="${esc(t)}">${ic('info', 13)}</span>`;
 
@@ -2197,16 +2190,12 @@
     if (L.mode === 'new' && !L.placed) {
       side = '<div class="lab-drop" data-lab-drop><b>Add a component here</b><span>Drag S-Docs Documents from the left, or click it.</span></div>';
     } else if (L.mode === 'new') {
-      // User: exactly what this person gets. Builder: the configured card plus why it was chosen,
-      // shown only to people with the S-Docs Configuration Manager permission.
-      const seesFinal = r.c && (!r.pinned || r.live);
-      const builder = L.dmode === 'builder' && r.user.cfgManager;
-      const empty = `<article class="sd-card"><header class="sd-head">${LOGO}<h2>${esc(L.title || 'S-Docs')}</h2></header><p class="sd-empty">No document options are available here.</p>${builder ? builderDetails(r) : ''}</article>`;
-      const card = builder ? (r.c ? cardHtml('lab', r.c, rec, r.user, { title: L.title, details: builderDetails(r) }) : empty)
-        : (seesFinal ? cardHtml('lab', r.c, rec, r.user, { title: L.title }) : empty);
-      const protoNote = L.dmode === 'builder' && !r.user.cfgManager
-        ? `<div class="lab-resolved">${ic('lock', 15, 2)}<span><b>Prototype note:</b> ${esc(r.user.name)} doesn’t have the S-Docs Configuration Manager permission, so even in Builder mode they get the normal card.</span></div>` : '';
-      side = `<div class="lab-selected"><span class="lab-tag">S-Docs Documents</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>${card}</div>${protoNote}`;
+      const empty = `<article class="sd-card"><header class="sd-head">${LOGO}<h2>${esc(L.title || 'S-Docs')}</h2></header><p class="sd-empty">No document options are available here.</p></article>`;
+      const card = r.c ? cardHtml('lab', r.c, rec, r.user, { title: L.title }) : empty;
+      side = `<div class="lab-selected"><span class="lab-tag">S-Docs Documents</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>${card}</div>
+        <div class="lab-resolved${r.c ? '' : ' warn'}">${ic(r.c ? 'info' : 'alert', 15, 2)}<span>${r.c
+          ? `For <b>${esc(r.user.name)}</b> on <b>${esc(rec.Name)}</b> the first matching configuration is <b>#${r.prio} ${esc(r.c.name)}</b>. Your business admin decides this in S-Docs Document Configurations; there's nothing to set here.`
+          : esc(r.why)}</span></div>`;
     } else {
       side = `<div class="lab-selected"><span class="lab-tag">Generate Documents (S-Docs)</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>
           <div class="lab-legacy-card"><div class="lab-legacy-head">${LOGO}<h3>Templates to Generate</h3><button class="lab-pill-btn">Generate</button></div>
@@ -2238,27 +2227,17 @@
       </div>`;
   }
 
-  function builderDetails(r) {
-    const L = state.lab, obj = L.object, list = state.configs[obj] || [];
-    const rec = r.rec, user = r.user;
-    const ctx = { rec, user, placement: 'record' };
+  // Diagnostics shown under the card for configuration managers who turned Builder details on.
+  function builderDetailsFor(obj, rec, user) {
+    const list = state.configs[obj] || [];
     const rowsHtml = rows => rows.length ? `<ul class="ad-tr-rows">${rows.map(x => `<li class="${x.pass ? 'pass' : 'fail'}"><span class="mk">${ic(x.pass ? 'check' : 'x', 11, 3)}</span><span><b>${x.n}.</b> ${esc(x.text)} <span class="act">— ${esc(x.actual)}</span></span></li>`).join('')}</ul>` : '';
-    let head, body = '';
-    if (r.pinned && r.c) {
-      const sc = scopeCheck(r.c, ctx);
-      const ev = evalConditions(r.c.logic, r.c.customLogic, r.c.conditions, obj, rec, user);
-      head = `<b>#${r.prio} ${esc(r.c.name)}</b> · pinned in page settings · ${esc(r.c.status)}`;
-      body = `<div class="sd-bd-verdict ${r.live ? 'ok' : 'no'}">${ic(r.live ? 'check' : 'x', 12, 3)} ${esc(user.name)} ${r.live ? 'sees' : 'does not see'} this on ${esc(rec.Name)}${!sc.ok ? ' — ' + esc(sc.reason) : ''}</div>` +
-        (r.c.logic === 'always' ? '<div class="sd-bd-note">No conditions — shows for everyone.</div>' : rowsHtml(ev.rows) + (r.c.logic === 'custom' ? `<div class="sd-bd-note">Logic: ${esc(r.c.customLogic)}</div>` : ''));
-    } else {
-      const res = resolve(list, obj, ctx);
-      const w = res.winner;
-      head = w ? `<b>#${w.prio} ${esc(w.cfg.name)}</b> · automatic (first match) · ${list.length} checked` : '<b>No configuration matched</b> · automatic';
-      body = `<div class="sd-bd-verdict ${w ? 'ok' : 'no'}">${ic(w ? 'check' : 'x', 12, 3)} ${esc(user.name)} on ${esc(rec.Name)}</div>` +
-        `<ol class="sd-bd-trace">${res.trace.filter(t => t.outcome !== 'unevaluated').map(t => `<li class="${t.outcome}"><span class="p">${t.prio}</span><span><b>${esc(t.cfg.name)}</b> — ${esc(t.outcome === 'win' ? 'used' : t.outcome === 'skip' ? t.why.replace(/\.$/, '').toLowerCase() : 'conditions not met')}${t.outcome !== 'skip' && t.rows && t.rows.length ? rowsHtml(t.rows) : ''}</span></li>`).join('')}</ol>`;
-    }
+    const res = resolve(list, obj, { rec, user, placement: 'record' });
+    const w = res.winner;
+    const head = w ? `<b>#${w.prio} ${esc(w.cfg.name)}</b> · first match · ${list.length} checked` : '<b>No configuration matched</b>';
+    const body = `<div class="sd-bd-verdict ${w ? 'ok' : 'no'}">${ic(w ? 'check' : 'x', 12, 3)} ${esc(user.name)} on ${esc(rec.Name)}</div>` +
+      `<ol class="sd-bd-trace">${res.trace.filter(t => t.outcome !== 'unevaluated').map(t => `<li class="${t.outcome}"><span class="p">${t.prio}</span><span><b>${esc(t.cfg.name)}</b> — ${esc(t.outcome === 'win' ? 'used' : t.outcome === 'skip' ? t.why.replace(/\.$/, '').toLowerCase() : 'conditions not met')}${t.outcome !== 'skip' && t.rows && t.rows.length ? rowsHtml(t.rows) : ''}</span></li>`).join('')}</ol>`;
     return `<details class="sd-builder" open><summary>${ic('flask', 13, 2)} Builder details <span>${head}</span></summary>${body}
-      <div class="sd-bd-foot">${ic('lock', 11, 2)} Only people with S-Docs Configuration Manager see this. Switch Mode to User before you go live.</div></details>`;
+      <div class="sd-bd-foot">${ic('lock', 11, 2)} Only you see this, because you turned on Builder details in Document Configurations.</div></details>`;
   }
   function renderLabProps() {
     const el = $('#lab-props');
@@ -2284,53 +2263,12 @@
         <div class="lab-f"><label>Template</label><input type="text" value="Header and Right Sidebar" disabled></div></div>`;
       return;
     }
-    // Only standard design-property controls: a text input and a datasource-backed search input.
+    // One design property. Which configuration applies, and everything else, is the business admin's.
     el.innerHTML = `<div class="lab-crumb"><a href="#">Page</a> › S-Docs Documents</div>
       <div class="lab-props-body">
-        <div class="lab-f"><label for="lab-title">Title ${labInfo('Heading shown on the card.')}</label><input type="text" id="lab-title" data-lab="title" value="${esc(L.title)}"></div>
-        <div class="lab-f lab-combo"><label for="lab-cfg">Configuration ${labInfo('Automatic uses the first configuration whose conditions match the record and the person. Pick one to always use it; its conditions still apply.')}</label>
-          <div class="lab-search-input"><input type="text" id="lab-cfg" role="combobox" aria-expanded="false" aria-controls="lab-cfg-list" aria-autocomplete="list" autocomplete="off" data-lab-combo value="${esc(labCfgLabel())}">${ic('search', 15, 2)}</div>
-          <ul class="lab-listbox" id="lab-cfg-list" role="listbox" hidden></ul>
-        </div>
-        <div class="lab-f"><label for="lab-dmode">Mode ${labInfo('Builder adds details about which configuration was used and why, for troubleshooting. Only S-Docs configuration managers see them; everyone else gets the normal card.')}</label>
-          <select id="lab-dmode" data-lab="dmode">${[['user', 'User'], ['builder', 'Builder']].map(([k, l]) => `<option value="${k}" ${k === L.dmode ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div class="lab-f"><label for="lab-title">Title ${labInfo('Heading shown on the card. Templates and actions come from S-Docs Document Configurations, managed by your business admin.')}</label><input type="text" id="lab-title" data-lab="title" value="${esc(L.title)}"></div>
         <div class="lab-sec"><div class="lab-sec-h">${ic('down', 12, 2.4)} Set Component Visibility</div><div class="lab-f"><span class="lab-l">Filters</span><button class="sf-btn">+ Add Filter</button></div></div>
       </div>`;
-  }
-  // The options an Apex datasource picklist would return for this page's object.
-  function labOptions() {
-    const list = state.configs[state.lab.object] || [];
-    return [{ v: '', l: 'Automatic (first match)' }].concat(list.map(c => ({ v: c.key, l: c.name + (c.status === 'Active' ? '' : ` (${c.status})`) })));
-  }
-  const labCfgLabel = () => { const L = state.lab, o = labOptions().find(x => x.v === (L.source === 'pin' ? L.pin : '')); return o ? o.l : ''; };
-  function renderLabList(query) {
-    const ul = $('#lab-cfg-list');
-    if (!ul) return;
-    const L = state.lab, cur = L.source === 'pin' ? L.pin : '';
-    const q = lc(query || '');
-    const opts = labOptions().filter(o => !q || lc(o.l).includes(q));
-    ul.innerHTML = opts.length
-      ? opts.map((o, i) => `<li role="option" class="lab-opt${o.v === cur ? ' is-current' : ''}${i === 0 ? ' is-active' : ''}" data-lab-opt="${esc(o.v)}" aria-selected="${o.v === cur}">${esc(o.l)}</li>`).join('')
-      : '<li class="lab-opt-empty">No matches</li>';
-  }
-  function openLabList(input, query) {
-    state.lab.listOpened = true;
-    renderLabList(query);
-    $('#lab-cfg-list').hidden = false;
-    input.setAttribute('aria-expanded', 'true');
-  }
-  function closeLabList() {
-    const ul = $('#lab-cfg-list'), input = $('#lab-cfg');
-    if (ul) ul.hidden = true;
-    if (input) { input.setAttribute('aria-expanded', 'false'); input.value = labCfgLabel(); }
-  }
-  function pickLabOption(v) {
-    const L = state.lab;
-    L.source = v ? 'pin' : 'auto';
-    L.pin = v;
-    state.pv.lab = null;
-    closeLabList();
-    renderLabCanvas();
   }
   function renderLabCfgs() {}
 
@@ -2377,13 +2315,7 @@
      ======================================================================= */
   // What the record page's S-Docs component resolves to, using the page's App Builder settings.
   function pageResolve(rec, user) {
-    const L = state.lab, list = state.configs.Opportunity || [];
-    const ctx = { rec, user, placement: 'record' };
-    if (L.source === 'pin') {
-      const c = list.find(x => x.key === L.pin);
-      return c && scopeCheck(c, ctx).ok && evalConditions(c.logic, c.customLogic, c.conditions, 'Opportunity', rec, user).pass ? c : null;
-    }
-    const r = resolve(list, 'Opportunity', ctx);
+    const r = resolve(state.configs.Opportunity || [], 'Opportunity', { rec, user, placement: 'record' });
     return r.winner ? r.winner.cfg : null;
   }
   function renderRecord() {
@@ -2426,8 +2358,9 @@
     if (!el) return;
     const { c, rec, user } = pvCtx('rec');
     const title = state.lab.title || 'S-Docs';
-    el.innerHTML = c ? cardHtml('rec', c, rec, user, { title })
-      : `<article class="sd-card"><header class="sd-head">${LOGO}<h2>${esc(title)}</h2></header><p class="sd-empty">No document options are available here.</p></article>`;
+    const details = user.cfgManager && state.builderDetails ? builderDetailsFor('Opportunity', rec, user) : '';
+    el.innerHTML = c ? cardHtml('rec', c, rec, user, { title, details })
+      : `<article class="sd-card"><header class="sd-head">${LOGO}<h2>${esc(title)}</h2></header><p class="sd-empty">No document options are available here.</p>${details}</article>`;
   }
 
   /* =======================================================================
@@ -2437,13 +2370,7 @@
   function flowResolve() {
     const F = state.flow, rec = recordsOf('Opportunity')[FLOW_REC], user = userById(FLOW_USER);
     if (!F.recordId) return { c: null, rec, user, why: 'S-Docs needs a record. Set Record ID to {!recordId} on the component.' };
-    const list = state.configs.Opportunity || [], ctx = { rec, user, placement: 'flow' };
-    if (F.config) {
-      const c = list.find(x => x.key === F.config);
-      const ok = c && scopeCheck(c, ctx).ok && evalConditions(c.logic, c.customLogic, c.conditions, 'Opportunity', rec, user).pass;
-      return ok ? { c, rec, user } : { c: null, rec, user, why: `“${c ? c.name : F.config}” doesn't apply to ${user.name} on ${rec.Name}.` };
-    }
-    const r = resolve(list, 'Opportunity', ctx);
+    const r = resolve(state.configs.Opportunity || [], 'Opportunity', { rec, user, placement: 'flow' });
     return r.winner ? { c: r.winner.cfg, rec, user } : { c: null, rec, user, why: 'No configuration matches.' };
   }
   const FB_COMPONENTS = [
@@ -2493,19 +2420,15 @@
     }).join('') || '<p class="lab-hint fb-pad">No components match.</p>';
   }
   function flowEditorHtml() {
-    const F = state.flow, list = state.configs.Opportunity || [];
+    const F = state.flow;
     const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
-    const cfgName = F.config ? ((list.find(x => x.key === F.config) || {}).name || F.config) : 'Automatic (first match)';
     const props = F.added ? `
         <div class="fb-props-h">S-Docs Documents</div>
         <div class="lab-f"><label>API Name</label><input type="text" value="sdocsDocuments" disabled></div>
         <div class="lab-f"><label for="fb-rid">Record ID <span class="ad-req">*</span> ${labInfo('Screen flows don’t pass a record automatically. Map the flow’s recordId variable here.')}</label>
           <div class="lab-search-input"><input type="text" id="fb-rid" data-fb="recordId" value="${esc(F.recordId)}" placeholder="Search resources...">${ic('search', 15, 2)}</div>
           ${F.recordId ? '' : '<button class="fb-res-pick" data-fb-res="{!recordId}">{!recordId} <small>Variable · Text</small></button>'}</div>
-        <div class="lab-f"><label for="fb-cfg">Configuration ${labInfo('Automatic uses the first configuration whose conditions match. Pick one to always use it; its conditions still apply.')}</label>
-          <select id="fb-cfg" data-fb="config">${opt('', 'Automatic (first match)', F.config)}${list.map(c => opt(c.key, c.name + (c.status === 'Active' ? '' : ` (${c.status})`), F.config)).join('')}</select></div>
         <div class="lab-f"><label for="fb-title">Title</label><input type="text" id="fb-title" data-fb="title" value="${esc(F.title)}"></div>
-        <div class="lab-f"><label for="fb-mode">Mode</label><select id="fb-mode" data-fb="mode">${opt('user', 'User', F.mode)}${opt('builder', 'Builder', F.mode)}</select></div>
         <div class="lab-sec"><div class="lab-sec-h">${ic('down', 12, 2.4)} Store Output Values</div>
           <div class="lab-f"><label for="fb-od">Generated document IDs</label><select id="fb-od" data-fb="outDocs">${opt('', 'Not stored', F.outDocs)}${opt('{!docIds}', '{!docIds}', F.outDocs)}</select></div>
           <div class="lab-f"><label for="fb-oe">Last lifecycle event</label><select id="fb-oe" data-fb="outEvent">${opt('', 'Not stored', F.outEvent)}${opt('{!lastEvent}', '{!lastEvent}', F.outEvent)}</select></div>
@@ -2522,7 +2445,7 @@
         <section class="fb-sed-canvas"><div class="fb-screen">
           <div class="fb-screen-h">Generate paperwork</div>
           <div class="fb-screen-b">${F.added
-            ? `<div class="lab-selected fb-sel"><span class="lab-tag">S-Docs Documents</span><div class="fb-ph">${LOGO}<div><b>${esc(F.title || 'S-Docs')}</b><small>Configuration: ${esc(cfgName)} · Record: ${esc(F.recordId || 'not set')}</small><small>The card renders when the flow runs.</small></div></div></div>`
+            ? `<div class="lab-selected fb-sel"><span class="lab-tag">S-Docs Documents</span><div class="fb-ph">${LOGO}<div><b>${esc(F.title || 'S-Docs')}</b><small>Record: ${esc(F.recordId || 'not set')} · Configuration: first match, set by your business admin</small><small>The card renders when the flow runs.</small></div></div></div>`
             : '<div class="lab-drop" data-fb-drop><b>Add a component here</b><span>Drag S-Docs Documents from the left, or click it.</span></div>'}</div>
           <div class="fb-screen-f"><span class="fb-fbtn">Previous</span><span class="fb-fbtn primary">Next</span></div>
         </div></section>
@@ -2615,7 +2538,7 @@
       clearTimeout(sigTimer);
       state.configs = seed();
       if (key !== 'bizadmin') { const L_ = state.configs.Opportunity; L_.splice(L_.findIndex(c => c.key === 'sales_standard'), 0, midMarket()); }
-      Object.assign(state, { edit: null, pv: {}, events: [], genCount: {}, object: 'Opportunity', recv: { rec: 3, user: 'u2' }, flow: freshFlow() });
+      Object.assign(state, { edit: null, pv: {}, events: [], genCount: {}, builderDetails: false, object: 'Opportunity', recv: { rec: 3, user: 'u2' }, flow: freshFlow() });
       state.test = { object: 'Opportunity', rec: 0, user: 'u1', placement: 'record' };
       state.lab = freshLab(key !== 'sfadmin');
       if (key === 'rep' || key === 'flow') state.lab.title = 'Documents';
@@ -2642,7 +2565,8 @@
     // salesforce admin
     labPlace() { state.lab.placed = true; state.pv.lab = null; renderLab(); },
     labSet(k, v) { state.lab[k] = v; state.pv.lab = null; if (k === 'q') renderLab(); else { renderLabProps(); renderLabCanvas(); } },
-    labOpenList() { const i = $('#lab-cfg'); if (i) { openLabList(i, ''); i.focus(); } },
+    setBuilderDetails(v) { state.builderDetails = !!v; if (state.view === 'list') renderList(); },
+    openRecordAs(user, recIdx) { state.recv = { rec: recIdx, user }; state.pv.rec = null; state.view = 'record'; render(); window.scrollTo(0, 0); },
     labSave() { state.lab.saved = true; toast(`${OBJ(state.lab.object).label} Record Page saved. It's already the org default, so reps see it now.`); },
     // sales rep
     pvState: ns => state.pv[ns],
@@ -2762,23 +2686,21 @@
     if ((el = q('[data-fb-next]'))) { window.LWC2.flowNext(); return; }
 
     /* ---- app builder ---- */
-    if ((el = q('[data-go-lab]'))) { state.lab.object = (RECORDS[state.object] ? state.object : 'Opportunity'); state.lab.rec = 0; state.lab.pin = ''; state.pv.lab = null; state.view = 'lab'; render(); window.scrollTo(0, 0); return; }
+    if ((el = q('[data-go-lab]'))) { state.lab.object = (RECORDS[state.object] ? state.object : 'Opportunity'); state.lab.rec = 0; state.pv.lab = null; state.view = 'lab'; render(); window.scrollTo(0, 0); return; }
     if ((el = q('[data-lab-exit]')) || (el = q('[data-lab-manage]'))) { state.object = state.lab.object; state.view = 'list'; render(); return; }
     if ((el = q('[data-lab-mode]'))) { state.lab.mode = el.dataset.labMode; renderLab(); return; }
-    if ((el = q('[data-lab-opt]'))) { pickLabOption(el.dataset.labOpt); return; }
-    if ((el = q('[data-lab-combo]'))) { if ($('#lab-cfg-list').hidden) { openLabList(el, ''); el.select(); } return; }
-    if (!q('.lab-combo')) closeLabList();
     if ((el = q('[data-lab-save]'))) { window.LWC2.labSave(); return; }
     if ((el = q('[data-lab-comp]'))) { if (!state.lab.placed) window.LWC2.labPlace(); else { state.lab.mode = 'new'; renderLab(); } return; }
     if ((el = q('[data-lab-drop]'))) { toast('Drag S-Docs Documents here from the Components list, or click it there.', 'info'); return; }
     if ((el = q('[data-lab-pages]'))) {
       e.stopPropagation();
       if (menuAnchor === el) { closeMenu(); return; }
-      openMenu(el, Object.keys(RECORDS).map(o => ({ k: o, l: OBJ(o).label + ' Record Page', icon: 'record' })), k => { Object.assign(state.lab, { object: k, rec: 0, pin: '' }); state.pv.lab = null; renderLab(); });
+      openMenu(el, Object.keys(RECORDS).map(o => ({ k: o, l: OBJ(o).label + ' Record Page', icon: 'record' })), k => { Object.assign(state.lab, { object: k, rec: 0 }); state.pv.lab = null; renderLab(); });
       return;
     }
 
     /* ---- list ---- */
+    if ((el = q('[data-open-record]'))) { window.LWC2.openRecordAs('u5', 3); return; }
     if ((el = q('[data-go-test]'))) { state.test.object = state.object; state.test.rec = 0; state.view = 'test'; render(); return; }
     if ((el = q('[data-new]'))) { newConfigModal(); return; }
     if ((el = q('[data-obj]'))) { state.object = el.dataset.obj; renderList(); return; }
@@ -2929,6 +2851,13 @@
     if (el.closest('.ad-crow') && el.dataset.c) { onCondField(el, isChange); return; }
     if (state.modal && el.closest('#ad-modal')) { onModalField(el, isChange); return; }
     if (el.dataset.tf) { onTestField(el, isChange); return; }
+    if (el.hasAttribute && el.hasAttribute('data-bd-toggle')) {
+      if (!isChange) return;
+      state.builderDetails = el.checked;
+      renderList();
+      toast(el.checked ? 'Builder details are on. You’ll see why each configuration applies under the S-Docs card on record pages; nobody else will.' : 'Builder details are off.', 'info');
+      return;
+    }
     if (el.hasAttribute && el.hasAttribute('data-lab-search')) { if (!isChange) { state.lab.q = el.value; const pl = $('#lab-pal'); if (pl) pl.innerHTML = labPaletteHtml(); } return; }
     if (el.hasAttribute && el.hasAttribute('data-fb-search')) { if (!isChange) { state.flow.q = el.value; const pl = $('#fb-pal'); if (pl) pl.innerHTML = flowPaletteHtml(); } return; }
     if (el.dataset && el.dataset.fb) {
@@ -2938,7 +2867,6 @@
       if (el.tagName === 'SELECT' || f === 'recordId' && el.value === '{!recordId}') { const id = el.id; renderFlow(); const n = id && document.getElementById(id); if (n && n.tagName !== 'SELECT') n.focus(); }
       return;
     }
-    if (el.hasAttribute && el.hasAttribute('data-lab-combo')) { if (!isChange) openLabList(el, el.value); return; }
     if (el.dataset.lab) {
       const L = state.lab, f = el.dataset.lab;
       if (!isChange && el.tagName !== 'INPUT') return;
@@ -2991,21 +2919,6 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (e.target && e.target.id === 'lab-cfg') {
-      const ul = $('#lab-cfg-list');
-      const opts = $$('[data-lab-opt]', ul);
-      let i = opts.findIndex(o => o.classList.contains('is-active'));
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (ul.hidden) { openLabList(e.target, ''); return; }
-        i = Math.max(0, Math.min(opts.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
-        opts.forEach((o, j) => o.classList.toggle('is-active', j === i));
-        if (opts[i]) opts[i].scrollIntoView({ block: 'nearest' });
-        return;
-      }
-      if (e.key === 'Enter' && !ul.hidden && opts[i]) { e.preventDefault(); pickLabOption(opts[i].dataset.labOpt); return; }
-      if (e.key === 'Escape' && !ul.hidden) { closeLabList(); return; }
-    }
     if (e.key !== 'Escape') return;
     if (state.modal) { closeModal(null); return; }
     if (!menuEl.hidden) closeMenu();

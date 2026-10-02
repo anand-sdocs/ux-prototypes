@@ -137,8 +137,25 @@
           show: () => A.goTest(3, 'u2'),
         },
         {
+          title: 'Troubleshoot with Builder details',
+          body: `When a rep says "I don't see the order form", Priya can see what the component sees. <b>Builder details</b> is a switch on this page. It's <b>just for her</b>, and only people with S-Docs Configuration Manager can turn it on, so reps never see diagnostics.<br><br>There's no Mode to set in App Builder: this is the business admin's switch.`,
+          action: 'Go back to the list and turn on <b>Builder details</b> at the top of the page.',
+          target: () => (S().view === 'list' ? $('[data-bd-toggle]')?.closest('.ad-bd-toggle') : $('.ad-hactions [data-back]')),
+          done: () => S().builderDetails,
+          show: () => { A.goList(); A.setBuilderDetails(true); },
+        },
+        {
+          title: 'See it on a record',
+          body: `Under the S-Docs card Priya now sees which configuration was used, why the ones above it were skipped, and each condition with its real value. Sam opening the same record sees only the card.`,
+          action: 'Click <b>Open a record</b> next to the switch.',
+          target: () => $('[data-open-record]'),
+          stay: true,
+          done: () => S().view === 'record' && S().recv.user === 'u5',
+          show: () => A.openRecordAs('u5', 3),
+        },
+        {
           title: 'That\'s Priya\'s part',
-          body: `Conditions → templates → actions → preview → activate → test → reorder.<br><br>Priya never touched a page layout. Next: Marco, the Salesforce admin, puts the component on the Opportunity page, once.`,
+          body: `Conditions → templates → actions → preview → activate → test → reorder → troubleshoot.<br><br>Priya never touched a page layout. Next: Marco, the Salesforce admin, puts the component on the Opportunity page once and gives it a title. That's all he does.`,
           action: 'Click <b>Next scenario</b>.',
         },
       ],
@@ -150,7 +167,7 @@
       steps: [
         {
           title: 'Meet Marco',
-          body: `Marco Diaz is the Salesforce admin and owns the Opportunity record page. He adds the S-Docs component <b>once</b>. Priya's configurations decide what it shows, so he isn't asked to change the page every time sales wants a new document.<br><br>This is the <b>Opportunity Record Page</b> in Lightning App Builder, with an empty slot in the right column.`,
+          body: `Marco Diaz is the Salesforce admin and owns the Opportunity record page. He adds the S-Docs component <b>once</b> and gives it a title. Priya's configurations decide everything else, so he isn't asked to change the page every time sales wants a new document.<br><br>This is the <b>Opportunity Record Page</b> in Lightning App Builder, with an empty slot in the right column.`,
           action: 'Click <b>Next</b>.',
         },
         {
@@ -170,46 +187,21 @@
           show: () => A.labPlace(),
         },
         {
-          title: 'Three properties',
-          body: `That's all there is: <b>Title</b>, <b>Configuration</b> and <b>Mode</b>. Today's two components have around 18 between them; switch the prototype strip to <b>Today</b> to compare.`,
+          title: 'One property: Title',
+          body: `That's the only setting. The component always uses the <b>first matching configuration</b> in Priya's priority order, so there's nothing for Marco to choose. Today's two components have around 18 properties between them; switch the prototype strip to <b>Today</b> to compare.`,
           action: 'Change <b>Title</b> to <b>Documents</b>.',
           target: () => $('#lab-title'),
           done: () => S().lab.title.trim() !== '' && S().lab.title !== 'S-Docs',
           show: () => A.labSet('title', 'Documents'),
         },
         {
-          title: 'Configuration: leave it on Automatic',
-          body: `<b>Automatic</b> uses the first configuration that matches the record and the person, in Priya's order. Pick one only for a special page; its conditions still apply.<br><br>The options come straight from Priya's list, so new configurations show up here without a deploy.`,
-          action: 'Click the <b>Configuration</b> box to see the options, then leave it on <b>Automatic</b>.',
-          target: () => $('#lab-cfg'),
-          stay: true,
-          done: () => S().lab.listOpened,
-          show: () => A.labOpenList(),
-        },
-        {
-          title: 'Check it with Builder mode',
-          body: `A component can't reliably tell it's on the App Builder canvas, so <b>Mode</b> makes it explicit. <b>Builder</b> adds a details panel showing which configuration was used and why. Only people with S-Docs Configuration Manager ever see it.`,
-          action: 'Set <b>Mode</b> to <b>Builder</b>.',
-          target: () => $('#lab-dmode'),
-          done: () => S().lab.dmode === 'builder',
-          show: () => A.labSet('dmode', 'builder'),
-        },
-        {
           title: 'Preview as a rep',
-          body: `The prototype strip above the canvas stands in for "who is looking at which record".<br><br>For Sam on Initech the details should show <b>Mid-Market Deals</b> used, with both Amount conditions passing, and the configurations above it skipped.`,
+          body: `The prototype strip above the canvas stands in for "who is looking at which record". The note under the card says which configuration applies.<br><br>For Sam on Initech it's <b>Mid-Market Deals</b>. Switch to Anand on PseudoCo and the same component shows <b>Enterprise Sales</b>, with no change to the page.`,
           action: 'In the prototype strip, preview as <b>Sam Rivera</b> on <b>Initech – Partner Resale</b>.',
           target: () => [...document.querySelectorAll('.lab-proto select')],
           stay: true,
           done: () => S().lab.user === 'u2' && S().lab.rec === 3,
           show: () => { A.labSet('user', 'u2'); A.labSet('rec', 3); },
-        },
-        {
-          title: 'Back to User mode',
-          body: `Builder mode is safe to leave on, because only configuration managers see the details. Still, switch it back before going live.`,
-          action: 'Set <b>Mode</b> back to <b>User</b>.',
-          target: () => $('#lab-dmode'),
-          done: () => S().lab.dmode === 'user',
-          show: () => A.labSet('dmode', 'user'),
         },
         {
           title: 'Save',
@@ -221,7 +213,7 @@
         },
         {
           title: 'That\'s Marco\'s part',
-          body: `One component, three properties, set once. From now on Priya changes what reps get without Marco.<br><br>Next: Sam, a sales rep, uses it.`,
+          body: `One component, one property, set once. From now on Priya changes what reps get, and troubleshoots it, without Marco.<br><br>Next: Sam, a sales rep, uses it.`,
           action: 'Click <b>Next scenario</b>.',
         },
       ],
@@ -320,14 +312,6 @@
           show: () => A.flowSet('recordId', '{!recordId}'),
         },
         {
-          title: 'Choose the configuration',
-          body: `Automatic works in flows too. A purpose-built flow like this one can pin a configuration instead. Its conditions still apply, so the flow can't give someone templates they shouldn't have.`,
-          action: 'Set <b>Configuration</b> to <b>Mid-Market Deals</b>.',
-          target: () => $('#fb-cfg'),
-          done: () => S().flow.config === 'mid_market_deals',
-          show: () => A.flowSet('config', 'mid_market_deals'),
-        },
-        {
           title: 'Store the outputs',
           body: `The component hands values back to the flow, so later elements can use them: attach the documents to a case, branch on whether anything was generated, and so on.`,
           action: 'Set <b>Generated document IDs</b> to <b>{!docIds}</b> (and <b>Last lifecycle event</b> to <b>{!lastEvent}</b> if you like).',
@@ -353,7 +337,7 @@
         },
         {
           title: 'Generate inside the flow',
-          body: `Same card as on the record page, with the Mid-Market Deals templates and actions.`,
+          body: `Same card as on the record page. The component picked <b>Mid-Market Deals</b> on its own, by priority, exactly as on the record page.`,
           action: 'Pick a template and click <b>Generate</b>.',
           target: () => $('#fb-run-card .sd-combo'),
           done: () => (S().genCount.flowrun || 0) > 0,
@@ -372,7 +356,7 @@
           body: `Three people, one component:
             <ul>
               <li><b>Priya</b> decides what shows, for whom, in S-Docs.</li>
-              <li><b>Marco</b> places the component once, on a page or in a flow.</li>
+              <li><b>Marco</b> places the component once, on a page or in a flow, and gives it a title.</li>
               <li><b>Sam</b> just generates and sends.</li>
             </ul>
             Pick any scenario above to go again.`,

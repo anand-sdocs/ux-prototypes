@@ -13,7 +13,7 @@ This document defines the data a **business admin** manages to control what the 
 | Business admins configure, not Salesforce admins | Everything is **data in custom objects**, edited through an S-Docs wizard. No App Builder, no metadata deploys. |
 | Different setups per record / user | A **Configuration** has **conditions** on record fields, parent fields, the running user, groups and permission sets, formulas, or Apex. |
 | Ordering when several match | Configurations are **ordered per object; first match wins**. |
-| Embeddable in LWCs and screen flows | Configurations can be **scoped to a placement**: record page, Experience Cloud, screen flow or embedded. A host can also pin one Configuration by its key. |
+| Embeddable in LWCs and screen flows | The same component works on record pages, inside custom LWCs and on flow screens, and picks the first matching Configuration in each. Later phases add **scoping to a placement** (record page, Experience Cloud, screen flow, embedded). |
 | Point-and-click action control | Each Configuration lists its **end-user actions** (preview, edit, sign, delete …) with simple per-action settings. |
 | Pre-generation actions that feed generation | **Before-generate steps** (validation, user prompt, Apex, Flow) write into declared **generation inputs** that templates merge. |
 | Lifecycle events | The component emits a fixed event catalog on DOM events, Lightning Message Service, and Flow outputs. Platform events are opt-in per Configuration. |
@@ -32,17 +32,14 @@ Decided 2026-10-02. Phase 1 keeps a Configuration to three things: **when to sho
 | **Actions** | `Action__c`, `Enabled__c`. The component decides where an action shows: actions that work on several documents (Download, Email, Request signature, Refresh, Delete) appear on the toolbar and on each document; the rest appear on each document only. | `Surface__c`, `Allowed_For__c`, `Confirm__c`, `Settings__c` |
 | **Not in Phase 1** | — | `Doc_Config_Step__c` (before/after steps), `Doc_Config_Input__c` (generation inputs), `Doc_User_Preference__c` |
 
-**Lightning App Builder properties (Phase 1):** three, all standard design-property controls.
-- **Title:** a text input.
-- **Configuration:** a search input backed by an Apex datasource picklist. The options are *Automatic (first match)*, which is blank and the default, plus every Configuration for the page's object; non-active ones are marked, e.g. *(Draft)*. The stored value is the Configuration's `Config_Key__c`.
-- **Mode:** a picklist with *User* (the default) and *Builder*.
-  - *User* shows exactly what the person viewing the page gets, which can be an empty card.
-  - *Builder* shows the selected Configuration's card, plus a details panel: which Configuration was used, how it was chosen (pinned or first match), whether this person would see it, each condition marked pass or fail with its actual value, and why higher-priority Configurations were skipped.
-  - Builder details render only for users with the `SDocs_Configuration_Manager` custom permission, which comes with the S-Docs Configuration Manager permission set. Everyone else gets the User view, so a page left in Builder mode never shows diagnostics to end users.
+**Lightning App Builder (Phase 1):** one design property, **Title**. The component always uses the first matching Configuration by priority, so the Salesforce admin drops it on the page, gives it a title, and the business admin manages everything else. The same applies on flow screens, where the component adds a required **Record ID** input and output values.
 
-There's no supported way for a component to know it's running on the App Builder canvas, which is why Mode is an explicit setting.
+**Builder details (Phase 1):** the business admin's troubleshooting switch on the Document Configurations page. When it's on, the S-Docs card on record pages shows, under the card, which Configuration was used, why higher-priority ones were skipped, and each condition marked pass or fail with its actual value.
+- The switch is **per person**, so one admin's troubleshooting doesn't change what other admins see.
+- Only users with the `SDocs_Configuration_Manager` custom permission can turn it on or see the details. Reps never see them.
+- It replaces a "Mode" design property: there's no supported way for a component to know it's on the App Builder canvas, and troubleshooting belongs to the business admin anyway.
 
-Still in Phase 1, because it belongs to the component rather than the admin: the lifecycle events (§6), and the option for a page or host component to pin one Configuration by its key. A pinned Configuration's conditions still apply.
+Still in Phase 1, because it belongs to the component rather than the admin: the lifecycle events (§6).
 
 ## 2. Concepts
 
@@ -135,7 +132,7 @@ Seven objects: five configuration children under one parent, plus one small per-
 | Field | Type | Notes |
 |---|---|---|
 | `Name` | Text(80) | Label shown to admins, e.g. *Enterprise Sales — Proposals*. |
-| `Config_Key__c` | Text(80), unique, external ID | Developer name, e.g. `opp_enterprise_sales`. Hosts use it to pin a Configuration; promotion between orgs matches on it. |
+| `Config_Key__c` | Text(80), unique, external ID | Developer name, e.g. `opp_enterprise_sales`. Promotion between orgs matches on it, and it identifies the Configuration in lifecycle events. |
 | `Description__c` | Long text(2000) | Why this exists and who owns it. |
 | `Object_API_Name__c` | Text(255), required | Base object, e.g. `Opportunity`. |
 | `Status__c` | Draft · Active · Inactive | Only **Active** Configurations are evaluated. Draft ones can still be run in the wizard's *Test* view. |
@@ -345,25 +342,20 @@ Not configuration. This object holds the end user's own choices so they don't po
 
 ```mermaid
 flowchart TD
-    A[Component loads<br/>recordId, objectApiName,<br/>placement, configKey?] --> B{Host pinned<br/>a configKey?}
-    B -- yes --> C[Load that Configuration]
-    C --> D{Active, same object,<br/>conditions true?}
-    D -- yes --> W[Use it]
-    D -- no --> N[Show 'not available' state<br/>emit configurationnotfound]
-    B -- no --> E[Active Configurations for object<br/>within effective dates<br/>ordered by Evaluation_Order]
+    A[Component loads<br/>recordId, objectApiName, placement] --> E[Active Configurations for object<br/>within effective dates<br/>ordered by Evaluation_Order]
     E --> F[Drop those whose placement type<br/>doesn't fit]
     F --> G{Next candidate}
-    G -- none left --> N
+    G -- none left --> N[Show 'not available' state<br/>emit configurationresolved with none]
     G --> H[Evaluate conditions<br/>Always / All / Any / Custom logic]
     H -- false --> G
-    H -- true --> W
+    H -- true --> W[Use it]
     W --> T[Filter templates by their visibility rules<br/>apply actions, steps, inputs<br/>emit configurationresolved]
 ```
 
 **Rules**
 
 - **First match wins.** Order is per object. The wizard shows the list in order with drag-to-reorder, and always shows the *Always* fallback, if there is one, at the bottom.
-- **A pinned Configuration still checks its conditions.** Pinning picks *which* Configuration; it never bypasses user or record gating.
+- **There's no pinning.** The page, flow or host component never chooses a Configuration; the business admin's order does. (Decided 2026-10-02.)
 - **Hosts can narrow, never widen.** An embedding LWC can hide actions or limit templates for its own UI, but cannot enable an action or template the resolved Configuration doesn't allow.
 - **Explainability is built in.** The wizard's *Test* view takes a record and a user (*"run as"* preview), then shows each candidate Configuration and each condition row as pass or fail. The runtime records the same trace in debug logs.
 
