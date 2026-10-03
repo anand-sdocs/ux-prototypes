@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-Docs Provisioning Splash</title>
+<link rel="stylesheet" href="../kit.css">
+<link rel="stylesheet" href="../screens.css">
+<style>
+/* Layout: the kit's pre-app page (workspace-select) widened into a two-pane card.
+   Left: what is happening + a four-step product tour. Right: a live demo of the step in view.
+   Every colour, space, size, radius, shadow and easing is a --sd-* token. */
+:root { color-scheme: light; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--sd-color-surface-sunken); }
+
+.screen-provisioning {
+  /* why: tour pacing has no kit token (kit motion tokens are 80-160ms UI feedback);
+     named once here so the Angular build can lift them into one constant. */
+  --screen-provisioning-stage: 1300ms;
+  --screen-provisioning-hold: 2600ms;
+  --screen-provisioning-spin: 1000ms;
+  --screen-provisioning-demo-h: 30rem;
+
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: var(--sd-space-48) var(--sd-space-16);
+  background: var(--sd-color-surface-sunken);
+}
+
+.screen-provisioning-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-24);
+  width: 100%;
+  max-width: 68rem;
+}
+
+.screen-provisioning-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sd-space-16);
+}
+.screen-provisioning-brand .sd-sdocs-logo { font-size: var(--sd-text-md); }
+
+/* ---------- the card ---------- */
+.screen-provisioning-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "demo" "steps" "foot";
+  background: var(--sd-color-surface-default);
+  border: 1px solid var(--sd-color-border-subtle);
+  border-radius: var(--sd-radius-lg);
+  overflow: clip;
+}
+/* why: two panes side by side only when the demo has room for its cards */
+@media (min-width: 56rem) {
+  .screen-provisioning-card {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "head demo" "steps demo" "foot demo";
+  }
+}
+
+.screen-provisioning-head,
+.screen-provisioning-steps,
+.screen-provisioning-foot { padding-inline: var(--sd-space-32); }
+
+.screen-provisioning-head {
+  grid-area: head;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-8);
+  padding-block: var(--sd-space-32) var(--sd-space-24);
+}
+.screen-provisioning-mark { width: var(--sd-space-32); height: var(--sd-space-32); }
+.screen-provisioning-title {
+  margin: var(--sd-space-8) 0 0;
+  color: var(--sd-color-text-strong);
+  font-size: var(--sd-text-xl);
+  line-height: var(--sd-text-xl-lh);
+  font-weight: var(--sd-weight-bold);
+  text-wrap: balance;
+}
+.screen-provisioning-lede {
+  margin: 0;
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-sm);
+  line-height: var(--sd-text-sm-lh);
+  font-weight: var(--sd-weight-medium);
+  max-width: 34rem;
+}
+
+/* ---------- tour steps (left) ---------- */
+.screen-provisioning-steps {
+  grid-area: steps;
+  margin: 0;
+  padding-block: 0 var(--sd-space-24);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-4);
+}
+.screen-provisioning-step { position: relative; }
+/* the rail joining one marker to the next */
+.screen-provisioning-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--sd-space-12) + var(--sd-space-12) - 0.5px);
+  top: calc(var(--sd-space-12) + var(--sd-space-24) + var(--sd-space-4));
+  bottom: calc(-1 * var(--sd-space-12));
+  width: 1px;
+  background: var(--sd-color-border-subtle);
+}
+.screen-provisioning-step-button {
+  display: grid;
+  grid-template-columns: var(--sd-space-24) minmax(0, 1fr);
+  gap: var(--sd-space-12);
+  width: 100%;
+  padding: var(--sd-space-12);
+  border: 1px solid transparent;
+  border-radius: var(--sd-radius-md);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--sd-duration-base) var(--sd-easing),
+              border-color var(--sd-duration-base) var(--sd-easing);
+}
+.screen-provisioning-step-button:hover { background: var(--sd-color-surface-hover); }
+.screen-provisioning-step-button:focus-visible {
+  outline: var(--sd-ring-width) solid var(--sd-color-border-focus);
+  outline-offset: var(--sd-ring-offset-inset);
+}
+.screen-provisioning-step.is-current .screen-provisioning-step-button {
+  background: var(--sd-color-surface-accent);
+  border-color: var(--sd-color-border-accent);
+}
+.screen-provisioning-step-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--sd-space-24);
+  height: var(--sd-space-24);
+  border-radius: var(--sd-radius-full);
+  background: var(--sd-color-surface-default);
+  border: 1px solid var(--sd-color-border-default);
+  color: var(--sd-color-icon-muted);
+}
+.screen-provisioning-step-marker .sd-icon { width: var(--sd-space-12); height: var(--sd-space-12); }
+.screen-provisioning-step-marker .screen-provisioning-tick { display: none; }
+.screen-provisioning-step.is-current .screen-provisioning-step-marker {
+  background: var(--sd-color-action-primary);
+  border-color: var(--sd-color-action-primary);
+  color: var(--sd-color-icon-inverse);
+}
+.screen-provisioning-step.is-done .screen-provisioning-step-marker {
+  background: var(--sd-color-surface-success);
+  border-color: var(--sd-color-border-step-done);
+  color: var(--sd-color-icon-success);
+}
+.screen-provisioning-step.is-done .screen-provisioning-glyph { display: none; }
+.screen-provisioning-step.is-done .screen-provisioning-tick { display: block; }
+
+.screen-provisioning-step-text { display: flex; flex-direction: column; gap: var(--sd-space-2); min-width: 0; }
+.screen-provisioning-eyebrow {
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-2xs);
+  line-height: var(--sd-text-2xs-lh);
+  font-weight: var(--sd-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.screen-provisioning-step.is-current .screen-provisioning-eyebrow { color: var(--sd-color-text-accent); }
+.screen-provisioning-step-title {
+  color: var(--sd-color-text-default);
+  font-size: var(--sd-text-sm);
+  line-height: var(--sd-text-sm-lh);
+  font-weight: var(--sd-weight-medium);
+}
+.screen-provisioning-step.is-current .screen-provisioning-step-title {
+  color: var(--sd-color-text-strong);
+  font-weight: var(--sd-weight-semibold);
+}
+.screen-provisioning-step-detail { display: none; flex-direction: column; gap: var(--sd-space-8); padding-top: var(--sd-space-4); }
+.screen-provisioning-step.is-current .screen-provisioning-step-detail { display: flex; }
+.screen-provisioning-step-desc {
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+}
+.screen-provisioning-step-detail .sd-progress-bar { width: 100%; }
+
+/* ---------- footer: setup status + the one primary action ---------- */
+.screen-provisioning-foot {
+  grid-area: foot;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-16);
+  padding-block: var(--sd-space-20) var(--sd-space-24);
+  border-top: 1px solid var(--sd-color-border-subtle);
+}
+.screen-provisioning-foot-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sd-space-12) var(--sd-space-16);
+}
+.screen-provisioning-status { display: flex; align-items: flex-start; gap: var(--sd-space-8); min-width: 0; }
+.screen-provisioning-status .sd-icon { flex-shrink: 0; width: var(--sd-space-20); height: var(--sd-space-20); margin-top: var(--sd-space-2); }
+.screen-provisioning-status-busy { color: var(--sd-color-icon-accent); animation: screen-provisioning-spin var(--screen-provisioning-spin) linear infinite; }
+.screen-provisioning-status-done { color: var(--sd-color-icon-success); }
+.screen-provisioning-status-text { display: flex; flex-direction: column; }
+.screen-provisioning-status-title {
+  color: var(--sd-color-text-strong);
+  font-size: var(--sd-text-sm);
+  line-height: var(--sd-text-sm-lh);
+  font-weight: var(--sd-weight-semibold);
+}
+.screen-provisioning-status-sub {
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-variant-numeric: tabular-nums;
+}
+.screen-provisioning-legal {
+  margin: 0;
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+}
+.screen-provisioning-legal a { color: var(--sd-color-text-accent); font-weight: var(--sd-weight-medium); }
+.screen-provisioning-legal a:hover { color: var(--sd-color-text-accent-hover); }
+
+/* ---------- demo pane (right) ---------- */
+.screen-provisioning-demo {
+  grid-area: demo;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--screen-provisioning-demo-h);
+  padding: var(--sd-space-32) var(--sd-space-24);
+  background-color: var(--sd-color-surface-subtle);
+  background-image: radial-gradient(var(--sd-color-border-default) 1px, transparent 1px);
+  background-size: var(--sd-space-16) var(--sd-space-16);
+  border-bottom: 1px solid var(--sd-color-border-subtle);
+}
+/* why: on the side-by-side layout the demo's divider moves from below to the left */
+@media (min-width: 56rem) {
+  .screen-provisioning-demo { border-bottom: 0; border-left: 1px solid var(--sd-color-border-subtle); padding: var(--sd-space-40); }
+}
+.screen-provisioning-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sd-space-8);
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+.screen-provisioning-scene-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sd-space-4);
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-2xs);
+  line-height: var(--sd-text-2xs-lh);
+  font-weight: var(--sd-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.screen-provisioning-scene-label .sd-icon { width: var(--sd-space-12); height: var(--sd-space-12); }
+
+/* one object in a demo: a white card, like the kit's panels */
+.screen-provisioning-object {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-12);
+  padding: var(--sd-space-16);
+  background: var(--sd-color-surface-default);
+  border: 1px solid var(--sd-color-border-subtle);
+  border-radius: var(--sd-radius-lg);
+  box-shadow: var(--sd-shadow-sm);
+}
+.screen-provisioning-object-head { display: flex; align-items: center; gap: var(--sd-space-12); min-width: 0; }
+.screen-provisioning-badge-slot { margin-left: auto; flex-shrink: 0; }
+.screen-provisioning-tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--sd-space-32);
+  height: var(--sd-space-32);
+  border-radius: var(--sd-radius-md);
+  background: var(--sd-color-surface-subtle);
+  color: var(--sd-color-icon-default);
+}
+.screen-provisioning-tile .sd-icon { width: var(--sd-space-16); height: var(--sd-space-16); }
+.screen-provisioning-object-name {
+  display: flex; flex-direction: column; min-width: 0;
+  color: var(--sd-color-text-strong);
+  font-size: var(--sd-text-sm);
+  line-height: var(--sd-text-sm-lh);
+  font-weight: var(--sd-weight-semibold);
+}
+.screen-provisioning-object-meta {
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.screen-provisioning-link {
+  display: grid;
+  place-items: center;
+  color: var(--sd-color-icon-subtle);
+}
+.screen-provisioning-link .sd-icon { width: var(--sd-space-16); height: var(--sd-space-16); }
+
+/* scene 1: variables list + the page they drop into */
+.screen-provisioning-vars { display: flex; flex-direction: column; gap: var(--sd-space-4); margin: 0; padding: 0; list-style: none; }
+.screen-provisioning-var {
+  display: flex; align-items: center; gap: var(--sd-space-8);
+  padding: var(--sd-space-4) var(--sd-space-8);
+  border-radius: var(--sd-radius-sm);
+  color: var(--sd-color-text-default);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+  transition: background-color var(--sd-duration-slow) var(--sd-easing);
+}
+.screen-provisioning-var .sd-icon { width: var(--sd-space-16); height: var(--sd-space-16); color: var(--sd-color-icon-muted); }
+.screen-provisioning-var .screen-provisioning-var-tick { margin-left: auto; color: var(--sd-color-icon-success); visibility: hidden; }
+.screen-provisioning-var.is-on { background: var(--sd-color-surface-selected); }
+.screen-provisioning-var.is-on .screen-provisioning-var-tick { visibility: visible; }
+.screen-provisioning-page {
+  margin: 0;
+  color: var(--sd-color-text-default);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-md-lh);
+}
+.screen-provisioning-slot { border-bottom: 1px dashed transparent; transition: border-color var(--sd-duration-slow) var(--sd-easing); }
+.screen-provisioning-slot:not(.is-on) { border-bottom-color: var(--sd-color-border-strong); }
+.screen-provisioning-slot:not(.is-on) .sd-token { visibility: hidden; }
+.screen-provisioning-slot.is-on .sd-token { animation: screen-provisioning-drop var(--sd-duration-slow) var(--sd-easing-out) both; }
+
+/* scene 3: signer row */
+.screen-provisioning-signer { display: flex; align-items: center; gap: var(--sd-space-12); }
+.screen-provisioning-avatar {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: var(--sd-space-32); height: var(--sd-space-32);
+  border-radius: var(--sd-radius-full);
+  background: var(--sd-color-avatar-purple-fill);
+  border: 1px solid var(--sd-color-avatar-purple-line);
+  color: var(--sd-color-text-strong);
+  font-size: var(--sd-text-xs);
+  font-weight: var(--sd-weight-semibold);
+}
+
+/* scene 4: what happens after signing */
+.screen-provisioning-outcomes { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.screen-provisioning-outcome {
+  display: flex; align-items: center; gap: var(--sd-space-12);
+  padding-block: var(--sd-space-12);
+  color: var(--sd-color-text-default);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+}
+.screen-provisioning-outcome + .screen-provisioning-outcome { border-top: 1px solid var(--sd-color-border-subtle); }
+.screen-provisioning-outcome > .sd-icon { flex-shrink: 0; width: var(--sd-space-16); height: var(--sd-space-16); color: var(--sd-color-icon-success); }
+.screen-provisioning-outcome > span:first-of-type { flex: 1; min-width: 0; }
+.screen-provisioning-outcome .sd-badge-integration-types { flex-shrink: 0; }
+
+/* staged reveal inside a scene: data-at="n" appears at stage n */
+.screen-provisioning-scene [data-at]:not(.is-in) { display: none; }
+.screen-provisioning-scene [data-at].is-in { animation: screen-provisioning-rise var(--sd-duration-slow) var(--sd-easing-out) both; }
+
+/* ---------- mockup-only controls, outside the product card ---------- */
+.screen-provisioning-mock {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: var(--sd-space-12);
+  color: var(--sd-color-text-muted);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+}
+
+.screen-provisioning-mock .sd-toggle { width: auto; flex: 0 1 18rem; }
+
+@keyframes screen-provisioning-rise { from { opacity: 0; transform: translateY(var(--sd-space-8)); } to { opacity: 1; transform: none; } }
+@keyframes screen-provisioning-drop { from { opacity: 0; transform: translateY(calc(-1 * var(--sd-space-8))); } to { opacity: 1; transform: none; } }
+@keyframes screen-provisioning-spin { to { transform: rotate(360deg); } }
+
+/* why: people who ask for less motion get every stage at once and a still spinner */
+@media (prefers-reduced-motion: reduce) {
+  .screen-provisioning *, .screen-provisioning *::before { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body class="sd-page">
+<a class="sd-skip" href="#sd-main">Skip to content</a>
+
+<main class="screen-provisioning" id="sd-main" tabindex="-1">
+  <div class="screen-provisioning-column">
+
+    <div class="screen-provisioning-brand">
+      <a class="sd-sdocs-logo" href="#" aria-label="S-Docs"><svg class="sd-sdocs-logo__mark sd-icon" aria-hidden="true"><use href="../icons.svg#sdocs-logo"></use></svg></a>
+      <button type="button" class="sd-text-link sd-text-link--medium"><svg class="sd-icon sd-text-link__icon" aria-hidden="true"><use href="../icons.svg#log-out-01"></use></svg><span class="sd-text-link__label">Sign out</span></button>
+    </div>
+
+    <section class="screen-provisioning-card" aria-labelledby="prov-title">
+
+      <header class="screen-provisioning-head">
+        <svg class="sd-icon screen-provisioning-mark" aria-hidden="true"><use href="../icons.svg#sdocs-mark"></use></svg>
+        <h1 class="screen-provisioning-title" id="prov-title">See what S&#8209;Docs can do</h1>
+        <p class="screen-provisioning-lede">We're setting up your workspace. It usually takes 2 to 5 minutes. Here's how a deal in your CRM becomes a signed contract in the meantime.</p>
+      </header>
+
+      <ol class="screen-provisioning-steps" aria-label="Product tour">
+        <li class="screen-provisioning-step">
+          <button type="button" class="screen-provisioning-step-button" data-step="0">
+            <span class="screen-provisioning-step-marker" aria-hidden="true">
+              <svg class="sd-icon screen-provisioning-glyph"><use href="../icons.svg#layers-three-01"></use></svg>
+              <svg class="sd-icon screen-provisioning-tick"><use href="../icons.svg#check"></use></svg>
+            </span>
+            <span class="screen-provisioning-step-text">
+              <span class="screen-provisioning-eyebrow">Templates</span>
+              <span class="screen-provisioning-step-title">Build a template once</span>
+              <span class="screen-provisioning-step-detail">
+                <span class="screen-provisioning-step-desc">Drop CRM fields into the page. They fill in by themselves every time the template is used.</span>
+                <progress class="sd-progress-bar" max="100" value="0" aria-label="Time on this step"></progress>
+              </span>
+            </span>
+          </button>
+        </li>
+        <li class="screen-provisioning-step">
+          <button type="button" class="screen-provisioning-step-button" data-step="1">
+            <span class="screen-provisioning-step-marker" aria-hidden="true">
+              <svg class="sd-icon screen-provisioning-glyph"><use href="../icons.svg#file-plus-02"></use></svg>
+              <svg class="sd-icon screen-provisioning-tick"><use href="../icons.svg#check"></use></svg>
+            </span>
+            <span class="screen-provisioning-step-text">
+              <span class="screen-provisioning-eyebrow">Documents</span>
+              <span class="screen-provisioning-step-title">Generate from any record</span>
+              <span class="screen-provisioning-step-detail">
+                <span class="screen-provisioning-step-desc">Pick a deal, contact or company. S-Docs merges its data into a finished PDF in seconds.</span>
+                <progress class="sd-progress-bar" max="100" value="0" aria-label="Time on this step"></progress>
+              </span>
+            </span>
+          </button>
+        </li>
+        <li class="screen-provisioning-step">
+          <button type="button" class="screen-provisioning-step-button" data-step="2">
+            <span class="screen-provisioning-step-marker" aria-hidden="true">
+              <svg class="sd-icon screen-provisioning-glyph"><use href="../icons.svg#icon-signature"></use></svg>
+              <svg class="sd-icon screen-provisioning-tick"><use href="../icons.svg#check"></use></svg>
+            </span>
+            <span class="screen-provisioning-step-text">
+              <span class="screen-provisioning-eyebrow">Signature requests</span>
+              <span class="screen-provisioning-step-title">Send it for signature</span>
+              <span class="screen-provisioning-step-detail">
+                <span class="screen-provisioning-step-desc">Signers sign on any device. You see when it's delivered, opened and signed.</span>
+                <progress class="sd-progress-bar" max="100" value="0" aria-label="Time on this step"></progress>
+              </span>
+            </span>
+          </button>
+        </li>
+        <li class="screen-provisioning-step">
+          <button type="button" class="screen-provisioning-step-button" data-step="3">
+            <span class="screen-provisioning-step-marker" aria-hidden="true">
+              <svg class="sd-icon screen-provisioning-glyph"><use href="../icons.svg#dataflow-01"></use></svg>
+              <svg class="sd-icon screen-provisioning-tick"><use href="../icons.svg#check"></use></svg>
+            </span>
+            <span class="screen-provisioning-step-text">
+              <span class="screen-provisioning-eyebrow">Automation</span>
+              <span class="screen-provisioning-step-title">Close the loop in your CRM</span>
+              <span class="screen-provisioning-step-detail">
+                <span class="screen-provisioning-step-desc">The signed PDF goes back on the record and its timeline, and signer answers write back to the deal.</span>
+                <progress class="sd-progress-bar" max="100" value="0" aria-label="Time on this step"></progress>
+              </span>
+            </span>
+          </button>
+        </li>
+      </ol>
+
+      <!-- ===== Demo pane: one scene per step ===== -->
+      <div class="screen-provisioning-demo" aria-live="off" aria-label="Demo of the step in view">
+
+        <!-- 1. Templates -->
+        <div class="screen-provisioning-scene" data-scene="0" data-stages="4">
+          <span class="screen-provisioning-scene-label"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#edit-03"></use></svg>Template editor</span>
+          <div class="screen-provisioning-object">
+            <div class="screen-provisioning-object-head">
+              <span class="screen-provisioning-object-name">Deal variables<span class="screen-provisioning-object-meta">Drag into the page</span></span>
+            </div>
+            <ul class="screen-provisioning-vars">
+              <li class="screen-provisioning-var" data-on="1"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#variable"></use></svg>Company.Name<svg class="sd-icon screen-provisioning-var-tick" aria-hidden="true"><use href="../icons.svg#check"></use></svg></li>
+              <li class="screen-provisioning-var" data-on="2"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#variable"></use></svg>Deal.Close_Date<svg class="sd-icon screen-provisioning-var-tick" aria-hidden="true"><use href="../icons.svg#check"></use></svg></li>
+              <li class="screen-provisioning-var" data-on="3"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#variable"></use></svg>Deal.Amount<svg class="sd-icon screen-provisioning-var-tick" aria-hidden="true"><use href="../icons.svg#check"></use></svg></li>
+            </ul>
+          </div>
+          <span class="screen-provisioning-link" aria-hidden="true"><svg class="sd-icon"><use href="../icons.svg#arrow-narrow-down"></use></svg></span>
+          <div class="screen-provisioning-object">
+            <div class="screen-provisioning-object-head">
+              <span class="screen-provisioning-tile"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#file-05"></use></svg></span>
+              <span class="screen-provisioning-object-name">Order Form<span class="screen-provisioning-object-meta">Template · Deals</span></span>
+              <span class="screen-provisioning-badge-slot">
+                <span class="sd-badge-statuses sd-badge-statuses--signature-draft" data-until="4">Draft</span>
+                <span class="sd-badge-statuses sd-badge-statuses--template-published" data-at="4">Published</span>
+              </span>
+            </div>
+            <p class="screen-provisioning-page">
+              This Order Form is entered into by
+              <span class="screen-provisioning-slot" data-on="1"><span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Company.Name</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved"></span></span></span>
+              and starts on
+              <span class="screen-provisioning-slot" data-on="2"><span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Deal.Close_Date</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved"></span></span></span>.
+              Annual subscription fee:
+              <span class="screen-provisioning-slot" data-on="3"><span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Deal.Amount</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved"></span></span></span>.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. Documents -->
+        <div class="screen-provisioning-scene" data-scene="1" data-stages="4" hidden>
+          <span class="screen-provisioning-scene-label"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#file-plus-02"></use></svg>New document</span>
+          <div class="screen-provisioning-object">
+            <div class="screen-provisioning-object-head">
+              <span class="screen-provisioning-tile"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#building-01"></use></svg></span>
+              <span class="screen-provisioning-object-name">Northwind Traders<span class="screen-provisioning-object-meta">Deal · $48,000 · Closes Oct 31, 2026</span></span>
+            </div>
+          </div>
+          <span class="screen-provisioning-link" data-at="1" aria-hidden="true"><svg class="sd-icon"><use href="../icons.svg#arrow-narrow-down"></use></svg></span>
+          <div class="screen-provisioning-object" data-at="1">
+            <div class="sd-file-row sd-file-row--wrap sd-file-row--busy" data-until="3">
+              <span class="sd-file-row__glyph"><svg class="sd-icon sd-file-row__page" aria-hidden="true"><use href="../icons.svg#file-blank"></use></svg><span class="sd-file-row__kind">PDF</span></span>
+              <span class="sd-file-row__body"><span class="sd-file-row__name">Northwind Traders – Order Form</span><span class="sd-file-row__meta"></span></span>
+              <span class="sd-file-row__actions"><span class="sd-file-row__busy" role="status"><svg class="sd-icon sd-file-row__busy-icon screen-provisioning-status-busy" aria-hidden="true"><use href="../icons.svg#loading-02"></use></svg>Generating…</span></span>
+            </div>
+            <div class="sd-file-row sd-file-row--wrap" data-at="3">
+              <span class="sd-file-row__glyph"><svg class="sd-icon sd-file-row__page" aria-hidden="true"><use href="../icons.svg#file-blank"></use></svg><span class="sd-file-row__kind">PDF</span></span>
+              <span class="sd-file-row__body"><span class="sd-file-row__name">Northwind Traders – Order Form</span><span class="sd-file-row__meta"><span>3 pages</span><span class="sd-file-row__dot" aria-hidden="true"></span><span>182 KB</span></span></span>
+              <span class="sd-file-row__actions"><span class="sd-badge-statuses sd-badge-statuses--document-created">Created</span></span>
+            </div>
+          </div>
+          <div class="screen-provisioning-object" data-at="4" data-sd-mode="signer">
+            <p class="screen-provisioning-page">
+              This Order Form is entered into by
+              <span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Company.Name</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved">Northwind Traders</span></span>
+              and starts on
+              <span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Deal.Close_Date</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved">October 31, 2026</span></span>.
+              Annual subscription fee:
+              <span class="sd-token"><span class="sd-token__brace">{{</span><span class="sd-token__path">Deal.Amount</span><span class="sd-token__brace">}}</span><span class="sd-token__resolved">$48,000</span></span>.
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Signature requests -->
+        <div class="screen-provisioning-scene" data-scene="2" data-stages="4" hidden>
+          <span class="screen-provisioning-scene-label"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#icon-signature"></use></svg>Signature request</span>
+          <div class="screen-provisioning-object">
+            <div class="screen-provisioning-object-head">
+              <span class="screen-provisioning-tile"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#mail-01"></use></svg></span>
+              <span class="screen-provisioning-object-name">Northwind Traders – Order Form<span class="screen-provisioning-object-meta">Sent today at 10:42 AM</span></span>
+              <span class="screen-provisioning-badge-slot">
+                <span class="sd-badge-statuses sd-badge-statuses--signature-sent" data-until="4">Sent</span>
+                <span class="sd-badge-statuses sd-badge-statuses--signature-completed" data-at="4">Completed</span>
+              </span>
+            </div>
+            <div class="screen-provisioning-signer">
+              <span class="screen-provisioning-avatar" aria-hidden="true">PS</span>
+              <span class="screen-provisioning-object-name">Priya Shah<span class="screen-provisioning-object-meta">VP Operations, Northwind Traders</span></span>
+            </div>
+            <details class="sd-signing-timeline" open data-timeline>
+              <summary class="sd-signing-timeline__summary"><span class="sd-signing-timeline__document"><span class="sd-signing-timeline__name">Order Form</span></span><span class="sd-signing-timeline__status"><svg class="sd-icon sd-signing-timeline__chevron" aria-hidden="true"><use href="../icons.svg#chevron-down"></use></svg><span class="sd-signing-timeline__word" data-until="4">In progress</span><span class="sd-signing-timeline__word" data-at="4">Completed</span><span class="sd-signing-timeline__marker" aria-hidden="true"><svg class="sd-icon sd-signing-timeline__tick"><use href="../icons.svg#check"></use></svg><svg class="sd-icon sd-signing-timeline__spinner"><use href="../icons.svg#loading-02"></use></svg><svg class="sd-icon sd-signing-timeline__cross"><use href="../icons.svg#x-close"></use></svg><svg class="sd-icon sd-signing-timeline__dash"><use href="../icons.svg#minus"></use></svg></span></span></summary>
+              <ol class="sd-signing-timeline__steps" aria-label="Progress">
+                <li class="sd-signing-timeline-step" data-at="0"><span class="sd-signing-timeline-step__marker" aria-hidden="true"><svg class="sd-icon sd-signing-timeline-step__tick"><use href="../icons.svg#check"></use></svg><svg class="sd-icon sd-signing-timeline-step__spinner"><use href="../icons.svg#loading-02"></use></svg><svg class="sd-icon sd-signing-timeline-step__cross"><use href="../icons.svg#x-close"></use></svg></span><span class="sd-signing-timeline-step__text"><span class="sd-signing-timeline-step__label">Delivered</span><span class="sd-signing-timeline-step__time">October 3, 2026 10:42 AM</span></span></li>
+                <li class="sd-signing-timeline-step" data-at="1"><span class="sd-signing-timeline-step__marker" aria-hidden="true"><svg class="sd-icon sd-signing-timeline-step__tick"><use href="../icons.svg#check"></use></svg><svg class="sd-icon sd-signing-timeline-step__spinner"><use href="../icons.svg#loading-02"></use></svg><svg class="sd-icon sd-signing-timeline-step__cross"><use href="../icons.svg#x-close"></use></svg></span><span class="sd-signing-timeline-step__text"><span class="sd-signing-timeline-step__label">Opened</span><span class="sd-signing-timeline-step__time">October 3, 2026 11:05 AM</span></span></li>
+                <li class="sd-signing-timeline-step" data-at="2"><span class="sd-signing-timeline-step__marker" aria-hidden="true"><svg class="sd-icon sd-signing-timeline-step__tick"><use href="../icons.svg#check"></use></svg><svg class="sd-icon sd-signing-timeline-step__spinner"><use href="../icons.svg#loading-02"></use></svg><svg class="sd-icon sd-signing-timeline-step__cross"><use href="../icons.svg#x-close"></use></svg></span><span class="sd-signing-timeline-step__text"><span class="sd-signing-timeline-step__label">Authenticated</span><span class="sd-signing-timeline-step__time">October 3, 2026 11:06 AM</span></span></li>
+                <li class="sd-signing-timeline-step" data-at="4" data-final><span class="sd-signing-timeline-step__marker" aria-hidden="true"><svg class="sd-icon sd-signing-timeline-step__tick"><use href="../icons.svg#check"></use></svg><svg class="sd-icon sd-signing-timeline-step__spinner"><use href="../icons.svg#loading-02"></use></svg><svg class="sd-icon sd-signing-timeline-step__cross"><use href="../icons.svg#x-close"></use></svg></span><span class="sd-signing-timeline-step__text"><span class="sd-signing-timeline-step__label">Completed</span><span class="sd-signing-timeline-step__time">October 3, 2026 11:09 AM</span></span></li>
+              </ol>
+            </details>
+          </div>
+        </div>
+
+        <!-- 4. Automation -->
+        <div class="screen-provisioning-scene" data-scene="3" data-stages="5" hidden>
+          <span class="screen-provisioning-scene-label"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#zap"></use></svg>After Priya signs</span>
+          <div class="screen-provisioning-object">
+            <div class="screen-provisioning-object-head">
+              <span class="screen-provisioning-tile"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#building-01"></use></svg></span>
+              <span class="screen-provisioning-object-name">Northwind Traders<span class="screen-provisioning-object-meta">Deal · $48,000</span></span>
+            </div>
+            <ul class="screen-provisioning-outcomes">
+              <li class="screen-provisioning-outcome" data-at="1"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#check-circle"></use></svg><span>Signed PDF attached to the deal</span><span class="sd-badge-integration-types sd-badge-integration-types--file-storage">File storage</span></li>
+              <li class="screen-provisioning-outcome" data-at="2"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#check-circle"></use></svg><span>“Order Form completed” added to the timeline</span><span class="sd-badge-integration-types">Data source</span></li>
+              <li class="screen-provisioning-outcome" data-at="3"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#check-circle"></use></svg><span>PO number PO-20931 written back to the deal</span><span class="sd-badge-integration-types">Data source</span></li>
+              <li class="screen-provisioning-outcome" data-at="4"><svg class="sd-icon" aria-hidden="true"><use href="../icons.svg#check-circle"></use></svg><span>Final PDF and audit trail emailed to the deal owner</span><span class="sd-badge-integration-types sd-badge-integration-types--messaging">Messaging</span></li>
+            </ul>
+          </div>
+          <div class="sd-alert sd-alert--success" role="status" data-at="5"><svg class="sd-icon sd-alert__icon sd-alert__icon--warning" aria-hidden="true"><use href="../icons.svg#alert-circle"></use></svg><svg class="sd-icon sd-alert__icon sd-alert__icon--success" aria-hidden="true"><use href="../icons.svg#check-circle"></use></svg><svg class="sd-icon sd-alert__icon sd-alert__icon--error" aria-hidden="true"><use href="../icons.svg#x-circle"></use></svg><p class="sd-alert__text">Signed, filed and logged without leaving your CRM</p></div>
+        </div>
+
+      </div>
+
+      <!-- ===== Footer: setup status + the region's one primary button ===== -->
+      <footer class="screen-provisioning-foot">
+        <p class="screen-provisioning-legal" data-ready-only hidden>
+          By clicking Accept &amp; Continue you agree to our <a href="#">Master Services Agreement</a> and <a href="#">Privacy Policy</a>.
+        </p>
+        <div class="screen-provisioning-foot-row">
+          <div class="screen-provisioning-status" role="status" aria-live="polite">
+            <svg class="sd-icon screen-provisioning-status-busy" aria-hidden="true" data-busy-only><use href="../icons.svg#loading-02"></use></svg>
+            <svg class="sd-icon screen-provisioning-status-done" aria-hidden="true" data-ready-only hidden><use href="../icons.svg#check-circle"></use></svg>
+            <span class="screen-provisioning-status-text">
+              <span class="screen-provisioning-status-title" data-busy-only>Setting up your workspace</span>
+              <span class="screen-provisioning-status-title" data-ready-only hidden>Your workspace is ready</span>
+              <span class="screen-provisioning-status-sub" data-busy-only>Keep this tab open · <span id="prov-elapsed">0:00</span> so far</span>
+              <span class="screen-provisioning-status-sub" data-ready-only hidden>Finish the tour or go straight in</span>
+            </span>
+          </div>
+          <button class="sd-button sd-button--md" type="button" id="prov-continue" disabled>Accept &amp; Continue<svg class="sd-button__icon sd-icon" aria-hidden="true"><use href="../icons.svg#arrow-right"></use></svg></button>
+        </div>
+      </footer>
+    </section>
+
+    <form class="screen-provisioning-mock" id="prov-mock" aria-label="Mockup controls">
+      <span>Mockup state</span>
+      <fieldset class="sd-toggle" role="radiogroup" aria-label="Workspace state">
+        <label class="sd-toggle-option"><input class="sd-toggle-option__input" type="radio" name="prov-state" id="prov-state-busy" value="busy" checked><span class="sd-toggle-option__label">Provisioning</span></label>
+        <label class="sd-toggle-option"><input class="sd-toggle-option__input" type="radio" name="prov-state" id="prov-state-ready" value="ready"><span class="sd-toggle-option__label">Ready</span></label>
+      </fieldset>
+    </form>
+
+  </div>
+</main>
+
+<script>
+(function () {
+  var root = document.querySelector('.screen-provisioning');
+  var css = getComputedStyle(root);
+  var STAGE_MS = parseFloat(css.getPropertyValue('--screen-provisioning-stage')) || 1300;
+  var HOLD_MS = parseFloat(css.getPropertyValue('--screen-provisioning-hold')) || 2600;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.screen-provisioning-step'));
+  var scenes = Array.prototype.slice.call(document.querySelectorAll('.screen-provisioning-scene'));
+  var demo = document.querySelector('.screen-provisioning-demo');
+  var current = 0, elapsed = 0, last = 0, paused = false, stage = -1;
+
+  function sceneLength(i) { return (+scenes[i].dataset.stages) * STAGE_MS + HOLD_MS; }
+
+  function setStage(n) {
+    if (n === stage) return;
+    stage = n;
+    var sc = scenes[current];
+    sc.querySelectorAll('[data-at]').forEach(function (el) { el.classList.toggle('is-in', +el.dataset.at <= n); });
+    sc.querySelectorAll('[data-on]').forEach(function (el) { el.classList.toggle('is-on', +el.dataset.on <= n); });
+    sc.querySelectorAll('[data-until]').forEach(function (el) { el.toggleAttribute('hidden', n >= +el.dataset.until); });
+    sc.querySelectorAll('[data-timeline]').forEach(function (tl) {
+      var shown = tl.querySelectorAll('.sd-signing-timeline-step.is-in');
+      tl.querySelectorAll('.sd-signing-timeline-step').forEach(function (s) { s.classList.remove('sd-signing-timeline-step--current'); });
+      var lastShown = shown[shown.length - 1];
+      var done = !!(lastShown && lastShown.hasAttribute('data-final'));
+      if (lastShown && !done) lastShown.classList.add('sd-signing-timeline-step--current');
+      tl.classList.toggle('sd-signing-timeline--done', done);
+    });
+  }
+
+  function show(i) {
+    current = i; elapsed = 0; stage = -1;
+    steps.forEach(function (s, k) {
+      s.classList.toggle('is-current', k === i);
+      s.classList.toggle('is-done', k < i);
+      var b = s.querySelector('button');
+      if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      s.querySelector('progress').value = 0;
+    });
+    scenes.forEach(function (s, k) { s.hidden = k !== i; });
+    setStage(reduced ? 99 : 0);
+  }
+
+  function tick(now) {
+    var dt = last ? now - last : 0; last = now;
+    if (!paused && !document.hidden) {
+      elapsed += dt;
+      var len = sceneLength(current);
+      if (!reduced) setStage(Math.min(+scenes[current].dataset.stages, Math.floor(elapsed / STAGE_MS)));
+      steps[current].querySelector('progress').value = Math.min(100, (elapsed / len) * 100);
+      if (elapsed >= len) show((current + 1) % scenes.length);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  steps.forEach(function (s, k) {
+    s.querySelector('button').addEventListener('click', function () { show(k); });
+  });
+  // Hovering the demo pauses it, so people can read a scene.
+  demo.addEventListener('mouseenter', function () { paused = true; });
+  demo.addEventListener('mouseleave', function () { paused = false; });
+
+  // ---- provisioning state (mocked: the real page polls GET /customer/{id}/status) ----
+  var started = Date.now();
+  var elapsedEl = document.getElementById('prov-elapsed');
+  var continueBtn = document.getElementById('prov-continue');
+  var ready = false;
+  function setReady(on) {
+    ready = on;
+    document.querySelectorAll('[data-busy-only]').forEach(function (el) { el.toggleAttribute('hidden', on); });
+    document.querySelectorAll('[data-ready-only]').forEach(function (el) { el.toggleAttribute('hidden', !on); });
+    continueBtn.disabled = !on;
+    document.title = on ? 'Your workspace is ready · S-Docs' : 'Setting up your workspace · S-Docs';
+    document.getElementById(on ? 'prov-state-ready' : 'prov-state-busy').checked = true;
+  }
+  setInterval(function () {
+    if (ready) return;
+    var s = Math.floor((Date.now() - started) / 1000);
+    elapsedEl.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    if (s >= 180) setReady(true);
+  }, 1000);
+  document.getElementById('prov-mock').addEventListener('change', function (e) {
+    if (e.target.name === 'prov-state') { started = Date.now(); setReady(e.target.value === 'ready'); }
+  });
+  document.getElementById('prov-mock').addEventListener('submit', function (e) { e.preventDefault(); });
+
+  show(0);
+  setReady(false);
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
