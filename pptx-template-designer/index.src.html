@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerPoint Template Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap">
+  <link rel="stylesheet" href="vendor/sdocs-kit/kit.css">
+  <link rel="stylesheet" href="vendor/sdocs-kit/screens.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/sdocs-kit/kit.js" defer></script>
+</head>
+<body class="sd-page">
+<!-- S-Docs UI kit icon sprite, inlined by the build so icons also work when the page is opened from disk -->
+<!--SPRITE-->
+<a class="sd-skip" href="#sd-main">Skip to the slides</a>
+<div class="sd-editor-shell ptd" id="ptd-root" data-mode="design" data-stage="upload">
+  <header class="sd-masthead-editor">
+    <div class="sd-masthead-editor__left">
+      <a class="sd-back-signature" href="../index.html" aria-label="All prototypes"><span class="sd-sdocs-mark"><svg class="sd-sdocs-mark__glyph sd-icon" aria-hidden="true"><use href="#sdocs-mark"></use></svg></span></a>
+      <div class="sd-masthead-editor__info">
+        <div class="sd-masthead-editor__header">
+          <button class="sd-masthead-title" type="button"><span class="sd-masthead-title__box"><span class="sd-masthead-title__label" id="ptd-title">New PowerPoint template</span></span><svg class="sd-masthead-title__icon sd-icon" aria-hidden="true"><use href="#edit-03"></use></svg></button>
+          <span class="sd-badge-statuses">Draft</span>
+        </div>
+        <div class="sd-masthead-editor__meta">
+          <span class="sd-base-record"><button type="button" class="sd-text-link sd-text-link--medium sd-text-link--icon-16"><svg class="sd-text-link__icon sd-icon" aria-hidden="true"><use href="#database-01"></use></svg><span class="sd-text-link__label">Opportunity</span></button></span>
+          <span class="sd-masthead-timestamp"><svg class="sd-masthead-timestamp__icon sd-icon" aria-hidden="true"><use href="#file-05"></use></svg><span class="sd-masthead-timestamp__label">PowerPoint template (.pptx)</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="sd-masthead-editor__right">
+      <div class="sd-masthead-editor__links ptd-when-loaded">
+        <button type="button" class="sd-text-link sd-text-link--semibold" id="ptd-replace"><svg class="sd-text-link__icon sd-icon" aria-hidden="true"><use href="#upload-cloud-01"></use></svg><span class="sd-text-link__label">Replace .pptx</span></button>
+        <button type="button" class="sd-text-link sd-text-link--semibold" id="ptd-example"><svg class="sd-text-link__icon sd-icon" aria-hidden="true"><use href="#check-done-01"></use></svg><span class="sd-text-link__label">Load finished example</span></button>
+        <button type="button" class="sd-text-link sd-text-link--semibold" id="ptd-json-open"><svg class="sd-text-link__icon sd-icon" aria-hidden="true"><use href="#code"></use></svg><span class="sd-text-link__label">Template JSON</span></button>
+      </div>
+      <div class="sd-masthead-editor__actions ptd-when-loaded">
+        <div class="ptd-record" id="ptd-record-wrap" hidden>
+          <label class="ptd-record__label" for="ptd-record">Sample record</label>
+          <div class="sd-field__control ptd-record__control">
+            <select id="ptd-record"></select>
+            <span class="sd-field__affix sd-field__affix--chevron"><svg class="sd-icon" aria-hidden="true"><use href="#chevron-down"></use></svg></span>
+          </div>
+        </div>
+        <div class="ptd-history" role="group" aria-label="History">
+          <button class="sd-icon-button sd-icon-button--tertiary" type="button" id="ptd-undo" aria-label="Undo" title="Undo (⌘Z or Ctrl+Z)" disabled><svg class="sd-icon-button__icon sd-icon" aria-hidden="true"><use href="#reverse-left"></use></svg></button>
+          <button class="sd-icon-button sd-icon-button--tertiary" type="button" id="ptd-redo" aria-label="Redo" title="Redo (⇧⌘Z or Ctrl+Y)" disabled><svg class="sd-icon-button__icon sd-icon" aria-hidden="true"><use href="#reverse-right"></use></svg></button>
+          <span class="sd-skip" id="ptd-history-live" role="status"></span>
+        </div>
+        <button class="sd-button sd-button--md sd-button--secondary" type="button" id="ptd-preview" aria-pressed="false"><svg class="sd-button__icon sd-icon" aria-hidden="true"><use href="#eye"></use></svg><span id="ptd-preview-label">Preview</span></button>
+        <button class="sd-button sd-button--md" type="button" id="ptd-publish">Publish template</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="sd-editor-shell__work" id="sd-main">
+    <div class="sd-insert-panel ptd-when-loaded" role="region" aria-label="Insert">
+      <div class="sd-insert-menu" role="toolbar" aria-orientation="vertical" aria-label="Insert">
+        <button class="sd-insert-menu__button" type="button" data-sd-open="fields" aria-label="Fields" aria-pressed="false"><svg class="sd-icon sd-insert-menu__icon" aria-hidden="true"><use href="#database-01"></use></svg></button>
+        <button class="sd-insert-menu__button" type="button" data-sd-open="related" aria-label="Related lists" aria-pressed="false"><svg class="sd-icon sd-insert-menu__icon" aria-hidden="true"><use href="#table"></use></svg></button>
+      </div>
+      <div class="sd-insert-panel__panel"></div>
+      <template data-sd-pane="fields">
+        <div class="sd-pane-header"><p class="sd-pane-header__label">Fields</p></div>
+        <div class="sd-search-field"><div class="sd-search-field__content"><input class="sd-search-field__input" type="search" placeholder="Search" aria-label="Search fields"><svg class="sd-icon sd-search-field__icon" aria-hidden="true"><use href="#search-sm"></use></svg></div></div>
+        <p class="ptd-pane-hint">Click a text box, then a field, to replace its text. Select words first to replace only those.</p>
+        <div class="sd-insert-panel__body" data-ptd-fill="fields"></div>
+      </template>
+      <template data-sd-pane="related">
+        <div class="sd-pane-header"><p class="sd-pane-header__label">Related lists</p></div>
+        <p class="ptd-pane-hint">Click to add a table of related records to this slide, or drag it to where it should go. Then choose its columns, filter, sort and limit on the right.</p>
+        <div class="sd-insert-panel__body" data-ptd-fill="related"></div>
+      </template>
+    </div>
+
+    <div class="sd-editor-canvas ptd-canvas">
+      <div class="ptd-banner" id="ptd-banner" hidden>
+        <svg class="sd-icon" aria-hidden="true"><use href="#eye"></use></svg>
+        <span id="ptd-banner-text"></span>
+      </div>
+
+      <section class="ptd-upload" id="ptd-upload" aria-labelledby="ptd-upload-title">
+        <div class="ptd-drop" id="ptd-drop">
+          <svg class="sd-icon ptd-drop__icon" aria-hidden="true"><use href="#upload-cloud-01"></use></svg>
+          <h1 class="ptd-drop__title" id="ptd-upload-title">Start from a PowerPoint file</h1>
+          <p class="ptd-drop__text">Drop a .pptx here, or choose one. Your slides appear as they are; then add merge fields, related-list tables, repeating slides and conditions on top.</p>
+          <div class="ptd-drop__actions">
+            <button class="sd-button sd-button--md" type="button" id="ptd-choose"><svg class="sd-button__icon sd-icon" aria-hidden="true"><use href="#upload-cloud-01"></use></svg>Choose a .pptx</button>
+            <button class="sd-button sd-button--md sd-button--secondary" type="button" id="ptd-sample">Use the sample proposal</button>
+          </div>
+          <ul class="ptd-drop__facts">
+            <li>Your deck’s design stays exactly as it is. Merge fields go into its text; everything else is saved beside it.</li>
+            <li>Change the design in PowerPoint any time and upload it again. Bindings follow the slides and shapes.</li>
+            <li>In this prototype the file stays in your browser. Nothing is uploaded.</li>
+          </ul>
+        </div>
+        <input type="file" id="ptd-file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden>
+      </section>
+
+      <div class="ptd-work" id="ptd-work" hidden>
+        <nav class="ptd-strip" id="ptd-strip" aria-label="Slides"></nav>
+        <div class="ptd-main">
+          <div class="ptd-slidebar" id="ptd-slidebar" role="group" aria-label="This slide"></div>
+          <div class="ptd-stage-wrap" id="ptd-stage-wrap">
+            <div class="ptd-stage" id="ptd-stage">
+              <div class="ptd-slide" id="ptd-slide"></div>
+              <div class="ptd-overlay" id="ptd-overlay"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ptd-loading" id="ptd-loading" hidden><span>Reading the presentation…</span></div>
+    </div>
+
+    <aside class="sd-properties-panel sd-editor-shell__side screen-family-panel-column ptd-when-loaded" aria-label="Properties" data-sd-selection="shape">
+      <div class="sd-properties-panel__body">
+        <div class="sd-properties-panel__head"><h2 class="sd-properties-panel__title" id="ptd-props-title">Slide</h2></div>
+        <div class="sd-properties-panel__controls" id="ptd-props"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- template JSON drawer -->
+<div class="ptd-drawer" id="ptd-drawer" role="dialog" aria-modal="false" aria-labelledby="ptd-drawer-title" hidden>
+  <div class="ptd-drawer__head">
+    <div>
+      <h2 class="ptd-drawer__title" id="ptd-drawer-title">Template JSON</h2>
+      <p class="ptd-drawer__sub" id="ptd-drawer-sub"></p>
+    </div>
+    <button class="sd-icon-button sd-icon-button--sm sd-icon-button--tertiary" type="button" id="ptd-json-close" aria-label="Close"><svg class="sd-icon-button__icon sd-icon" aria-hidden="true"><use href="#x-close"></use></svg></button>
+  </div>
+  <p class="ptd-drawer__note">S-Docs saves two things: the .pptx itself, with merge fields typed into its text, and this JSON for everything structural. Slides are keyed by PowerPoint’s slide ID and shapes by their shape ID, which survive edits and re-saves in PowerPoint. The renderer’s own model is never stored.</p>
+  <div class="ptd-drawer__actions">
+    <button class="sd-button sd-button--md sd-button--secondary" type="button" id="ptd-json-copy"><svg class="sd-button__icon sd-icon" aria-hidden="true"><use href="#copy-01"></use></svg>Copy</button>
+    <button class="sd-button sd-button--md sd-button--secondary" type="button" id="ptd-template-download"><svg class="sd-button__icon sd-icon" aria-hidden="true"><use href="#download-01"></use></svg>Download template .pptx</button>
+  </div>
+  <div class="ptd-drawer__body">
+    <h3 class="ptd-drawer__h">Template JSON <span>saved beside the .pptx</span></h3>
+    <pre class="ptd-drawer__json" id="ptd-json" tabindex="0"></pre>
+    <h3 class="ptd-drawer__h">Merge fields <span>saved in the .pptx text itself</span></h3>
+    <div id="ptd-json-fields"></div>
+  </div>
+</div>
+
+<div class="ptd-toast" id="ptd-toast" role="status" hidden></div>
+
+<script src="app.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "pptx-template-designer-vendor",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Bundles the PPTX template designer prototype (app + @aiden0z/pptx-renderer + JSZip) into ../app.bundle.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test.mjs"
+  },
+  "dependencies": {
+    "@aiden0z/pptx-renderer": "1.3.0",
+    "jszip": "3.10.2"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "0.9.12",
+    "esbuild": "0.28.2"
+  }
+}
