@@ -1,0 +1,652 @@
+/* =====================================================================
+   PDF Live Edit
+   The S-Docs page uses the UI kit (kit.css) and only --sd-* tokens.
+   The Salesforce frame around it is real SLDS 2 (imported into a cascade
+   layer below the kit, see index.html). The one thing that carries literal
+   values is the PDF's own ink (.lp-page) — the customer's document, which
+   prints the same whatever theme the app is in.
+   ===================================================================== */
+
+/* `hidden` must win over the display values the parts below set. */
+.lp [hidden] { display: none !important; }
+
+/* ================= Salesforce frame (SLDS 2, see index.html) =================
+   The header and app nav are real SLDS 2 blueprint markup, fixed by SLDS. This
+   is only the layout glue from the salesforce-container-prototype template. */
+.lp {
+  --proto-chrome-height: calc(var(--slds-s-header-sizing-height, 3.125rem) + var(--slds-s-navigation-sizing-height, 2.5rem));
+}
+html, body { height: 100%; }
+body.lp {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden;                                  /* the editor scrolls itself */
+  padding-block-start: var(--proto-chrome-height);   /* under the fixed header + nav */
+  background: var(--slds-g-color-surface-2);
+}
+.proto-app { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.proto-app > * { flex: 1 1 auto; min-height: 0; }
+/* why: SLDS sizes the global search for desktop; let it shrink on tablets and drop it
+   (plus favourites) on phones so the header actions stay visible */
+@media (max-width: 64em) { .slds-global-header__item_search { min-width: 0; } }
+@media (max-width: 48em) { .slds-global-header__item_search, .proto-hide-narrow { display: none; } }
+
+/* The Visualforce page area Lightning gives us: a gutter of the app's grey,
+   and room at the bottom for the prototype controls. */
+.lp-frame { padding: 12px 12px 64px; }
+
+/* why: the kit's editor shell assumes it owns the viewport (height: 100vh);
+   here it lives inside Lightning's page area, so it fills the frame instead. */
+.lp .lp-shell {
+  height: 100%;
+  border: 1px solid var(--sd-color-border-subtle);
+  border-radius: var(--sd-radius-lg);
+  overflow: hidden;
+  background: var(--sd-color-surface-default);
+}
+/* why: the masthead title is a heading here, not the kit's rename button. */
+.lp .lp-title { cursor: default; margin: 0; font: inherit; }
+
+/* ================= Page thumbnails ================= */
+.lp-thumbs {
+  flex: 0 0 auto;
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--sd-color-border-subtle);
+  background: var(--sd-color-surface-default);
+  min-height: 0;
+}
+.lp-thumbs__title {
+  margin: 0;
+  padding: var(--sd-space-16) var(--sd-space-16) var(--sd-space-8);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-semibold);
+  color: var(--sd-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lp-thumbs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sd-space-16) var(--sd-space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-16);
+  overflow: auto;
+}
+.lp-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sd-space-8);
+  width: 100%;
+  padding: var(--sd-space-8);
+  border: 0;
+  border-radius: var(--sd-radius-md);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--sd-color-text-muted);
+  position: relative;
+}
+.lp-thumb:hover { background: var(--sd-color-surface-hover); }
+.lp-thumb:focus-visible { outline: var(--sd-ring-width) solid var(--sd-color-border-focus); outline-offset: var(--sd-ring-offset); }
+.lp-thumb[aria-current="true"] { background: var(--sd-color-surface-selected); color: var(--sd-color-text-strong); }
+.lp-thumb[aria-current="true"] .lp-page { box-shadow: 0 0 0 2px var(--sd-color-border-selected); }
+.lp-thumb .lp-page { --page-w: 112px; pointer-events: none; }
+.lp-thumb__label { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); font-weight: var(--sd-weight-medium); }
+.lp-thumb__badge {
+  position: absolute;
+  top: var(--sd-space-4);
+  right: var(--sd-space-4);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--sd-space-4);
+  border-radius: var(--sd-radius-full);
+  display: grid;
+  place-items: center;
+  background: var(--sd-color-action-primary);
+  color: var(--sd-color-text-inverse);
+  font-size: var(--sd-text-2xs);
+  font-weight: var(--sd-weight-bold);
+}
+.lp-thumb__badge--drift { background: var(--sd-color-status-warning-banner); color: var(--sd-color-text-strong); box-shadow: inset 0 0 0 1px var(--sd-color-status-warning-banner-border); }
+.lp-thumb__badges { position: absolute; top: var(--sd-space-4); right: var(--sd-space-4); display: flex; gap: var(--sd-space-4); }
+.lp-thumb__badges .lp-thumb__badge { position: static; }
+
+/* ================= Canvas ================= */
+.lp-canvas__bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-8);
+  padding: var(--sd-space-12) var(--sd-space-24) 0;
+}
+.lp-banner:empty { display: none; }
+.lp-banner .sd-alert { align-items: center; }
+.lp-banner .sd-alert__text { flex: 1 1 auto; }
+.lp-banner__act { display: flex; gap: var(--sd-space-8); flex: 0 0 auto; }
+.lp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sd-space-16);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  color: var(--sd-color-text-muted);
+}
+.lp-legend .sd-checkbox { font-size: var(--sd-text-xs); margin-right: var(--sd-space-8); }
+.lp-key { display: inline-flex; align-items: center; gap: var(--sd-space-4); }
+.lp-key::before { content: ""; width: 14px; height: 10px; border-radius: 2px; }
+.lp-key--data::before { background: var(--sd-color-object-data-surface); box-shadow: inset 0 -2px 0 var(--sd-color-object-data-underline); }
+.lp-key--edited::before { background: var(--sd-color-surface-change-added); box-shadow: inset 0 -2px 0 var(--sd-color-border-success); }
+.lp-key--icon::before { display: none; }
+.lp-key--icon .sd-icon { width: 13px; height: 13px; color: var(--sd-color-icon-muted); }
+.lp-key--signer::before { background: var(--sd-color-signer-1-fill); box-shadow: inset 0 0 0 1px var(--sd-color-signer-1-edge); }
+
+.lp-docs { gap: var(--sd-space-32); padding: var(--sd-space-24) var(--sd-space-48) var(--sd-space-48); }
+
+/* ================= The PDF page =================
+   Sized in PDF points: 1pt = 100cqw / 612, so the same markup draws the
+   full page and its thumbnail. Positions come from the template in %. */
+.lp-page {
+  --pt: calc(100cqw / var(--pw, 612));
+  /* the overlay's ink matches the PDF's (see tools/make_template_pdf.py) */
+  --ink: #1d232b;
+  --ink-muted: #5b6470;
+  --ink-accent: #1f3a5f;
+  --ink-rule: #c9ced6;
+  --ink-band: #eef1f5;
+
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--page-w, 816px);   /* zoom sets --page-w on the canvas */
+  aspect-ratio: var(--pw, 612) / var(--ph, 792);
+  container-type: inline-size;
+  background: #fff;
+  box-shadow: var(--sd-shadow-sm);
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;  /* what Blob.toPDF prints */
+  color: var(--ink);
+  scroll-margin-top: var(--sd-space-24);
+}
+/* Layer 1: the PDF, drawn by PDF.js. Layer 2: the overlay, same box. */
+.lp-pdf { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.lp-overlay { position: absolute; inset: 0; }
+.lp-loading { margin: var(--sd-space-48) auto; color: var(--sd-color-text-muted); }
+.lp-file-warning { max-width: 640px; margin: var(--sd-space-48) auto; }
+.lp-file-warning code { font-size: var(--sd-text-xs); padding: 1px var(--sd-space-4); border-radius: var(--sd-radius-sm); background: var(--sd-color-surface-subtle); }
+.lp-pdf-info { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* Prototype views — not part of the design. "PDF only" is the raw template;
+   "Field boxes" outlines every placement to check it lines up with the PDF. */
+.lp-docs[data-view="pdf"] .lp-overlay { visibility: hidden; }
+.lp-docs[data-view="boxes"] :is(.lp-f, .lp-sf) { outline: 1px solid var(--sd-color-border-error); outline-offset: 0; }
+.lp-docs[data-view="boxes"] .lp-f { background: color-mix(in srgb, var(--sd-color-status-error-banner) 60%, transparent) !important; }
+
+/* ---- a merge field ---- */
+.lp-f {
+  position: absolute;
+  font-size: calc(var(--fs) * var(--pt));
+  line-height: 1.3;
+  border-radius: 2px;
+  outline: none;
+}
+.lp-f__v {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;           /* CedarEngine clips with overflow: hidden too */
+  overflow-wrap: anywhere;
+}
+.lp-f--b { font-weight: 700; }
+.lp-f--right .lp-f__v { text-align: right; }
+.lp-f--muted { color: var(--ink-muted); }
+
+/* What the person can do with it shows only while "Show fields" is on. */
+.lp-docs[data-show] .lp-f[data-kind="data"] {
+  background: var(--sd-color-object-data-surface);
+  box-shadow: inset 0 -1px 0 var(--sd-color-object-data-underline);
+  cursor: text;
+}
+.lp-docs[data-show] .lp-f[data-kind="data"]:hover { background: var(--sd-color-object-data-surface-hover); }
+.lp-docs[data-show] .lp-f[data-override] { box-shadow: inset 0 -2px 0 var(--sd-color-border-warning); }
+.lp-docs[data-show] .lp-f[data-pending] {
+  background: var(--sd-color-surface-change-added);
+  box-shadow: inset 0 -2px 0 var(--sd-color-border-success);
+}
+.lp-docs[data-show] .lp-f[data-kind="locked"] { cursor: default; }
+.lp-docs[data-show] .lp-f[data-kind="locked"]:hover { box-shadow: inset 0 0 0 1px var(--sd-color-border-default); }
+.lp-f[data-kind="data"]:focus-visible,
+.lp-f[data-active] { box-shadow: 0 0 0 2px var(--sd-color-border-focus) !important; }
+.lp-f[data-error] { box-shadow: 0 0 0 2px var(--sd-color-border-error) !important; }
+
+/* Clipped: the value is longer than the box and will be cut off in the PDF. */
+.lp-docs[data-show] .lp-f[data-clipped] .lp-f__v {
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.lp-docs[data-show] .lp-f[data-clipped] { box-shadow: inset 0 -2px 0 var(--sd-color-border-error); }
+
+/* Transient label chip on hover / focus: chrome about the field, not print. */
+.lp-docs :is(.lp-f, .lp-sf)::after {
+  content: attr(data-chip);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: -1px;
+  padding: 2px var(--sd-space-8);
+  border-radius: var(--sd-radius-sm);
+  background: var(--sd-color-surface-inverse);
+  color: var(--sd-color-text-inverse);
+  font-family: var(--sd-font);
+  font-size: var(--sd-text-2xs);
+  line-height: var(--sd-text-2xs-lh);
+  font-weight: var(--sd-weight-medium);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sd-duration-fast) var(--sd-easing);
+  z-index: 2;
+}
+.lp-docs :is(.lp-f, .lp-sf):hover::after,
+.lp-docs .lp-f:focus-visible::after { opacity: 1; }
+.lp-docs .lp-f[data-editing]::after { opacity: 0; }
+
+/* Signer fields: the kit's field object, placed. Shown, never operable. */
+.lp-sf { position: absolute; font-family: var(--sd-font); font-size: calc(9 * var(--pt)); }
+.lp-sf .sd-field-object { display: block; width: 100%; height: 100%; }
+/* why: a placed field object is sized by its box; here the box is the placement. */
+.lp-sf .sd-field-object__box { width: 100%; height: 100%; cursor: not-allowed; }
+.lp-sf .sd-field-object--signature .sd-field-object__value { font-size: 1.3em; }
+.lp-docs:not([data-show]) .lp-sf { visibility: hidden; }
+.lp-thumb .lp-f::after, .lp-thumb .lp-f::before { display: none; }
+
+/* ---- inline editing: the value becomes an input where it sits ---- */
+.lp-f[data-editing] { z-index: 3; }
+.lp-f[data-editing] .lp-f__v { visibility: hidden; }
+.lp-in {
+  position: absolute;
+  left: -3px;
+  top: -2px;
+  width: calc(100% + 6px);
+  height: max(calc(100% + 4px), 1.7em);
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 2px;
+  background: #fff;                 /* the paper */
+  color: inherit;
+  font: inherit;
+  line-height: 1.3;
+  text-align: inherit;
+  box-shadow: 0 0 0 2px var(--sd-color-border-focus), var(--sd-shadow-sm);
+  outline: none;
+}
+textarea.lp-in { resize: none; height: max(calc(100% + 4px), 4em); }
+.lp-f--right .lp-in { text-align: right; }
+.lp-f[data-error] .lp-in { box-shadow: 0 0 0 2px var(--sd-color-border-error), var(--sd-shadow-sm); }
+.lp-docs .lp-f[data-linked] { outline: 1px dashed var(--sd-color-border-focus); outline-offset: 1px; }
+.lp-inline-msg {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -3px;
+  z-index: 4;
+  padding: 2px var(--sd-space-8);
+  border-radius: var(--sd-radius-sm);
+  font-family: var(--sd-font);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+  white-space: nowrap;
+  box-shadow: var(--sd-shadow-sm);
+}
+.lp-inline-msg[data-kind="error"] { background: var(--sd-color-status-error-fill); color: var(--sd-color-text-on-error); }
+.lp-inline-msg[data-kind="warn"] { background: var(--sd-color-status-warning-banner); color: var(--sd-color-text-strong); box-shadow: inset 0 0 0 1px var(--sd-color-status-warning-banner-border); }
+
+/* ---- marks beside a field: no access, history. Never printed. ---- */
+.lp-mark {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 1px;
+  border: 0;
+  border-radius: var(--sd-radius-full);
+  background: none;
+  color: var(--sd-color-icon-muted);
+}
+.lp-mark .sd-icon { width: 100%; height: 100%; }
+.lp-mark--hist { cursor: pointer; color: var(--sd-color-icon-accent); }
+.lp-mark--hist:hover { background: var(--sd-color-surface-hover); color: var(--sd-color-icon-accent-hover); }
+.lp-mark--hist:focus-visible { outline: var(--sd-ring-width) solid var(--sd-color-border-focus); outline-offset: 1px; }
+.lp-mark--drift { background: var(--sd-color-status-warning-banner); color: var(--sd-color-text-strong); box-shadow: 0 0 0 1px var(--sd-color-status-warning-banner-border); }
+.lp-mark--drift:hover { background: var(--sd-color-status-warning-banner); color: var(--sd-color-text-strong); }
+.lp-docs:not([data-show]) .lp-mark { visibility: hidden; }
+.lp-inline-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; }
+
+/* ---- a field's history (opens from its mark) ---- */
+.lp-tl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lp-tl__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-4);
+  padding: 0 0 var(--sd-space-16) var(--sd-space-20);
+}
+.lp-tl__item::before {             /* the dot */
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sd-color-surface-default);
+  box-shadow: inset 0 0 0 2px var(--sd-color-border-strong);
+}
+.lp-tl__item::after {              /* the line to the next dot */
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 16px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--sd-color-border-subtle);
+}
+.lp-tl__item:last-child { padding-bottom: 0; }
+.lp-tl__item:last-child::after { display: none; }
+.lp-tl__item--now::before { box-shadow: inset 0 0 0 5px var(--sd-color-border-success); }
+.lp-tl__item--drift::before { box-shadow: inset 0 0 0 5px var(--sd-color-status-warning-banner-border); }
+.lp-tl__when { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); font-weight: var(--sd-weight-semibold); color: var(--sd-color-text-strong); }
+.lp-tl__note { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-tl__tags { display: flex; gap: var(--sd-space-4); }
+.lp-tl__value { color: var(--sd-color-text-default); }
+
+/* ================= Side panel ================= */
+.lp-side { --sd-side-w: 380px; }
+.lp-side__tabs {
+  padding: var(--sd-space-12) var(--sd-space-16);
+  border-bottom: 1px solid var(--sd-color-border-subtle);
+}
+.lp-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: var(--sd-space-4);
+  padding: 0 var(--sd-space-4);
+  border-radius: var(--sd-radius-full);
+  background: var(--sd-color-action-primary);
+  color: var(--sd-color-text-inverse);
+  font-size: var(--sd-text-2xs);
+  font-weight: var(--sd-weight-bold);
+}
+.lp-side__body { padding: var(--sd-space-16); gap: var(--sd-space-16); }
+
+.lp-tools { display: flex; gap: var(--sd-space-8); align-items: center; }
+.lp-tools .sd-search-field { flex: 1 1 auto; }
+.lp-filter { display: flex; flex-wrap: wrap; gap: var(--sd-space-4); }
+.lp-filter button {
+  border: 1px solid var(--sd-color-border-subtle);
+  background: var(--sd-color-surface-default);
+  color: var(--sd-color-text-muted);
+  border-radius: var(--sd-radius-full);
+  padding: 2px var(--sd-space-8);
+  font: inherit;
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-medium);
+  cursor: pointer;
+}
+.lp-filter button:hover { background: var(--sd-color-surface-hover); }
+.lp-filter button[aria-pressed="true"] { background: var(--sd-color-surface-selected); border-color: var(--sd-color-border-selected); color: var(--sd-color-text-strong); }
+
+.lp-search {
+  width: 100%;
+  height: var(--sd-control-sm);
+  padding: 0 var(--sd-space-12);
+  border: 1px solid var(--sd-color-border-default);
+  border-radius: var(--sd-radius-sm);
+  font: inherit;
+  color: var(--sd-color-text-strong);
+  background: var(--sd-color-surface-default);
+}
+.lp-search:focus-visible { outline: var(--sd-ring-width) solid var(--sd-color-border-focus); outline-offset: 0; }
+
+.lp-group { display: flex; flex-direction: column; gap: var(--sd-space-2); }
+.lp-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sd-space-8);
+  margin: 0 0 var(--sd-space-4);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+  font-weight: var(--sd-weight-semibold);
+  color: var(--sd-color-text-strong);
+}
+.lp-group__head span { font-weight: var(--sd-weight-medium); color: var(--sd-color-text-muted); }
+.lp-group__note { margin: 0 0 var(--sd-space-4); font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+
+.lp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--sd-space-8);
+  align-items: center;
+  width: 100%;
+  padding: var(--sd-space-8);
+  border: 0;
+  border-radius: var(--sd-radius-sm);
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.lp-row:hover { background: var(--sd-color-surface-hover); }
+.lp-row:focus-visible { outline: var(--sd-ring-width) solid var(--sd-color-border-focus); outline-offset: 0; }
+.lp-row__label { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-row__value { grid-column: 1; font-size: var(--sd-text-sm); line-height: var(--sd-text-sm-lh); color: var(--sd-color-text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-row__marks { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: var(--sd-space-4); align-items: center; color: var(--sd-color-icon-muted); }
+.lp-row__marks .sd-icon { width: 16px; height: 16px; }
+.lp-row[data-pending] .lp-row__value { color: var(--sd-color-text-success); }
+.lp-row[data-locked] .lp-row__value { color: var(--sd-color-text-muted); }
+
+.lp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sd-space-4);
+  padding: 0 var(--sd-space-8);
+  border-radius: var(--sd-radius-full);
+  font-size: var(--sd-text-2xs);
+  line-height: var(--sd-text-2xs-lh);
+  font-weight: var(--sd-weight-semibold);
+  white-space: nowrap;
+  background: var(--sd-color-surface-muted);
+  color: var(--sd-color-text-default);
+}
+.lp-tag .sd-icon, .lp-change__where .sd-icon { width: 12px; height: 12px; flex: 0 0 auto; }
+.lp-change__where { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sd-space-4); }
+.lp-tag--doc { background: var(--sd-color-status-warning-banner); }
+.lp-tag--record { background: var(--sd-color-status-info-surface); }
+.lp-tag--drift { background: var(--sd-color-status-warning-banner); box-shadow: inset 0 0 0 1px var(--sd-color-status-warning-banner-border); }
+.lp-tag--new { background: var(--sd-color-surface-change-added); }
+
+.lp-empty { margin: var(--sd-space-24) 0; text-align: center; color: var(--sd-color-text-muted); }
+.lp-empty strong { display: block; color: var(--sd-color-text-strong); margin-bottom: var(--sd-space-4); }
+
+/* ---- a change: old → new ---- */
+.lp-change {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-4);
+  padding: var(--sd-space-12);
+  border: 1px solid var(--sd-color-border-subtle);
+  border-radius: var(--sd-radius-md);
+}
+.lp-change__top { display: flex; align-items: center; gap: var(--sd-space-8); }
+.lp-change__label { flex: 1 1 auto; font-weight: var(--sd-weight-semibold); color: var(--sd-color-text-strong); }
+.lp-change__label button { all: unset; cursor: pointer; }
+.lp-change__label button:hover { text-decoration: underline; }
+.lp-diff { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sd-space-4) var(--sd-space-8); font-size: var(--sd-text-sm); }
+.lp-diff__from { background: var(--sd-color-surface-change-removed); text-decoration: line-through; padding: 0 var(--sd-space-4); border-radius: 2px; color: var(--sd-color-text-default); }
+.lp-diff__to { background: var(--sd-color-surface-change-added); padding: 0 var(--sd-space-4); border-radius: 2px; color: var(--sd-color-text-strong); }
+.lp-diff__arrow { color: var(--sd-color-icon-muted); }
+.lp-change__where { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+
+/* ---- versions: the list of PDF versions, nothing more ---- */
+.lp-versions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sd-space-8); }
+.lp-version { border: 1px solid var(--sd-color-border-subtle); border-radius: var(--sd-radius-md); }
+.lp-version__acts { display: flex; gap: var(--sd-space-2); margin-left: auto; }
+.lp-version__what { margin: 0; font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-tag--error { background: var(--sd-color-status-error-banner); color: var(--sd-color-text-error); box-shadow: inset 0 0 0 1px var(--sd-color-status-error-banner-border); }
+
+/* ---- history ---- */
+.lp-history { display: flex; flex-direction: column; gap: var(--sd-space-8); }
+.lp-ver { border: 1px solid var(--sd-color-border-subtle); border-radius: var(--sd-radius-md); }
+.lp-ver[open] { border-color: var(--sd-color-border-default); }
+.lp-ver > summary { list-style: none; cursor: pointer; }
+.lp-ver > summary::-webkit-details-marker { display: none; }
+.lp-ver .sd-version-row { border-radius: var(--sd-radius-md); }
+.lp-ver__body { display: flex; flex-direction: column; gap: var(--sd-space-8); padding: 0 var(--sd-space-12) var(--sd-space-12); }
+.lp-ver__reason { margin: 0; font-size: var(--sd-text-sm); color: var(--sd-color-text-default); }
+.lp-ver__reason::before { content: "“"; }
+.lp-ver__reason::after { content: "”"; }
+.lp-ver__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sd-space-8); }
+.lp-ver__list li { display: flex; flex-direction: column; gap: var(--sd-space-2); }
+.lp-ver__item-label { font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-ver__links { display: flex; gap: var(--sd-space-16); }
+.lp-note { margin: 0; font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+
+/* ================= Field editor (anchored) ================= */
+.lp-pop {
+  position: fixed;
+  z-index: var(--sd-z-overlay);
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-12);
+  padding: var(--sd-space-16);
+  background: var(--sd-color-surface-default);
+  border: 1px solid var(--sd-color-border-subtle);
+  border-radius: var(--sd-radius-lg);
+  box-shadow: var(--sd-shadow-lg);
+  font-family: var(--sd-font);
+  font-size: var(--sd-text-sm);
+  line-height: var(--sd-text-sm-lh);
+  color: var(--sd-color-text-default);
+}
+.lp-pop__head { display: flex; align-items: flex-start; gap: var(--sd-space-8); }
+.lp-pop__titles { flex: 1 1 auto; min-width: 0; }
+.lp-pop__title { margin: 0; font-size: var(--sd-text-md); line-height: var(--sd-text-md-lh); font-weight: var(--sd-weight-bold); color: var(--sd-color-text-strong); }
+.lp-pop__path { margin: var(--sd-space-2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sd-space-4); font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-pop__path .sd-icon { width: 12px; height: 12px; }
+.lp-pop__meta { display: flex; flex-wrap: wrap; gap: var(--sd-space-4); }
+.lp-pop .sd-field { flex-direction: column; gap: var(--sd-space-4); }
+/* why: in a 372px bubble the kit's side label column would leave the input ~150px; stack it. */
+.lp-pop .sd-field__label { width: auto; padding: 0; }
+/* why: the column's flex-basis is a width in the kit's row layout; stacked, it would become 180px of height. */
+.lp-pop .sd-field__col, .lp-modal .sd-field__col { flex: 0 0 auto; width: 100%; }
+.lp-pop textarea { min-height: 96px; resize: vertical; }
+.lp-pop__hint { margin: 0; font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-pop__error { margin: 0; font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-error); font-weight: var(--sd-weight-medium); }
+.lp-pop__info {
+  display: flex;
+  gap: var(--sd-space-8);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--sd-space-8) var(--sd-space-12);
+  border-radius: var(--sd-radius-md);
+  background: var(--sd-color-surface-subtle);
+  font-size: var(--sd-text-xs);
+  line-height: var(--sd-text-xs-lh);
+}
+.lp-pop__info .sd-icon { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; color: var(--sd-color-icon-muted); }
+.lp-pop__info--warn { background: var(--sd-color-status-warning-banner); box-shadow: inset 0 0 0 1px var(--sd-color-status-warning-banner-border); }
+.lp-pop__info--warn .sd-icon { color: var(--sd-color-text-strong); }
+.lp-pop__info strong { color: var(--sd-color-text-strong); }
+.lp-pop__info--inline { align-items: center; }
+.lp-pop__info--inline > span { flex: 1 1 auto; }
+
+.lp-scope { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sd-space-8); }
+.lp-scope legend { padding: 0; margin-bottom: var(--sd-space-4); font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); font-weight: var(--sd-weight-semibold); color: var(--sd-color-text-strong); }
+.lp-scope .sd-radio { align-items: flex-start; }
+.lp-scope__text { display: flex; flex-direction: column; }
+.lp-scope__sub { font-weight: var(--sd-weight-medium); font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); color: var(--sd-color-text-muted); }
+.lp-pop__foot { display: flex; align-items: center; gap: var(--sd-space-8); padding-top: var(--sd-space-4); }
+.lp-pop__foot .lp-spacer { flex: 1 1 auto; }
+.lp-pop__kbd { font-size: var(--sd-text-2xs); line-height: var(--sd-text-2xs-lh); color: var(--sd-color-text-muted); }
+
+/* ================= Dialogs ================= */
+.lp-modal { width: min(560px, calc(100vw - 32px)); }
+.lp-modal .sd-modal__body { display: flex; flex-direction: column; gap: var(--sd-space-16); }
+.lp-modal h3 { margin: 0; font-size: var(--sd-text-sm); line-height: var(--sd-text-sm-lh); font-weight: var(--sd-weight-semibold); color: var(--sd-color-text-strong); }
+.lp-modal h3 span { font-weight: var(--sd-weight-medium); color: var(--sd-color-text-muted); }
+.lp-modal p { margin: 0; }
+.lp-modal__list { list-style: none; margin: var(--sd-space-8) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sd-space-8); }
+.lp-modal__list li { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: var(--sd-space-8); align-items: baseline; }
+.lp-modal__list .lp-ver__item-label { padding-top: 1px; }
+.lp-modal .sd-field { flex-direction: column; gap: var(--sd-space-4); }
+.lp-modal .sd-field__label { width: auto; padding: 0; }
+.lp-modal textarea { min-height: 64px; resize: vertical; }
+.lp-modal__list--save { gap: 0; }
+.lp-modal__list--save li { display: flex; flex-direction: column; gap: var(--sd-space-8); padding: var(--sd-space-12) 0; border-bottom: 1px solid var(--sd-color-border-subtle); }
+.lp-modal__list--save li:first-child { padding-top: 0; }
+.lp-wb { align-items: flex-start; }
+.lp-wb__sub { display: block; font-size: var(--sd-text-xs); line-height: var(--sd-text-xs-lh); font-weight: var(--sd-weight-medium); color: var(--sd-color-text-muted); }
+.lp-modal .sd-button[aria-busy="true"] { cursor: progress; opacity: 0.8; }
+
+/* ================= Toast ================= */
+.lp-toast {
+  position: fixed;
+  left: 50%;
+  top: 112px;
+  transform: translateX(-50%);
+  z-index: var(--sd-z-overlay);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sd-space-8);
+  pointer-events: none;
+}
+.lp-toast .sd-alert { box-shadow: var(--sd-shadow-lg); pointer-events: auto; min-width: 360px; }
+
+/* ================= Prototype controls ================= */
+.proto-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: var(--sd-z-overlay);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 16px;
+  border-radius: 999px;
+  background: #1b2433;
+  color: #fff;
+  font-family: var(--sd-font);
+  font-size: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  white-space: nowrap;
+}
+.proto-label { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .65; }
+.proto-seg { display: flex; background: rgba(255, 255, 255, .12); border-radius: 999px; padding: 2px; }
+.proto-seg button { border: 0; background: none; color: rgba(255, 255, 255, .75); font: inherit; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.proto-seg button:hover { color: #fff; }
+.proto-seg button.active { background: #fff; color: #1b2433; }
+.proto-reset { border: 0; background: rgba(255, 255, 255, .12); color: #fff; font: inherit; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.proto-reset:hover { background: rgba(255, 255, 255, .22); }
+
+/* why: below a laptop width the rail and the panel would squeeze the page to
+   nothing, so the thumbnails go first and the panel narrows. */
+@media (max-width: 1180px) {
+  .lp-thumbs { display: none; }
+  .lp-side { --sd-side-w: 320px; }
+  .lp-masthead-hide { display: none; }
+}
+/* why: on a phone the side panel stacks under the page instead of beside it. */
+@media (max-width: 760px) {
+  .lp .sd-editor-shell__work { flex-direction: column; }
+  .lp-side { --sd-side-w: 100%; height: 45%; }
+  .proto-bar { left: 8px; right: 8px; transform: none; overflow-x: auto; }
+}

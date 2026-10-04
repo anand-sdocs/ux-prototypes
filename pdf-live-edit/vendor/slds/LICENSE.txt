@@ -1,0 +1,4 @@
+Icons: Salesforce Lightning Design System (@salesforce-ux/design-system@2.30.4),
+(c) Salesforce, Inc., licensed CC BY-ND 4.0 — https://creativecommons.org/licenses/by-nd/4.0/
+Used unmodified. Do not edit these SVG files.
+SLDS 2 CSS (@salesforce-ux/design-system-2@2.264.2) is under Salesforce's terms of use.
