@@ -25,31 +25,31 @@
   const SCENARIOS = [
     {
       key: 'bizadmin',
-      label: '1 · Business admin: set up a configuration',
+      label: '1 · Business admin: set up an S-Docs Card',
       hint: 'Priya decides which templates and actions mid-market reps get on an Opportunity.',
       steps: [
         {
           title: 'Meet Priya',
-          body: `Priya Shah runs Sales Operations. She decides which documents the sales team can create, but she isn't a Salesforce admin and can't edit Lightning pages.<br><br>Her <b>S-Docs Configuration Manager</b> permission set gives her this <b>Document Configurations</b> tab, and nothing in Setup.<br><br>Her ask from sales leadership: mid-market reps need a proposal, an order form and an NDA they can send for signature.`,
+          body: `Priya Shah runs Sales Operations. She decides which documents the sales team can create, but she isn't a Salesforce admin and can't edit Lightning pages.<br><br>Her <b>S-Docs Card Manager</b> permission set gives her this <b>S-Docs Cards</b> tab, and nothing in Setup.<br><br>Her ask from sales leadership: mid-market reps need a proposal, an order form and an NDA they can send for signature.`,
           action: 'Click <b>Next</b>.',
         },
         {
-          title: 'Configurations for Opportunity',
-          body: `Each row is a configuration for <b>Opportunity</b>. S-Docs checks them <b>top to bottom</b> and uses the <b>first</b> one whose conditions match the record and the person viewing it.<br><br><b>Default</b> at the bottom catches everyone else. An object only shows on the left once it has a saved configuration.`,
+          title: 'S-Docs Cards for Opportunity',
+          body: `Each row is an S-Docs Card for <b>Opportunity</b>. S-Docs checks them <b>top to bottom</b> and uses the <b>first</b> one whose conditions match the record and the person viewing it.<br><br><b>Default</b> at the bottom catches everyone else. An object only shows on the left once it has a saved S-Docs Card.`,
           action: 'Look at the order, then click <b>Next</b>.',
           target: () => $('#ad-cfg-list'),
         },
         {
-          title: 'Start a new configuration',
-          body: `A configuration is three things: <b>when to show</b>, <b>which templates</b> and <b>which actions</b>.`,
-          action: 'Click <b>New configuration</b>.',
+          title: 'Start a new S-Docs Card',
+          body: `An S-Docs Card is three things: <b>when to show</b>, <b>which templates</b> and <b>which actions</b>.`,
+          action: 'Click <b>New S-Docs Card</b>.',
           target: () => $('.ad-hactions [data-new]'),
-          done: () => modalTitle() === 'New configuration' || !!(S().edit && S().edit.isNew),
+          done: () => modalTitle() === 'New S-Docs Card' || !!(S().edit && S().edit.isNew),
           show: () => A.openNewConfig(),
         },
         {
           title: 'Name it and pick the object',
-          body: `Every configuration belongs to one object. You can pick any object here; once you save, it appears in the left panel.`,
+          body: `Every S-Docs Card belongs to one object. You can pick any object here; once you save, it appears in the left panel.`,
           action: 'Type <b>Mid-Market Deals</b>, keep <b>Opportunity</b>, and click <b>Continue</b>.',
           target: () => [$('#nc-name'), $('#ad-modal-foot [data-mb="1"]')],
           done: () => !!(S().edit && S().edit.isNew && S().view === 'edit'),
@@ -57,7 +57,7 @@
         },
         {
           title: 'When to show: deal size',
-          body: `With no conditions, a configuration shows on every record for everyone. Conditions can test the Opportunity's fields, its parent records (like the Account), or the person viewing it: their profile, role, permission sets or groups.`,
+          body: `With no conditions, an S-Docs Card shows on every record for everyone. Conditions can test the Opportunity's fields, its parent records (like the Account), or the person viewing it: their profile, role, permission sets or groups.`,
           action: 'Click <b>Add a condition</b>, then set <b>Amount</b> · <b>is at least (≥)</b> · <b>25000</b>.',
           target: () => $('[data-c-add="cfg"]') || $('#ad-body .ad-crow'),
           done: () => !!ed() && ed().conditions.some((r) => r.field === 'Amount' && ['gte', 'gt'].includes(r.op) && +r.value > 0),
@@ -105,7 +105,7 @@
         },
         {
           title: 'Where did it land?',
-          body: `A new configuration goes just above the <b>Default</b>, which puts Mid-Market Deals at <b>#6</b>, below <b>Sales — Standard</b>.<br><br>Let's check who actually gets it.`,
+          body: `A new S-Docs Card goes just above the <b>Default</b>, which puts Mid-Market Deals at <b>#6</b>, below <b>Sales — Standard</b>.<br><br>Let's check who actually gets it.`,
           action: 'Click <b>Test a record</b>.',
           target: () => $('.ad-hactions [data-go-test]'),
           done: () => S().view === 'test',
@@ -113,7 +113,7 @@
         },
         {
           title: 'Test: Sam on Initech',
-          body: `<b>Initech – Partner Resale</b> is $45,000, right in the mid-market range.<br><br>Look at the result: <b>Sales — Standard</b> wins at #5. Sam is in the Sales_Team group and that configuration is checked first, so Mid-Market Deals is <b>never reached</b> for Sam.`,
+          body: `<b>Initech – Partner Resale</b> is $45,000, right in the mid-market range.<br><br>Look at the result: <b>Sales — Standard</b> wins at #5. Sam is in the Sales_Team group and that S-Docs Card is checked first, so Mid-Market Deals is <b>never reached</b> for Sam.`,
           action: 'Pick <b>Initech – Partner Resale</b> and <b>Sam Rivera</b>.',
           target: () => [$('#tf-rec'), $('#tf-user')],
           stay: true,
@@ -122,7 +122,7 @@
         },
         {
           title: 'Fix the order',
-          body: `More specific configurations go higher. Mid-Market Deals is narrower than Sales — Standard, so it belongs above it.`,
+          body: `More specific S-Docs Cards go higher. Mid-Market Deals is narrower than Sales — Standard, so it belongs above it.`,
           action: 'Go back to the list and drag <b>Mid-Market Deals</b> above <b>Sales — Standard</b> (or use <b>•••</b> › <b>Move up</b>).',
           target: () => (S().view === 'list' ? $(`.ad-cfg[data-cfg="${(newCfg() || {}).id}"]`) : $('.ad-hactions [data-back]')),
           done: () => { const k = newKey(); return !!k && A.indexOf(k) >= 0 && A.indexOf(k) < A.indexOf('sales_standard'); },
@@ -138,7 +138,7 @@
         },
         {
           title: 'Troubleshoot with Builder details',
-          body: `When a rep says "I don't see the order form", Priya can see what the component sees. <b>Builder details</b> is a switch on this page. It's <b>just for her</b>, and only people with S-Docs Configuration Manager can turn it on, so reps never see diagnostics.<br><br>There's no Mode to set in App Builder: this is the business admin's switch.`,
+          body: `When a rep says "I don't see the order form", Priya can see what the component sees. <b>Builder details</b> is a switch on this page. It's <b>just for her</b>, and only people with S-Docs Card Manager can turn it on, so reps never see diagnostics.<br><br>There's no Mode to set in App Builder: this is the business admin's switch.`,
           action: 'Go back to the list and turn on <b>Builder details</b> at the top of the page.',
           target: () => (S().view === 'list' ? $('[data-bd-toggle]')?.closest('.ad-bd-toggle') : $('.ad-hactions [data-back]')),
           done: () => S().builderDetails,
@@ -146,7 +146,7 @@
         },
         {
           title: 'See it on a record',
-          body: `Under the S-Docs card Priya now sees which configuration was used, why the ones above it were skipped, and each condition with its real value. Sam opening the same record sees only the card.`,
+          body: `Under the S-Docs Card Priya now sees which S-Docs Card was used, why the ones above it were skipped, and each condition with its real value. Sam opening the same record sees only the card.`,
           action: 'Click <b>Open a record</b> next to the switch.',
           target: () => $('[data-open-record]'),
           stay: true,
@@ -163,16 +163,16 @@
     {
       key: 'sfadmin',
       label: '2 · Salesforce admin: add it to the record page',
-      hint: 'Marco adds S-Docs Documents to the Opportunity Record Page in Lightning App Builder.',
+      hint: 'Marco adds S-Docs Card to the Opportunity Record Page in Lightning App Builder.',
       steps: [
         {
           title: 'Meet Marco',
-          body: `Marco Diaz is the Salesforce admin and owns the Opportunity record page. He adds the S-Docs component <b>once</b> and gives it a title. Priya's configurations decide everything else, so he isn't asked to change the page every time sales wants a new document.<br><br>This is the <b>Opportunity Record Page</b> in Lightning App Builder, with an empty slot in the right column.`,
+          body: `Marco Diaz is the Salesforce admin and owns the Opportunity record page. He adds the <b>S-Docs Card</b> component <b>once</b> and gives it a title. Priya's S-Docs Cards decide everything else, so he isn't asked to change the page every time sales wants a new document.<br><br>This is the <b>Opportunity Record Page</b> in Lightning App Builder, with an empty slot in the right column.`,
           action: 'Click <b>Next</b>.',
         },
         {
           title: 'Find the component',
-          body: `S-Docs ships one component for record pages: <b>S-Docs Documents</b>. It's the template picker and the documents list together; today those are two components.`,
+          body: `S-Docs ships one component for record pages: <b>S-Docs Card</b>. It's the template picker and the documents list together; today those are two components.`,
           action: 'Type <b>S-Docs</b> in the Components search.',
           target: () => $('[data-lab-search]'),
           done: () => /s-?docs/i.test(S().lab.q) || S().lab.placed,
@@ -181,14 +181,14 @@
         {
           title: 'Add it to the page',
           body: `Drop it where reps will look for it, usually the right column.`,
-          action: 'Drag <b>S-Docs Documents</b> into the empty slot in the right column, or click it.',
+          action: 'Drag <b>S-Docs Card</b> into the empty slot in the right column, or click it.',
           target: () => [$('[data-lab-comp]'), $('[data-lab-drop]')],
           done: () => S().lab.placed,
           show: () => A.labPlace(),
         },
         {
           title: 'One property: Title',
-          body: `That's the only setting. The component always uses the <b>first matching configuration</b> in Priya's priority order, so there's nothing for Marco to choose. Today's two components have around 18 properties between them; switch the prototype strip to <b>Today</b> to compare.`,
+          body: `That's the only setting. The component always uses the <b>first matching S-Docs Card</b> in Priya's priority order, so there's nothing for Marco to choose. Today's two components have around 18 properties between them; switch the prototype strip to <b>Today</b> to compare.`,
           action: 'Change <b>Title</b> to <b>Documents</b>.',
           target: () => $('#lab-title'),
           done: () => S().lab.title.trim() !== '' && S().lab.title !== 'S-Docs',
@@ -196,7 +196,7 @@
         },
         {
           title: 'Preview as a rep',
-          body: `The prototype strip above the canvas stands in for "who is looking at which record". The note under the card says which configuration applies.<br><br>For Sam on Initech it's <b>Mid-Market Deals</b>. Switch to Anand on PseudoCo and the same component shows <b>Enterprise Sales</b>, with no change to the page.`,
+          body: `The prototype strip above the canvas stands in for "who is looking at which record". The note under the card says which S-Docs Card applies.<br><br>For Sam on Initech it's <b>Mid-Market Deals</b>. Switch to Anand on PseudoCo and the same component shows <b>Enterprise Sales</b>, with no change to the page.`,
           action: 'In the prototype strip, preview as <b>Sam Rivera</b> on <b>Initech – Partner Resale</b>.',
           target: () => [...document.querySelectorAll('.lab-proto select')],
           stay: true,
@@ -225,7 +225,7 @@
       steps: [
         {
           title: 'Meet Sam',
-          body: `Sam Rivera is an Account Executive working <b>Initech – Partner Resale</b> ($45,000).<br><br>The <b>Documents</b> card on the right is the component Marco added. Sam never sees configurations, only what <b>Mid-Market Deals</b> allows: a proposal, an order form and an NDA, plus Preview, Download, Email and Request signature.`,
+          body: `Sam Rivera is an Account Executive working <b>Initech – Partner Resale</b> ($45,000).<br><br>The <b>Documents</b> card on the right is the component Marco added. Sam never sees how the cards are set up, only what the <b>Mid-Market Deals</b> card allows: a proposal, an order form and an NDA, plus Preview, Download, Email and Request signature.`,
           action: 'Click <b>Next</b>.',
           target: () => $('#rec-side .sd-card'),
         },
@@ -272,7 +272,7 @@
         },
         {
           title: 'That\'s Sam\'s part',
-          body: `Pick → generate → send → signed, without leaving the Opportunity.<br><br>The event panel under the card shows every lifecycle event the component fired: <b>configurationresolved</b>, <b>generationstarted</b>, <b>documentgenerated</b>, <b>signaturerequested</b>, <b>signaturecompleted</b>. A custom component embedding S-Docs can listen for the same events.<br><br>Bonus: the same component in a screen flow.`,
+          body: `Pick → generate → send → signed, without leaving the Opportunity.<br><br>The event panel under the card shows every lifecycle event the component fired: <b>cardresolved</b>, <b>generationstarted</b>, <b>documentgenerated</b>, <b>signaturerequested</b>, <b>signaturecompleted</b>. A custom component embedding S-Docs can listen for the same events.<br><br>Bonus: the same component in a screen flow.`,
           action: 'Click <b>Next scenario</b>.',
         },
       ],
@@ -280,7 +280,7 @@
     {
       key: 'flow',
       label: '4 · Bonus: use it in a screen flow',
-      hint: 'Marco adds S-Docs Documents to a screen in Flow Builder, maps the record and stores the outputs.',
+      hint: 'Marco adds S-Docs Card to a screen in Flow Builder, maps the record and stores the outputs.',
       steps: [
         {
           title: 'A screen flow',
@@ -297,8 +297,8 @@
         },
         {
           title: 'Add the component',
-          body: `S-Docs Documents is listed under <b>Custom (Managed)</b>.`,
-          action: 'Drag <b>S-Docs Documents</b> onto the screen, or click it.',
+          body: `S-Docs Card is listed under <b>Custom (Managed)</b>.`,
+          action: 'Drag <b>S-Docs Card</b> onto the screen, or click it.',
           target: () => [$('[data-fb-comp]'), $('[data-fb-drop]')],
           done: () => S().flow.added,
           show: () => A.flowAdd(),

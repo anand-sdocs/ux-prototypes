@@ -1,5 +1,5 @@
 /* =========================================================================
-   S-Docs Document Configurations — business-admin prototype behaviour
+   S-Docs Cards — business-admin prototype behaviour
    Views: list (per object, ordered) · editor (6-step wizard + live preview) · test.
    ========================================================================= */
 (function () {
@@ -91,7 +91,7 @@
   };
   const OBJ = k => OBJECTS[k] || { label: k, color: '#8b93a1' };
   const ALL_OBJECTS = Object.keys(OBJECTS);
-  // The left rail lists only objects that have at least one saved configuration.
+  // The left rail lists only objects that have at least one saved S-Docs Card.
   const railObjects = () => ALL_OBJECTS.filter(o => (state.configs[o] || []).length);
   const objOptions = () => ALL_OBJECTS.slice().sort((a, b) => OBJ(a).label.localeCompare(OBJ(b).label)).map(o => [o, OBJ(o).label + (o.endsWith('__c') ? ' (custom)' : '')]);
 
@@ -282,7 +282,7 @@
       f: { Department: 'Sales', Title: 'Account Executive', Region__c: 'EMEA', LanguageLocaleKey: 'de', Id: 'u2', 'Manager.Department': 'Sales' } },
     { id: 'u3', name: 'Pat Lee', title: 'Partner rep, Initech', profile: 'Partner Community User', role: '', permsets: [], custperms: [], groups: [],
       f: { Department: 'Partner', Title: 'Partner Sales Rep', Region__c: 'North America', LanguageLocaleKey: 'en_US', Id: 'u3', 'Manager.Department': '' } },
-    { id: 'u5', name: 'Priya Shah', title: 'Sales Operations Manager', cfgManager: true, profile: 'Sales User', role: 'Sales_Manager', permsets: ['SDocs_User', 'SDocs_Configuration_Manager'], custperms: ['SDocs_Configuration_Manager'], groups: [],
+    { id: 'u5', name: 'Priya Shah', title: 'Sales Operations Manager', cfgManager: true, profile: 'Sales User', role: 'Sales_Manager', permsets: ['SDocs_User', 'SDocs_Card_Manager'], custperms: ['SDocs_Card_Manager'], groups: [],
       f: { Department: 'Sales Operations', Title: 'Sales Operations Manager', Region__c: 'North America', LanguageLocaleKey: 'en_US', Id: 'u5', 'Manager.Department': 'Sales' } },
     { id: 'u4', name: 'Jordan Kim', title: 'Support Agent', profile: 'Service User', role: 'Support_Agent', permsets: ['SDocs_User'], custperms: [], groups: ['Support'],
       f: { Department: 'Support', Title: 'Support Agent', Region__c: 'APAC', LanguageLocaleKey: 'en_US', Id: 'u4', 'Manager.Department': 'Support' } }
@@ -290,7 +290,7 @@
   const userById = id => USERS.find(u => u.id === id) || USERS[0];
 
   /* =======================================================================
-     SEED CONFIGURATIONS
+     SEED S-DOCS CARDS
      ======================================================================= */
   function mkActions(onKeys, over) {
     const a = {};
@@ -316,7 +316,7 @@
   const step = p => Object.assign({ id: uid('st'), phase: 'before', appliesTo: 'all', tkeys: [], onError: 'stop', runMode: 'sync' }, p);
   const input = p => Object.assign({ key: '', label: '', type: 'Text', options: '', required: false, defType: 'none', def: '', host: false, help: '' }, p);
 
-  /* Phase 1 (MVP): a configuration is when-to-show + templates + actions, nothing else.
+  /* Phase 1 (MVP): an S-Docs Card is when-to-show + templates + actions, nothing else.
      The advanced wizard and the richer seed data stay in this file for later phases. */
   const PHASE1 = true;
   const PHASE1_OVERRIDES = {
@@ -826,14 +826,14 @@
   });
 
   const EV_CH = {
-    configurationresolved: 'DOM · LMS · Flow', generationstarted: 'DOM · LMS', generationblocked: 'DOM · LMS · Flow',
+    cardresolved: 'DOM · LMS · Flow', generationstarted: 'DOM · LMS', generationblocked: 'DOM · LMS · Flow',
     generationcancelled: 'DOM · LMS', documentgenerated: 'DOM · LMS · Flow', generationcompleted: 'DOM · LMS · Flow',
     afterstepcompleted: 'LMS', emailsent: 'DOM · LMS · Flow', signaturerequested: 'DOM · LMS · Flow', signaturecompleted: 'Platform event',
     documentdeleted: 'DOM · LMS', documentrefreshed: 'DOM · LMS', actioninvoked: 'DOM · LMS'
   };
   function emit(name, detail, c) {
     let ch = EV_CH[name] || 'DOM · LMS';
-    if (c && c.publishPE && name !== 'configurationresolved') ch += ' · Platform event';
+    if (c && c.publishPE && name !== 'cardresolved') ch += ' · Platform event';
     state.events.unshift({ t: clock(), name, ch, detail: detail || '' });
     state.events = state.events.slice(0, 40);
     $$('[data-evlog]').forEach(el => { el.innerHTML = evLogInner(); });
@@ -874,36 +874,36 @@
         <div class="ad-hicon">${ic('sliders', 20, 2)}</div>
         <div class="ad-htitle">
           <div class="ad-eyebrow">S-Docs</div>
-          <h1>Document Configurations</h1>
+          <h1>S-Docs Cards</h1>
           <div class="ad-hsub">Decide which templates, actions and steps people get on each record — no page layout changes needed.</div>
         </div>
         <div class="ad-hactions">
-          <div class="ad-bd-toggle" title="Shows which configuration applied and why, under the S-Docs card on record pages. Only you see it.">${sw(state.builderDetails, 'data-bd-toggle aria-label="Builder details on record pages"')}<span><b>Builder details</b><small>On record pages, just for you</small></span></div>
+          <div class="ad-bd-toggle" title="Shows which S-Docs Card applied and why, under the S-Docs Card on record pages. Only you see it.">${sw(state.builderDetails, 'data-bd-toggle aria-label="Builder details on record pages"')}<span><b>Builder details</b><small>On record pages, just for you</small></span></div>
           ${state.builderDetails ? `<button class="ad-btn ad-btn-sm" data-open-record title="Opens Initech – Partner Resale as you">${ic('record', 14)} Open a record</button>` : ''}
           <button class="ad-btn" data-go-test>${ic('flask', 15)} Test a record</button>
           <button class="ad-btn" data-go-lab>${ic('record', 15)} See it in App Builder</button>
-          <button class="ad-btn ad-btn-primary" data-new>${ic('plus', 15, 2.2)} New configuration</button>
+          <button class="ad-btn ad-btn-primary" data-new>${ic('plus', 15, 2.2)} New S-Docs Card</button>
         </div>
       </section>
       <div class="ad-list-layout">
         <nav class="sf-card ad-objects" aria-label="Objects">
           <div class="ad-objects-title">Objects</div>
           ${rail.map(o => `<button class="ad-obj${o === obj ? ' active' : ''}" data-obj="${o}" aria-current="${o === obj}">${objDot(o)}<span class="ad-obj-name">${esc(OBJ(o).label)}</span><span class="ad-obj-count">${(state.configs[o] || []).length}</span></button>`).join('')}
-          <div class="ad-objects-foot">An object appears here once it has a saved configuration.</div>
+          <div class="ad-objects-foot">An object appears here once it has a saved S-Docs Card.</div>
         </nav>
         <section class="sf-card ad-main">
           <div class="ad-main-head">
-            <h2>${esc(label)} configurations<span>${list.length} total · ${active} active</span></h2>
+            <h2>${esc(label)} S-Docs Cards<span>${list.length} total · ${active} active</span></h2>
           </div>
           ${list.length ? `
-            <div class="ad-note">${ic('info', 16)}<div>Checked <b>top to bottom</b>. People get the <b>first configuration</b> whose conditions match the record and the person viewing it — so put specific ones first and a catch-all <b>Default</b> last. Drag rows to change the order.</div></div>
+            <div class="ad-note">${ic('info', 16)}<div>Checked <b>top to bottom</b>. People get the <b>first S-Docs Card</b> whose conditions match the record and the person viewing it — so put specific ones first and a catch-all <b>Default</b> last. Drag rows to change the order.</div></div>
             <ol class="ad-cfg-list" id="ad-cfg-list">${list.map((c, i) => cfgRow(c, i, flags[i])).join('')}</ol>
-            ${list.some(isOpenFallback) ? '' : `<div class="ad-note warn ad-mx">${ic('alert', 16)}<div>No <b>Default</b> configuration. A ${esc(label.toLowerCase())} that matches none of these shows <b>no templates</b>. Add one with <b>Always</b> at the bottom if everyone should get something.</div></div>`}
+            ${list.some(isOpenFallback) ? '' : `<div class="ad-note warn ad-mx">${ic('alert', 16)}<div>No <b>Default</b> S-Docs Card. A ${esc(label.toLowerCase())} that matches none of these shows <b>no templates</b>. Add one with <b>Always</b> at the bottom if everyone should get something.</div></div>`}
           ` : `
             <div class="ad-empty">
-              <h3>No configurations for ${esc(label)} yet</h3>
+              <h3>No S-Docs Cards for ${esc(label)} yet</h3>
               <p>Until you add one, the S-Docs component on ${esc(label.toLowerCase())} records shows no templates. Start with a <b>Default</b> that applies to everyone, then add more specific ones above it.</p>
-              <button class="ad-btn ad-btn-primary" data-new>${ic('plus', 15, 2.2)} New configuration</button>
+              <button class="ad-btn ad-btn-primary" data-new>${ic('plus', 15, 2.2)} New S-Docs Card</button>
             </div>`}
         </section>
       </div>`;
@@ -971,7 +971,7 @@
       }
       else if (k === 'deact') { c.status = 'Inactive'; renderList(); toast(`“${c.name}” is inactive and will be skipped.`, 'info'); }
       else if (k === 'del') {
-        const ok = await confirmModal('Delete configuration?', `Delete <b>${esc(c.name)}</b>? Records it matched will fall through to the next configuration in the list.`, 'Delete', true);
+        const ok = await confirmModal('Delete S-Docs Card?', `Delete <b>${esc(c.name)}</b>? Records it matched will fall through to the next S-Docs Card in the list.`, 'Delete', true);
         if (ok) { list.splice(i, 1); renderList(); toast(`“${c.name}” deleted.`); }
       }
     });
@@ -1031,7 +1031,7 @@
     if (!c) return;
     dragComp = c.hasAttribute('data-fb-comp') ? 'flow' : 'lab';
     e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('text/plain', 'S-Docs Documents');
+    e.dataTransfer.setData('text/plain', 'S-Docs Card');
   });
   document.addEventListener('dragover', e => {
     const d = e.target.closest && e.target.closest('[data-lab-drop], [data-fb-drop]');
@@ -1054,7 +1054,7 @@
     $$('.ad-cfg').forEach(x => x.classList.remove('is-dragging', 'drop-before', 'drop-after'));
   });
 
-  /* ---- new configuration / add object ---- */
+  /* ---- new S-Docs Card / add object ---- */
   async function newConfigModal() {
     const draft = { name: '', object: state.object, from: '', pos: 'fallback' };
     const posOpts = () => {
@@ -1067,12 +1067,12 @@
       ];
     };
     const ok = await openModal({
-      title: 'New configuration', draft,
+      title: 'New S-Docs Card', draft,
       render: () => `
         <div class="mf"><label for="nc-name">Name</label><input id="nc-name" data-m="name" value="${esc(draft.name)}" placeholder="e.g. EMEA Contracts"></div>
         <div class="mf"><label for="nc-obj">Object</label>${sel(objOptions(), draft.object, 'id="nc-obj" data-m="object"')}
-          <p class="m-note">Each configuration belongs to one object. If the object already has configurations, it's added just above its Default; you can drag it later.</p></div>`,
-      buttons: [{ label: 'Cancel', value: false }, { label: 'Continue', kind: 'primary', value: true, validate: () => draft.name.trim() ? null : 'Give the configuration a name.' }]
+          <p class="m-note">Each S-Docs Card belongs to one object. If the object already has S-Docs Cards, it's added just above its Default; you can drag it later.</p></div>`,
+      buttons: [{ label: 'Cancel', value: false }, { label: 'Continue', kind: 'primary', value: true, validate: () => draft.name.trim() ? null : 'Give the S-Docs Card a name.' }]
     });
     if (!ok) return;
     let cfg;
@@ -1114,8 +1114,8 @@
       <section class="sf-card ad-header">
         <div class="ad-hicon">${ic('sliders', 20, 2)}</div>
         <div class="ad-htitle">
-          <div class="ad-eyebrow"><a href="#" data-back>Document Configurations</a> › ${esc(OBJ(c.object).label)}${simple ? '' : ` · <button class="ad-link" data-mode="simple">${ic('back', 12, 2.2)} Simple view</button>`}</div>
-          <h1><span id="ad-ed-title">${esc(c.name || 'Untitled configuration')}</span>${statusPill(c.status)}<span class="ad-chip">Priority ${prio} of ${list.length}</span></h1>
+          <div class="ad-eyebrow"><a href="#" data-back>S-Docs Cards</a> › ${esc(OBJ(c.object).label)}${simple ? '' : ` · <button class="ad-link" data-mode="simple">${ic('back', 12, 2.2)} Simple view</button>`}</div>
+          <h1><span id="ad-ed-title">${esc(c.name || 'Untitled S-Docs Card')}</span>${statusPill(c.status)}<span class="ad-chip">Priority ${prio} of ${list.length}</span></h1>
         </div>
         <div class="ad-hactions">
           <button class="ad-btn" data-back>Cancel</button>
@@ -1126,7 +1126,7 @@
         </div>
       </section>
       <div class="ad-editor${simple ? ' is-simple' : ''}">
-        ${simple ? '' : '<nav class="sf-card ad-steps" aria-label="Configuration steps"><ol id="ad-stepper"></ol></nav>'}
+        ${simple ? '' : '<nav class="sf-card ad-steps" aria-label="S-Docs Card steps"><ol id="ad-stepper"></ol></nav>'}
         <section class="${simple ? 'ad-sbody' : 'sf-card ad-body'}" id="ad-body"></section>
         <aside class="ad-preview" id="ad-preview" aria-label="Live preview"></aside>
       </div>`;
@@ -1247,7 +1247,7 @@
       </section>
 
       ${PHASE1 ? '' : `<section class="ad-more">
-        <div><b>Advanced settings</b><span>${adv.length ? 'In use: ' + adv.map(esc).join(' · ') : 'Where it runs, steps before and after generating, prompts, picker style and more. Most configurations don’t need them.'}</span></div>
+        <div><b>Advanced settings</b><span>${adv.length ? 'In use: ' + adv.map(esc).join(' · ') : 'Where it runs, steps before and after generating, prompts, picker style and more. Most S-Docs Cards don’t need them.'}</span></div>
         <button class="ad-btn" data-mode="advanced">${ic('gear', 14)} Advanced settings</button>
       </section>`}`;
   }
@@ -1257,15 +1257,15 @@
     const E = state.edit;
     const list = effectiveList(c.object);
     const ecOnly = c.placements.length === 1 && c.placements[0] === 'experience';
-    return head('Basics & scope', 'Name the configuration and decide where it can run. Scope is checked before any conditions, so it is the cheapest way to narrow things down.') + `
+    return head('Basics & scope', 'Name the S-Docs Card and decide where it can run. Scope is checked before any conditions, so it is the cheapest way to narrow things down.') + `
       <div class="ad-section"><div class="ad-grid2">
         <div class="ad-field"><label for="f-name">Name<span class="ad-req">*</span></label><input id="f-name" class="ad-input" data-f="name" value="${esc(c.name)}" placeholder="e.g. Enterprise Sales"></div>
-        <div class="ad-field"><label for="f-key">Configuration key<span class="ad-req">*</span></label><input id="f-key" class="ad-input mono" data-f="key" value="${esc(c.key)}">
-          <div class="ad-fhint">Developers use this to pin a configuration from their own component. Keep it stable once live.</div></div>
+        <div class="ad-field"><label for="f-key">Card key<span class="ad-req">*</span></label><input id="f-key" class="ad-input mono" data-f="key" value="${esc(c.key)}">
+          <div class="ad-fhint">Developers use this to pin an S-Docs Card from their own component. Keep it stable once live.</div></div>
         <div class="ad-field ad-span2"><label for="f-desc">Description</label><textarea id="f-desc" class="ad-textarea" data-f="desc" placeholder="Who is this for, and who owns it?">${esc(c.desc)}</textarea></div>
         <div class="ad-field"><span class="ad-flabel">Object</span><div class="ad-readonly">${objDot(c.object)} ${esc(OBJ(c.object).label)} <span class="ad-fhint">${ic('lock', 12)} Set when created</span></div></div>
-        <div class="ad-field"><span class="ad-flabel">Priority</span><div class="ad-readonly"><span class="ad-prio">${list.findIndex(x => x.id === c.id) + 1}</span> of ${list.length} ${esc(OBJ(c.object).label)} configurations</div>
-          <div class="ad-fhint">${E.isNew ? 'Placed where you chose. ' : ''}Change the order on the configurations list.</div></div>
+        <div class="ad-field"><span class="ad-flabel">Priority</span><div class="ad-readonly"><span class="ad-prio">${list.findIndex(x => x.id === c.id) + 1}</span> of ${list.length} ${esc(OBJ(c.object).label)} S-Docs Cards</div>
+          <div class="ad-fhint">${E.isNew ? 'Placed where you chose. ' : ''}Change the order on the S-Docs Cards list.</div></div>
       </div></div>
 
       <div class="ad-section"><h3>Where it runs</h3>
@@ -1273,7 +1273,7 @@
         <div class="ad-chipchecks">${PLACEMENTS.map(p => { const on = c.placements.includes(p.k); return `<label class="ad-chipcheck${on ? ' on' : ''}"><input type="checkbox" data-place="${p.k}" ${on ? 'checked' : ''}>${ic(p.icon, 15)} ${esc(p.l)}</label>`; }).join('')}</div>
         <div class="ad-grid2 ad-gap-top">
           <div class="ad-field"><span class="ad-flabel">Active between</span><div class="ad-daterange"><input type="date" class="ad-input" data-f="from" value="${esc(c.from)}" aria-label="Start date"><span>to</span><input type="date" class="ad-input" data-f="to" value="${esc(c.to)}" aria-label="End date"></div>
-            <div class="ad-fhint">Optional. Outside these dates the configuration is skipped.</div></div>
+            <div class="ad-fhint">Optional. Outside these dates the S-Docs Card is skipped.</div></div>
         </div>
       </div>
 
@@ -1287,7 +1287,7 @@
 
   /* -------------------------- step 2: who & when -------------------------- */
   function stepWhen(c) {
-    return head('Who & when', 'Conditions decide whether this configuration applies to the record and the person viewing it. If they fail, S-Docs moves on to the next configuration in the list.') + `
+    return head('Who & when', 'Conditions decide whether this S-Docs Card applies to the record and the person viewing it. If they fail, S-Docs moves on to the next S-Docs Card in the list.') + `
       <div class="ad-section"><h3>Applies when</h3>
         ${seg([['always', 'Always'], ['all', 'All conditions are true'], ['any', 'Any condition is true'], ['custom', 'Custom logic']], c.logic, 'data-logic')}
       </div>
@@ -1339,7 +1339,7 @@
       b = `<textarea class="ad-textarea mono c-value" data-c="formula" rows="2" spellcheck="false" placeholder='AND(Amount > 100000, ISPICKVAL(Type, "New Business"))' aria-label="Formula">${esc(r.formula || '')}</textarea>`;
     } else if (r.subject === 'apex') {
       b = `<select class="ad-select c-value" data-c="cls" aria-label="Apex class">${APEX.condition.map(x => `<option ${x === r.cls ? 'selected' : ''}>${x}</option>`).join('')}</select>` +
-        `<span class="ad-crow-dash">implements <span class="ad-code">SDOC.ConfigCondition</span></span>`;
+        `<span class="ad-crow-dash">implements <span class="ad-code">SDOC.CardCondition</span></span>`;
     } else {
       const ops = opsFor(r, obj);
       b = `<select class="ad-select c-op" data-c="op" aria-label="Operator">${ops.map(o => `<option value="${o}" ${o === r.op ? 'selected' : ''}>${esc(opLabel(o, t))}</option>`).join('')}</select>` + valueControl(r, obj, t);
@@ -1420,7 +1420,7 @@
         ${c.templates.length ? `<div class="ad-table-wrap"><table class="ad-table">
           <thead><tr><th></th><th>Template</th>${grouped ? '<th>Group</th>' : ''}<th class="c-center">Featured</th><th class="c-center">Preselected</th>${auto ? '<th class="c-center">Auto</th>' : ''}<th>Shown when</th><th></th></tr></thead>
           <tbody>${rows}</tbody></table></div>`
-        : `<div class="ad-note warn">${ic('alert', 16)}<div>No templates yet. People who match this configuration would see an empty picker.</div></div>`}
+        : `<div class="ad-note warn">${ic('alert', 16)}<div>No templates yet. People who match this S-Docs Card would see an empty picker.</div></div>`}
         <div class="ad-gap-top"><button class="ad-btn" data-add-tpl>${ic('plus', 15, 2.2)} Add templates</button></div>
       </div>`;
   }
@@ -1495,7 +1495,7 @@
       <div class="ad-section"><h3>After generating</h3>
         <div class="ad-grid2">
           <div class="ad-field"><label for="f-after">Then</label>${sel([['stay', 'Stay on the documents list'], ['preview', 'Open a preview'], ['email', 'Open the email editor'], ['sign', 'Open the signature request']], c.afterGen, 'id="f-after" data-f="afterGen"')}</div>
-          <div class="ad-field"><label for="f-scope">Documents list shows</label>${sel([['config', "Documents from this configuration's templates"], ['all', 'Every S-Docs document on the record']], c.listScope, 'id="f-scope" data-f="listScope"')}</div>
+          <div class="ad-field"><label for="f-scope">Documents list shows</label>${sel([['config', "Documents from this S-Docs Card's templates"], ['all', 'Every S-Docs document on the record']], c.listScope, 'id="f-scope" data-f="listScope"')}</div>
           <div class="ad-field"><span class="ad-flabel">Output</span>${seg([['separate', 'One file per template'], ['combine', 'Combine into one PDF']], c.output, 'data-output')}</div>
           ${c.output === 'combine' ? `<div class="ad-field"><label for="f-cname">Combined file name</label><input id="f-cname" class="ad-input" data-f="combinedName" value="${esc(c.combinedName)}" placeholder="{!Name} – Document Pack"></div>` : '<div></div>'}
         </div>
@@ -1618,7 +1618,7 @@
     const c = state.edit.cfg;
     const draft = clone(s);
     const rows = draft.conditions || [];
-    const sources = () => ['record.Id', ...fieldsOf(c.object).map(f => 'record.' + f.p), ...c.inputs.map(i => 'input.' + i.key), 'context.userId', 'context.configKey', 'context.placement', ...(draft.phase === 'after' ? ['context.documentIds'] : [])];
+    const sources = () => ['record.Id', ...fieldsOf(c.object).map(f => 'record.' + f.p), ...c.inputs.map(i => 'input.' + i.key), 'context.userId', 'context.cardKey', 'context.placement', ...(draft.phase === 'after' ? ['context.documentIds'] : [])];
     const common = () => `
       <div class="mf"><label>Name</label><input data-m="name" value="${esc(draft.name)}"></div>
       <div class="mf"><label>Runs for</label>${sel([['all', 'Every template'], ['some', 'Only selected templates']], draft.appliesTo, 'data-m="appliesTo" data-rr')}
@@ -1723,9 +1723,9 @@
   function validate(c) {
     const out = [];
     const add = (stepI, level, msg) => out.push({ step: stepI, level, msg });
-    if (!String(c.name || '').trim()) add(0, 'err', 'Give the configuration a name.');
+    if (!String(c.name || '').trim()) add(0, 'err', 'Give the S-Docs Card a name.');
     if (!/^[a-z][a-z0-9_]*$/.test(c.key || '')) add(0, 'err', 'The key must start with a letter and use only lowercase letters, numbers and underscores.');
-    else if ((state.configs[c.object] || []).some(x => x.id !== c.id && x.key === c.key)) add(0, 'err', `Another ${OBJ(c.object).label} configuration already uses the key “${c.key}”.`);
+    else if ((state.configs[c.object] || []).some(x => x.id !== c.id && x.key === c.key)) add(0, 'err', `Another ${OBJ(c.object).label} S-Docs Card already uses the key “${c.key}”.`);
     if (c.runAs === 'system' && !(c.placements.length === 1 && c.placements[0] === 'experience')) add(0, 'err', 'Generating as system is only allowed when Experience Cloud is the only place it runs.');
     if (c.from && c.to && c.to < c.from) add(0, 'err', 'The end date is before the start date.');
     if (c.logic !== 'always') {
@@ -1744,8 +1744,8 @@
     c.inputs.forEach(inp => { if (inp.required && !inputSources(c, inp).length) add(4, 'err', `Required input “${inp.key}” has no source. Give it a default, ask for it, or set it from a step.`); });
     const list = effectiveList(c.object);
     const i = list.findIndex(x => x.id === c.id);
-    for (let j = 0; j < i; j++) if (isOpenFallback(list[j])) { add(5, 'warn', `#${j + 1} “${list[j].name}” always matches first, so this configuration will never be used. Move it above “${list[j].name}” on the list.`); break; }
-    if (isOpenScope(c) && i >= 0 && i < list.length - 1) add(5, 'warn', `This configuration always matches, so the ${plural(list.length - 1 - i, 'configuration')} below it will never be used.`);
+    for (let j = 0; j < i; j++) if (isOpenFallback(list[j])) { add(5, 'warn', `#${j + 1} “${list[j].name}” always matches first, so this S-Docs Card will never be used. Move it above “${list[j].name}” on the list.`); break; }
+    if (isOpenScope(c) && i >= 0 && i < list.length - 1) add(5, 'warn', `This S-Docs Card always matches, so the ${plural(list.length - 1 - i, 'S-Docs Card')} below it will never be used.`);
     return out;
   }
   function stepReview(c) {
@@ -1800,7 +1800,7 @@
   }
   async function leaveEditor() {
     if (state.edit && state.edit.dirty) {
-      const ok = await confirmModal('Discard changes?', 'You have unsaved changes to this configuration.', 'Discard changes', true);
+      const ok = await confirmModal('Discard changes?', 'You have unsaved changes to this S-Docs Card.', 'Discard changes', true);
       if (!ok) return;
     }
     state.edit = null;
@@ -1809,7 +1809,7 @@
   }
 
   /* =======================================================================
-     LIVE PREVIEW (the real S-Docs card, driven by a configuration)
+     LIVE PREVIEW (the real S-Docs card, driven by an S-Docs Card)
      ======================================================================= */
   function visibleTemplates(c, rec, user) {
     const shown = [], hidden = [];
@@ -1938,7 +1938,7 @@
       else if (i.defType === 'record') values[i.key] = rec[i.def] != null ? rec[i.def] : '';
       else if (i.defType === 'user') values[i.key] = user.f[i.def] != null ? user.f[i.def] : '';
     });
-    emit('configurationresolved', `${c.key} (#${effectiveList(c.object).findIndex(x => x.id === c.id) + 1})`, c);
+    emit('cardresolved', `${c.key} (#${effectiveList(c.object).findIndex(x => x.id === c.id) + 1})`, c);
 
     for (const s of c.steps.filter(x => x.phase === 'before' && applies(x))) {
       if (s.type === 'validation') {
@@ -1987,7 +1987,7 @@
     const missing = c.inputs.filter(i => i.required && isBlank(values[i.key]));
     if (missing.length) {
       emit('generationblocked', 'missing ' + missing.map(i => i.key).join(', '), c);
-      await openModal({ title: 'Can’t generate yet', render: () => `<div class="ad-validation-box">${ic('alert', 18, 2)}<span>Required input${missing.length > 1 ? 's' : ''} ${missing.map(i => `<b>${esc(i.label)}</b>`).join(', ')} ${missing.length > 1 ? 'have' : 'has'} no value. Nothing in this configuration fills ${missing.length > 1 ? 'them' : 'it'} in for this template.</span></div>`, buttons: [{ label: 'OK', kind: 'primary', value: true }] });
+      await openModal({ title: 'Can’t generate yet', render: () => `<div class="ad-validation-box">${ic('alert', 18, 2)}<span>Required input${missing.length > 1 ? 's' : ''} ${missing.map(i => `<b>${esc(i.label)}</b>`).join(', ')} ${missing.length > 1 ? 'have' : 'has'} no value. Nothing in this S-Docs Card fills ${missing.length > 1 ? 'them' : 'it'} in for this template.</span></div>`, buttons: [{ label: 'OK', kind: 'primary', value: true }] });
       return;
     }
     const shownInputs = Object.keys(values).filter(k => !isBlank(values[k]));
@@ -2056,11 +2056,11 @@
       <section class="sf-card ad-header">
         <div class="ad-hicon">${ic('flask', 20, 2)}</div>
         <div class="ad-htitle">
-          <div class="ad-eyebrow"><a href="#" data-back>${E ? 'Back to ' + esc(E.cfg.name || 'editing') : 'Document Configurations'}</a></div>
-          <h1>Which configuration applies?</h1>
-          <div class="ad-hsub">Pick a record and a person. S-Docs checks configurations from the top and stops at the first match.</div>
+          <div class="ad-eyebrow"><a href="#" data-back>${E ? 'Back to ' + esc(E.cfg.name || 'editing') : 'S-Docs Cards'}</a></div>
+          <h1>Which S-Docs Card applies?</h1>
+          <div class="ad-hsub">Pick a record and a person. S-Docs checks S-Docs Cards from the top and stops at the first match.</div>
         </div>
-        <div class="ad-hactions"><button class="ad-btn" data-back>${ic('back', 14)} ${E ? 'Back to editing' : 'Back to configurations'}</button></div>
+        <div class="ad-hactions"><button class="ad-btn" data-back>${ic('back', 14)} ${E ? 'Back to editing' : 'Back to S-Docs Cards'}</button></div>
       </section>
       ${E ? `<div class="ad-note ad-gap-top">${ic('info', 16)}<div>Testing with your <b>unsaved changes</b> to <b>${esc(E.cfg.name)}</b>${E.cfg.status !== 'Active' ? ` — treated as <b>Active</b> here so you can see where it would land` : ''}.</div></div>` : ''}
       <div class="ad-test">
@@ -2097,7 +2097,7 @@
     const label = { win: 'Wins', fail: 'Conditions not met', skip: 'Skipped', unevaluated: 'Not checked' };
     $('#ad-trace').innerHTML = `
       <div class="ad-trace-head"><h2>Evaluation order</h2>
-        ${w ? `<span class="ad-outcome win">${ic('check', 12, 2.8)} #${w.prio} ${esc(w.cfg.name)} wins</span>` : '<span class="ad-outcome fail">No configuration matches — no templates are shown</span>'}</div>
+        ${w ? `<span class="ad-outcome win">${ic('check', 12, 2.8)} #${w.prio} ${esc(w.cfg.name)} wins</span>` : '<span class="ad-outcome fail">No S-Docs Card matches — no templates are shown</span>'}</div>
       <ol class="ad-trace">${res.trace.map(t => `
         <li class="ad-tr is-${t.outcome}">
           <span class="ad-prio">${t.prio}</span>
@@ -2108,9 +2108,9 @@
             <div class="ad-tr-why">${esc(t.why)}</div>
             ${t.rows && t.rows.length ? `<ul class="ad-tr-rows">${t.rows.map(r => `<li class="${r.pass ? 'pass' : 'fail'}"><span class="mk">${ic(r.pass ? 'check' : 'x', 11, 3)}</span><span><b>${r.n}.</b> ${esc(r.text)} <span class="act">— ${esc(r.actual)}</span></span></li>`).join('')}</ul>${t.cfg.logic === 'custom' ? `<div class="ad-tr-logic">${esc(t.note)}</div>` : ''}` : ''}
           </div>
-        </li>`).join('') || '<li class="ad-empty"><p>No configurations for this object.</p></li>'}</ol>`;
+        </li>`).join('') || '<li class="ad-empty"><p>No S-Docs Cards for this object.</p></li>'}</ol>`;
     renderTestPreview();
-    if (emitResolved) emit('configurationresolved', w ? `${w.cfg.key} (#${w.prio}) for ${user.name} on ${rec.Name}` : `none for ${user.name} on ${rec.Name}`, w && w.cfg);
+    if (emitResolved) emit('cardresolved', w ? `${w.cfg.key} (#${w.prio}) for ${user.name} on ${rec.Name}` : `none for ${user.name} on ${rec.Name}`, w && w.cfg);
   }
   function renderTestPreview() {
     const el = $('#ad-test-pv');
@@ -2118,7 +2118,7 @@
     const { c, rec, user } = pvCtx('test');
     el.innerHTML = `<div class="ad-pv-head"><b>What ${esc(user.name.split(' ')[0])} sees</b>${c ? `<span class="ad-chip">${esc(c.name)}</span>` : ''}</div>` +
       (c ? cardHtml('test', c, rec, user) + (PHASE1 ? '' : flowSummary(c))
-        : `<div class="ad-pv-none"><b>No document options here</b>No configuration matches this record, person and placement, so the component shows an empty state. Add a <b>Default</b> configuration if everyone should get something.</div>`) +
+        : `<div class="ad-pv-none"><b>No document options here</b>No S-Docs Card matches this record, person and placement, so the component shows an empty state. Add a <b>Default</b> S-Docs Card if everyone should get something.</div>`) +
       evLogHtml();
   }
 
@@ -2130,7 +2130,7 @@
     const L = state.lab, obj = L.object;
     const recs = recordsOf(obj), rec = recs[L.rec] || recs[0], user = userById(L.user);
     const res = resolve(state.configs[obj] || [], obj, { rec, user, placement: 'record' });
-    return res.winner ? { c: res.winner.cfg, rec, user, prio: res.winner.prio } : { c: null, rec, user, why: `No configuration matches ${user.name} on ${rec.Name}, so the component shows an empty state.` };
+    return res.winner ? { c: res.winner.cfg, rec, user, prio: res.winner.prio } : { c: null, rec, user, why: `No S-Docs Card matches ${user.name} on ${rec.Name}, so the component shows an empty state.` };
   }
   const labInfo = t => `<span class="lab-i" title="${esc(t)}">${ic('info', 13)}</span>`;
 
@@ -2139,7 +2139,7 @@
     app.innerHTML = `
       <div class="lab">
         <div class="lab-top">
-          <button data-lab-exit aria-label="Back to Document Configurations">${ic('back', 16, 2)}</button>
+          <button data-lab-exit aria-label="Back to S-Docs Cards">${ic('back', 16, 2)}</button>
           <span>${ic('layers', 15)} Lightning App Builder</span>
           <button class="lab-pages" data-lab-pages aria-haspopup="menu">${ic('file', 14)} Pages ${ic('down', 12, 2.4)}</button>
           <span class="lab-page-name">${esc(label)} Record Page</span>
@@ -2171,10 +2171,10 @@
     const L = state.lab, q = lc(L.q);
     const std = ['Accordion', 'Action Launcher', 'Actions & Recommendations', 'Activities', 'Chatter', 'Flow', 'Highlights Panel', 'Path', 'Record Detail', 'Related List - Single', 'Rich Text', 'Tabs'];
     const custom = [
-      `<button class="lab-comp${L.mode === 'new' && L.placed ? ' active' : ''}" draggable="true" data-lab-comp="new"><span class="lab-comp-ic sd">${LOGO}</span>S-Docs Documents<span class="lab-new">2.0</span></button>`,
+      `<button class="lab-comp${L.mode === 'new' && L.placed ? ' active' : ''}" draggable="true" data-lab-comp="new"><span class="lab-comp-ic sd">${LOGO}</span>S-Docs Card<span class="lab-new">2.0</span></button>`,
       `<button class="lab-comp${L.mode === 'legacy' ? ' active' : ''}" data-lab-mode="legacy"><span class="lab-comp-ic sd">${LOGO}</span>Generate Documents (S-Docs)<span class="lab-old">today</span></button>`,
       `<button class="lab-comp${L.mode === 'legacy' ? ' active' : ''}" data-lab-mode="legacy"><span class="lab-comp-ic sd">${LOGO}</span>Documents (S-Docs)<span class="lab-old">today</span></button>`
-    ].filter((h, i) => !q || lc(['S-Docs Documents', 'Generate Documents (S-Docs)', 'Documents (S-Docs)'][i]).includes(q));
+    ].filter((h, i) => !q || lc(['S-Docs Card', 'Generate Documents (S-Docs)', 'Documents (S-Docs)'][i]).includes(q));
     const stdF = std.filter(n => !q || lc(n).includes(q));
     return (custom.length ? `<div class="lab-group">${ic('down', 12, 2.4)} Custom - Managed (${custom.length})</div>${custom.join('')}` : '') +
       (stdF.length ? `<div class="lab-group">${ic('down', 12, 2.4)} Standard (${q ? stdF.length : 62})</div>${stdF.map(n => `<div class="lab-comp lab-comp-std"><span class="lab-comp-ic">${esc(n[0])}</span>${esc(n)}</div>`).join('')}` : '') ||
@@ -2188,13 +2188,13 @@
     const fl = fieldsOf(L.object).filter(f => f.p !== 'Name').slice(0, 4);
     let side;
     if (L.mode === 'new' && !L.placed) {
-      side = '<div class="lab-drop" data-lab-drop><b>Add a component here</b><span>Drag S-Docs Documents from the left, or click it.</span></div>';
+      side = '<div class="lab-drop" data-lab-drop><b>Add a component here</b><span>Drag S-Docs Card from the left, or click it.</span></div>';
     } else if (L.mode === 'new') {
       const empty = `<article class="sd-card"><header class="sd-head">${LOGO}<h2>${esc(L.title || 'S-Docs')}</h2></header><p class="sd-empty">No document options are available here.</p></article>`;
       const card = r.c ? cardHtml('lab', r.c, rec, r.user, { title: L.title }) : empty;
-      side = `<div class="lab-selected"><span class="lab-tag">S-Docs Documents</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>${card}</div>
+      side = `<div class="lab-selected"><span class="lab-tag">S-Docs Card</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>${card}</div>
         <div class="lab-resolved${r.c ? '' : ' warn'}">${ic(r.c ? 'info' : 'alert', 15, 2)}<span>${r.c
-          ? `For <b>${esc(r.user.name)}</b> on <b>${esc(rec.Name)}</b> the first matching configuration is <b>#${r.prio} ${esc(r.c.name)}</b>. Your business admin decides this in S-Docs Document Configurations; there's nothing to set here.`
+          ? `For <b>${esc(r.user.name)}</b> on <b>${esc(rec.Name)}</b> the first matching S-Docs Card is <b>#${r.prio} ${esc(r.c.name)}</b>. Your business admin decides this in S-Docs Cards; there's nothing to set here.`
           : esc(r.why)}</span></div>`;
     } else {
       side = `<div class="lab-selected"><span class="lab-tag">Generate Documents (S-Docs)</span><span class="lab-handle">${ic('sliders', 12, 2)}${ic('trash', 12, 2)}</span><span class="lab-dot t"></span><span class="lab-dot b"></span>
@@ -2227,17 +2227,17 @@
       </div>`;
   }
 
-  // Diagnostics shown under the card for configuration managers who turned Builder details on.
+  // Diagnostics shown under the card for card managers who turned Builder details on.
   function builderDetailsFor(obj, rec, user) {
     const list = state.configs[obj] || [];
     const rowsHtml = rows => rows.length ? `<ul class="ad-tr-rows">${rows.map(x => `<li class="${x.pass ? 'pass' : 'fail'}"><span class="mk">${ic(x.pass ? 'check' : 'x', 11, 3)}</span><span><b>${x.n}.</b> ${esc(x.text)} <span class="act">— ${esc(x.actual)}</span></span></li>`).join('')}</ul>` : '';
     const res = resolve(list, obj, { rec, user, placement: 'record' });
     const w = res.winner;
-    const head = w ? `<b>#${w.prio} ${esc(w.cfg.name)}</b> · first match · ${list.length} checked` : '<b>No configuration matched</b>';
+    const head = w ? `<b>#${w.prio} ${esc(w.cfg.name)}</b> · first match · ${list.length} checked` : '<b>No S-Docs Card matched</b>';
     const body = `<div class="sd-bd-verdict ${w ? 'ok' : 'no'}">${ic(w ? 'check' : 'x', 12, 3)} ${esc(user.name)} on ${esc(rec.Name)}</div>` +
       `<ol class="sd-bd-trace">${res.trace.filter(t => t.outcome !== 'unevaluated').map(t => `<li class="${t.outcome}"><span class="p">${t.prio}</span><span><b>${esc(t.cfg.name)}</b> — ${esc(t.outcome === 'win' ? 'used' : t.outcome === 'skip' ? t.why.replace(/\.$/, '').toLowerCase() : 'conditions not met')}${t.outcome !== 'skip' && t.rows && t.rows.length ? rowsHtml(t.rows) : ''}</span></li>`).join('')}</ol>`;
     return `<details class="sd-builder" open><summary>${ic('flask', 13, 2)} Builder details <span>${head}</span></summary>${body}
-      <div class="sd-bd-foot">${ic('lock', 11, 2)} Only you see this, because you turned on Builder details in Document Configurations.</div></details>`;
+      <div class="sd-bd-foot">${ic('lock', 11, 2)} Only you see this, because you turned on Builder details in S-Docs Cards.</div></details>`;
   }
   function renderLabProps() {
     const el = $('#lab-props');
@@ -2263,10 +2263,10 @@
         <div class="lab-f"><label>Template</label><input type="text" value="Header and Right Sidebar" disabled></div></div>`;
       return;
     }
-    // One design property. Which configuration applies, and everything else, is the business admin's.
-    el.innerHTML = `<div class="lab-crumb"><a href="#">Page</a> › S-Docs Documents</div>
+    // One design property. Which S-Docs Card applies, and everything else, is the business admin's.
+    el.innerHTML = `<div class="lab-crumb"><a href="#">Page</a> › S-Docs Card</div>
       <div class="lab-props-body">
-        <div class="lab-f"><label for="lab-title">Title ${labInfo('Heading shown on the card. Templates and actions come from S-Docs Document Configurations, managed by your business admin.')}</label><input type="text" id="lab-title" data-lab="title" value="${esc(L.title)}"></div>
+        <div class="lab-f"><label for="lab-title">Title ${labInfo('Heading shown on the card. Templates and actions come from S-Docs Cards, managed by your business admin.')}</label><input type="text" id="lab-title" data-lab="title" value="${esc(L.title)}"></div>
         <div class="lab-sec"><div class="lab-sec-h">${ic('down', 12, 2.4)} Set Component Visibility</div><div class="lab-f"><span class="lab-l">Filters</span><button class="sf-btn">+ Add Filter</button></div></div>
       </div>`;
   }
@@ -2371,19 +2371,19 @@
     const F = state.flow, rec = recordsOf('Opportunity')[FLOW_REC], user = userById(FLOW_USER);
     if (!F.recordId) return { c: null, rec, user, why: 'S-Docs needs a record. Set Record ID to {!recordId} on the component.' };
     const r = resolve(state.configs.Opportunity || [], 'Opportunity', { rec, user, placement: 'flow' });
-    return r.winner ? { c: r.winner.cfg, rec, user } : { c: null, rec, user, why: 'No configuration matches.' };
+    return r.winner ? { c: r.winner.cfg, rec, user } : { c: null, rec, user, why: 'No S-Docs Card matches.' };
   }
   const FB_COMPONENTS = [
     { g: 'Input', items: ['Checkbox', 'Currency', 'Date', 'Lookup', 'Number', 'Picklist', 'Text'] },
     { g: 'Display', items: ['Display Image', 'Display Text', 'Section'] },
-    { g: 'Custom (Managed)', items: ['S-Docs Documents'] }
+    { g: 'Custom (Managed)', items: ['S-Docs Card'] }
   ];
   function renderFlow() {
     const F = state.flow;
     app.innerHTML = `
       <div class="fb">
         <div class="fb-top">
-          <button data-fb-exit aria-label="Back to Document Configurations">${ic('back', 16, 2)}</button>
+          <button data-fb-exit aria-label="Back to S-Docs Cards">${ic('back', 16, 2)}</button>
           <span class="fb-brand">${ic('layers', 15)} Flow Builder</span>
           <span class="fb-name">Close the Deal Paperwork <small>Screen Flow · Version 1 · ${F.saved ? 'Saved' : 'Unsaved changes'}</small></span>
           <span class="fb-top-r"><button class="sf-btn" data-fb-debug>Debug</button><button class="sf-btn">Save As New Version</button><button class="sf-btn sf-btn-brand" data-fb-save>Save</button><button class="sf-btn">Activate</button></span>
@@ -2400,7 +2400,7 @@
           <main class="fb-canvas"><div class="fb-flow">
             <div class="fb-node"><span class="fb-ico start">${ic('flag', 15, 2)}</span><div><b>Screen Flow</b><small>Start · launched from an Opportunity button</small></div></div>
             <div class="fb-line"></div>
-            <button class="fb-node is-el" data-fb-open><span class="fb-ico screen">${ic('flowscreen', 15, 2)}</span><div><b>Generate paperwork</b><small>Screen${F.added ? ' · S-Docs Documents' : ' · empty'}</small></div></button>
+            <button class="fb-node is-el" data-fb-open><span class="fb-ico screen">${ic('flowscreen', 15, 2)}</span><div><b>Generate paperwork</b><small>Screen${F.added ? ' · S-Docs Card' : ' · empty'}</small></div></button>
             <div class="fb-line"></div>
             <div class="fb-node"><span class="fb-ico end">${ic('x', 13, 3)}</span><div><b>End</b></div></div>
           </div></main>
@@ -2414,8 +2414,8 @@
     return FB_COMPONENTS.map(g => {
       const items = g.items.filter(n => !q || lc(n).includes(q));
       if (!items.length) return '';
-      return `<div class="lab-group">${ic('down', 12, 2.4)} ${esc(g.g)}</div>` + items.map(n => n === 'S-Docs Documents'
-        ? `<button class="lab-comp" draggable="true" data-fb-comp><span class="lab-comp-ic sd">${LOGO}</span>S-Docs Documents</button>`
+      return `<div class="lab-group">${ic('down', 12, 2.4)} ${esc(g.g)}</div>` + items.map(n => n === 'S-Docs Card'
+        ? `<button class="lab-comp" draggable="true" data-fb-comp><span class="lab-comp-ic sd">${LOGO}</span>S-Docs Card</button>`
         : `<div class="lab-comp lab-comp-std"><span class="lab-comp-ic">${esc(n[0])}</span>${esc(n)}</div>`).join('');
     }).join('') || '<p class="lab-hint fb-pad">No components match.</p>';
   }
@@ -2423,7 +2423,7 @@
     const F = state.flow;
     const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`;
     const props = F.added ? `
-        <div class="fb-props-h">S-Docs Documents</div>
+        <div class="fb-props-h">S-Docs Card</div>
         <div class="lab-f"><label>API Name</label><input type="text" value="sdocsDocuments" disabled></div>
         <div class="lab-f"><label for="fb-rid">Record ID <span class="ad-req">*</span> ${labInfo('Screen flows don’t pass a record automatically. Map the flow’s recordId variable here.')}</label>
           <div class="lab-search-input"><input type="text" id="fb-rid" data-fb="recordId" value="${esc(F.recordId)}" placeholder="Search resources...">${ic('search', 15, 2)}</div>
@@ -2445,8 +2445,8 @@
         <section class="fb-sed-canvas"><div class="fb-screen">
           <div class="fb-screen-h">Generate paperwork</div>
           <div class="fb-screen-b">${F.added
-            ? `<div class="lab-selected fb-sel"><span class="lab-tag">S-Docs Documents</span><div class="fb-ph">${LOGO}<div><b>${esc(F.title || 'S-Docs')}</b><small>Record: ${esc(F.recordId || 'not set')} · Configuration: first match, set by your business admin</small><small>The card renders when the flow runs.</small></div></div></div>`
-            : '<div class="lab-drop" data-fb-drop><b>Add a component here</b><span>Drag S-Docs Documents from the left, or click it.</span></div>'}</div>
+            ? `<div class="lab-selected fb-sel"><span class="lab-tag">S-Docs Card</span><div class="fb-ph">${LOGO}<div><b>${esc(F.title || 'S-Docs')}</b><small>Record: ${esc(F.recordId || 'not set')} · S-Docs Card: first match, set by your business admin</small><small>The card renders when the flow runs.</small></div></div></div>`
+            : '<div class="lab-drop" data-fb-drop><b>Add a component here</b><span>Drag S-Docs Card from the left, or click it.</span></div>'}</div>
           <div class="fb-screen-f"><span class="fb-fbtn">Previous</span><span class="fb-fbtn primary">Next</span></div>
         </div></section>
         <aside class="fb-sed-props">${props}</aside>
@@ -2510,8 +2510,8 @@
     if (nav && tabs) {
       const sales = v === 'record';
       nav.textContent = sales ? 'Sales' : 'S-Docs';
-      const list = sales ? ['Home', 'Accounts', 'Opportunities', 'Contacts', 'Reports'] : ['Home', 'S-Docs Templates', 'Documents', 'Document Configurations', 'Settings'];
-      const act = sales ? 'Opportunities' : 'Document Configurations';
+      const list = sales ? ['Home', 'Accounts', 'Opportunities', 'Contacts', 'Reports'] : ['Home', 'S-Docs Templates', 'Documents', 'S-Docs Cards', 'Settings'];
+      const act = sales ? 'Opportunities' : 'S-Docs Cards';
       tabs.innerHTML = list.map(t => `<div class="nav-tab${t === act ? ' active' : ''}">${esc(t)}</div>`).join('');
     }
     const chip = $('#persona-chip'), P_ = state.persona;
@@ -2579,7 +2579,7 @@
     flowSet(k, v) { state.flow[k] = v; if (k === 'q') { const pl = $('#fb-pal'); if (pl) pl.innerHTML = flowPaletteHtml(); } else renderFlow(); },
     flowOpen() { state.flow.open = true; renderFlow(); },
     flowAdd: () => { state.flow.open = true; flowAdd(); },
-    flowDone() { const F = state.flow; if (F.added && !F.recordId) { toast('Record ID is required on S-Docs Documents.', 'err'); return; } F.open = false; renderFlow(); },
+    flowDone() { const F = state.flow; if (F.added && !F.recordId) { toast('Record ID is required on S-Docs Card.', 'err'); return; } F.open = false; renderFlow(); },
     flowDebug() { const F = state.flow; F.open = false; F.debug = true; F.runDone = false; state.pv.flowrun = null; renderFlow(); },
     flowNext() { state.flow.runDone = true; renderFlow(); }
   };
@@ -2676,12 +2676,12 @@
     if ((el = q('[data-fb-exit]'))) { state.view = 'list'; render(); return; }
     if ((el = q('[data-fb-open]'))) { window.LWC2.flowOpen(); return; }
     if ((el = q('[data-fb-comp]'))) { if (!state.flow.added) flowAdd(); return; }
-    if ((el = q('[data-fb-drop]'))) { toast('Drag S-Docs Documents here from the components list, or click it there.', 'info'); return; }
+    if ((el = q('[data-fb-drop]'))) { toast('Drag S-Docs Card here from the components list, or click it there.', 'info'); return; }
     if ((el = q('[data-fb-res]'))) { state.flow.recordId = el.dataset.fbRes; renderFlow(); return; }
     if ((el = q('[data-fb-close]'))) { state.flow.open = false; renderFlow(); return; }
     if ((el = q('[data-fb-done]'))) { window.LWC2.flowDone(); return; }
     if ((el = q('[data-fb-save]'))) { state.flow.saved = true; renderFlow(); toast('Flow saved.'); return; }
-    if ((el = q('[data-fb-debug]'))) { if (!state.flow.added) { toast('Add S-Docs Documents to the screen first.', 'info'); return; } window.LWC2.flowDebug(); return; }
+    if ((el = q('[data-fb-debug]'))) { if (!state.flow.added) { toast('Add S-Docs Card to the screen first.', 'info'); return; } window.LWC2.flowDebug(); return; }
     if ((el = q('[data-fb-close-debug]'))) { state.flow.debug = false; renderFlow(); return; }
     if ((el = q('[data-fb-next]'))) { window.LWC2.flowNext(); return; }
 
@@ -2691,7 +2691,7 @@
     if ((el = q('[data-lab-mode]'))) { state.lab.mode = el.dataset.labMode; renderLab(); return; }
     if ((el = q('[data-lab-save]'))) { window.LWC2.labSave(); return; }
     if ((el = q('[data-lab-comp]'))) { if (!state.lab.placed) window.LWC2.labPlace(); else { state.lab.mode = 'new'; renderLab(); } return; }
-    if ((el = q('[data-lab-drop]'))) { toast('Drag S-Docs Documents here from the Components list, or click it there.', 'info'); return; }
+    if ((el = q('[data-lab-drop]'))) { toast('Drag S-Docs Card here from the Components list, or click it there.', 'info'); return; }
     if ((el = q('[data-lab-pages]'))) {
       e.stopPropagation();
       if (menuAnchor === el) { closeMenu(); return; }
@@ -2787,7 +2787,7 @@
     c[f] = v;
     if (f === 'name') {
       if (!state.edit.keyTouched && state.edit.isNew) { c.key = uniqueKey(c.object, slug(v) || 'config'); const k = $('#f-key'); if (k) k.value = c.key; }
-      const tt = $('#ad-ed-title'); if (tt) tt.textContent = v || 'Untitled configuration';
+      const tt = $('#ad-ed-title'); if (tt) tt.textContent = v || 'Untitled S-Docs Card';
     }
     markDirty();
     if (f === 'customLogic') updateWhenLive();
@@ -2855,7 +2855,7 @@
       if (!isChange) return;
       state.builderDetails = el.checked;
       renderList();
-      toast(el.checked ? 'Builder details are on. You’ll see why each configuration applies under the S-Docs card on record pages; nobody else will.' : 'Builder details are off.', 'info');
+      toast(el.checked ? 'Builder details are on. You’ll see why each S-Docs Card applies under the S-Docs Card on record pages; nobody else will.' : 'Builder details are off.', 'info');
       return;
     }
     if (el.hasAttribute && el.hasAttribute('data-lab-search')) { if (!isChange) { state.lab.q = el.value; const pl = $('#lab-pal'); if (pl) pl.innerHTML = labPaletteHtml(); } return; }

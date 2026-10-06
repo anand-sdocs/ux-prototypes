@@ -1,4 +1,4 @@
-# S-Docs LWC 2.0 — Configuration Data Model
+# S-Docs LWC 2.0 — S-Docs Card Data Model
 
 **Status:** Draft for review · **Author:** Anand Narasimhan · **Date:** 2026-10-01
 
@@ -11,32 +11,32 @@ This document defines the data a **business admin** manages to control what the 
 | Goal | How the model serves it |
 |---|---|
 | Business admins configure, not Salesforce admins | Everything is **data in custom objects**, edited through an S-Docs wizard. No App Builder, no metadata deploys. |
-| Different setups per record / user | A **Configuration** has **conditions** on record fields, parent fields, the running user, groups and permission sets, formulas, or Apex. |
-| Ordering when several match | Configurations are **ordered per object; first match wins**. |
-| Embeddable in LWCs and screen flows | The same component works on record pages, inside custom LWCs and on flow screens, and picks the first matching Configuration in each. Later phases add **scoping to a placement** (record page, Experience Cloud, screen flow, embedded). |
-| Point-and-click action control | Each Configuration lists its **end-user actions** (preview, edit, sign, delete …) with simple per-action settings. |
+| Different setups per record / user | A **S-Docs Card** has **conditions** on record fields, parent fields, the running user, groups and permission sets, formulas, or Apex. |
+| Ordering when several match | S-Docs Cards are **ordered per object; first match wins**. |
+| Embeddable in LWCs and screen flows | The same component works on record pages, inside custom LWCs and on flow screens, and picks the first matching S-Docs Card in each. Later phases add **scoping to a placement** (record page, Experience Cloud, screen flow, embedded). |
+| Point-and-click action control | Each S-Docs Card lists its **end-user actions** (preview, edit, sign, delete …) with simple per-action settings. |
 | Pre-generation actions that feed generation | **Before-generate steps** (validation, user prompt, Apex, Flow) write into declared **generation inputs** that templates merge. |
-| Lifecycle events | The component emits a fixed event catalog on DOM events, Lightning Message Service, and Flow outputs. Platform events are opt-in per Configuration. |
+| Lifecycle events | The component emits a fixed event catalog on DOM events, Lightning Message Service, and Flow outputs. Platform events are opt-in per S-Docs Card. |
 
 ---
 
 ## 1a. Phase 1 (MVP) scope
 
-Decided 2026-10-02. Phase 1 keeps a Configuration to three things: **when to show**, **which templates** and **which actions**. Everything else in this document is parked for a later phase, not discarded.
+Decided 2026-10-02. Phase 1 keeps an S-Docs Card to three things: **when to show**, **which templates** and **which actions**. Everything else in this document is parked for a later phase, not discarded.
 
 | | In Phase 1 | Later phases |
 |---|---|---|
-| **Configuration** | `Name`, `Config_Key__c`, `Description__c`, `Object_API_Name__c`, `Status__c`, `Evaluation_Order__c`, `Condition_Logic__c` (no conditions = always; otherwise all / any / custom), `Custom_Logic__c` | Placements, active dates, run as system, picker style, multi-select / favorites / regenerate, auto-generate, after-generate behavior, combined output, document-list scope, platform-event opt-in |
+| **S-Docs Card** | `Name`, `Card_Key__c`, `Description__c`, `Object_API_Name__c`, `Status__c`, `Evaluation_Order__c`, `Condition_Logic__c` (no conditions = always; otherwise all / any / custom), `Custom_Logic__c` | Placements, active dates, run as system, picker style, multi-select / favorites / regenerate, auto-generate, after-generate behavior, combined output, document-list scope, platform-event opt-in |
 | **Conditions** | Record and parent-record fields, user fields, profile, role, permission set, custom permission, public group | Formula and Apex conditions, template visibility rules, validation-step rules |
 | **Templates** | `Template__c`, `Row_Key__c`, `Sort_Order__c` | Featured, preselected, auto-generate, group label, display overrides |
 | **Actions** | `Action__c`, `Enabled__c`. The component decides where an action shows: actions that work on several documents (Download, Email, Request signature, Refresh, Delete) appear on the toolbar and on each document; the rest appear on each document only. | `Surface__c`, `Allowed_For__c`, `Confirm__c`, `Settings__c` |
-| **Not in Phase 1** | — | `Doc_Config_Step__c` (before/after steps), `Doc_Config_Input__c` (generation inputs), `Doc_User_Preference__c` |
+| **Not in Phase 1** | — | `SDocs_Card_Step__c` (before/after steps), `SDocs_Card_Input__c` (generation inputs), `Doc_User_Preference__c` |
 
-**Lightning App Builder (Phase 1):** one design property, **Title**. The component always uses the first matching Configuration by priority, so the Salesforce admin drops it on the page, gives it a title, and the business admin manages everything else. The same applies on flow screens, where the component adds a required **Record ID** input and output values.
+**Lightning App Builder (Phase 1):** one design property, **Title**. The component always uses the first matching S-Docs Card by priority, so the Salesforce admin drops it on the page, gives it a title, and the business admin manages everything else. The same applies on flow screens, where the component adds a required **Record ID** input and output values.
 
-**Builder details (Phase 1):** the business admin's troubleshooting switch on the Document Configurations page. When it's on, the S-Docs card on record pages shows, under the card, which Configuration was used, why higher-priority ones were skipped, and each condition marked pass or fail with its actual value.
+**Builder details (Phase 1):** the business admin's troubleshooting switch on the S-Docs Cards page. When it's on, the S-Docs Card on record pages shows, under the card, which S-Docs Card was used, why higher-priority ones were skipped, and each condition marked pass or fail with its actual value.
 - The switch is **per person**, so one admin's troubleshooting doesn't change what other admins see.
-- Only users with the `SDocs_Configuration_Manager` custom permission can turn it on or see the details. Reps never see them.
+- Only users with the `SDocs_Card_Manager` custom permission can turn it on or see the details. Reps never see them.
 - It replaces a "Mode" design property: there's no supported way for a component to know it's on the App Builder canvas, and troubleshooting belongs to the business admin anyway.
 
 Still in Phase 1, because it belongs to the component rather than the admin: the lifecycle events (§6).
@@ -45,7 +45,7 @@ Still in Phase 1, because it belongs to the component rather than the admin: the
 
 | Term | Meaning |
 |---|---|
-| **Configuration** | A named, ordered rule: *"for this object, in these placements, when these conditions are true, offer these templates and actions and run these steps."* |
+| **S-Docs Card** | A named, ordered rule: *"for this object, in these placements, when these conditions are true, offer these templates and actions and run these steps."* |
 | **Scope** | The cheap, structural filter checked first: object, placement type, active dates. |
 | **Condition** | One numbered criteria row. Rows combine with *All*, *Any*, or custom logic such as `1 AND (2 OR 3)`. |
 | **Placement** | Where the component is running: Record Page, Experience Cloud, Screen Flow, or Embedded LWC. |
@@ -59,19 +59,19 @@ Still in Phase 1, because it belongs to the component rather than the admin: the
 
 ```mermaid
 erDiagram
-    Doc_Configuration__c ||--o{ Doc_Config_Condition__c : "is matched by"
-    Doc_Configuration__c ||--o{ Doc_Config_Template__c : "offers"
-    Doc_Configuration__c ||--o{ Doc_Config_Action__c : "enables"
-    Doc_Configuration__c ||--o{ Doc_Config_Step__c : "runs"
-    Doc_Configuration__c ||--o{ Doc_Config_Input__c : "declares"
-    Doc_Config_Step__c ||--o{ Doc_Config_Condition__c : "validates with"
-    Doc_Config_Template__c ||--o{ Doc_Config_Condition__c : "is shown when"
-    Doc_Config_Step__c ||--o{ Doc_Config_Input__c : "prompts for"
-    Doc_Config_Template__c }o--|| S_Docs_Template : "references"
+    SDocs_Card__c ||--o{ SDocs_Card_Condition__c : "is matched by"
+    SDocs_Card__c ||--o{ SDocs_Card_Template__c : "offers"
+    SDocs_Card__c ||--o{ SDocs_Card_Action__c : "enables"
+    SDocs_Card__c ||--o{ SDocs_Card_Step__c : "runs"
+    SDocs_Card__c ||--o{ SDocs_Card_Input__c : "declares"
+    SDocs_Card_Step__c ||--o{ SDocs_Card_Condition__c : "validates with"
+    SDocs_Card_Template__c ||--o{ SDocs_Card_Condition__c : "is shown when"
+    SDocs_Card_Step__c ||--o{ SDocs_Card_Input__c : "prompts for"
+    SDocs_Card_Template__c }o--|| S_Docs_Template : "references"
     User ||--o{ Doc_User_Preference__c : "has"
 
-    Doc_Configuration__c {
-        Text Config_Key__c "unique, external id"
+    SDocs_Card__c {
+        Text Card_Key__c "unique, external id"
         Text Object_API_Name__c
         Picklist Status__c "Draft / Active / Inactive"
         Number Evaluation_Order__c
@@ -79,7 +79,7 @@ erDiagram
         Picklist Condition_Logic__c
         Text Custom_Logic__c
     }
-    Doc_Config_Condition__c {
+    SDocs_Card_Condition__c {
         Number Row_Number__c
         Picklist Subject__c
         Text Field_Path__c
@@ -87,21 +87,21 @@ erDiagram
         Picklist Value_Type__c
         Text Value__c
     }
-    Doc_Config_Template__c {
+    SDocs_Card_Template__c {
         Lookup Template__c
         Text Row_Key__c
         Number Sort_Order__c
         Checkbox Featured__c
         Checkbox Auto_Generate__c
     }
-    Doc_Config_Action__c {
+    SDocs_Card_Action__c {
         Picklist Action__c
         Checkbox Enabled__c
         Picklist Surface__c
         Picklist Allowed_For__c
         LongText Settings__c "JSON"
     }
-    Doc_Config_Step__c {
+    SDocs_Card_Step__c {
         Picklist Phase__c "Before / After"
         Picklist Step_Type__c
         Number Sort_Order__c
@@ -109,7 +109,7 @@ erDiagram
         Text Flow_API_Name__c
         Picklist On_Error__c
     }
-    Doc_Config_Input__c {
+    SDocs_Card_Input__c {
         Text Input_Key__c
         Picklist Data_Type__c
         Checkbox Required__c
@@ -117,7 +117,7 @@ erDiagram
     }
 ```
 
-Seven objects: five configuration children under one parent, plus one small per-user runtime object. Every child uses a **master-detail** to `Doc_Configuration__c`, so a Configuration is cloned, exported, deleted and secured as one unit.
+Seven objects: five S-Docs Card children under one parent, plus one small per-user runtime object. Every child uses a **master-detail** to `SDocs_Card__c`, so an S-Docs Card is cloned, exported, deleted and secured as one unit.
 
 ---
 
@@ -125,17 +125,17 @@ Seven objects: five configuration children under one parent, plus one small per-
 
 > Names use the `SDOC__` namespace at runtime and are shown without it here. Picklists are restricted unless noted.
 
-### 4.1 `Doc_Configuration__c` — Configuration
+### 4.1 `SDocs_Card__c` — S-Docs Card
 
 **Identity and scope**
 
 | Field | Type | Notes |
 |---|---|---|
 | `Name` | Text(80) | Label shown to admins, e.g. *Enterprise Sales — Proposals*. |
-| `Config_Key__c` | Text(80), unique, external ID | Developer name, e.g. `opp_enterprise_sales`. Promotion between orgs matches on it, and it identifies the Configuration in lifecycle events. |
+| `Card_Key__c` | Text(80), unique, external ID | Developer name, e.g. `opp_enterprise_sales`. Promotion between orgs matches on it, and it identifies the S-Docs Card in lifecycle events. |
 | `Description__c` | Long text(2000) | Why this exists and who owns it. |
 | `Object_API_Name__c` | Text(255), required | Base object, e.g. `Opportunity`. |
-| `Status__c` | Draft · Active · Inactive | Only **Active** Configurations are evaluated. Draft ones can still be run in the wizard's *Test* view. |
+| `Status__c` | Draft · Active · Inactive | Only **Active** S-Docs Cards are evaluated. Draft ones can still be run in the wizard's *Test* view. |
 | `Evaluation_Order__c` | Number(4,0), required | Lower is evaluated first. Unique per `Object_API_Name__c`; the wizard re-sequences when rows are dragged. |
 | `Placement_Types__c` | Multi-select: Record Page · Experience Cloud · Screen Flow · Embedded | Blank = any placement. |
 | `Effective_From__c` / `Effective_To__c` | Date | Optional window, for seasonal or pilot setups. |
@@ -144,14 +144,14 @@ Seven objects: five configuration children under one parent, plus one small per-
 
 | Field | Type | Notes |
 |---|---|---|
-| `Condition_Logic__c` | Always · All · Any · Custom | *Always* ignores condition rows. Use it for the fallback Configuration at the bottom of the order. |
+| `Condition_Logic__c` | Always · All · Any · Custom | *Always* ignores condition rows. Use it for the fallback S-Docs Card at the bottom of the order. |
 | `Custom_Logic__c` | Text(255) | e.g. `1 AND (2 OR 3) AND NOT 4`. Validated on save against the existing row numbers. |
 
 **Template picker behavior**
 
 | Field | Type | Notes |
 |---|---|---|
-| `Picker_Style__c` | Flat list · Favorites · Grouped | *Favorites* shows featured and user-starred templates on top. *Grouped* uses `Doc_Config_Template__c.Group_Label__c`. |
+| `Picker_Style__c` | Flat list · Favorites · Grouped | *Favorites* shows featured and user-starred templates on top. *Grouped* uses `SDocs_Card_Template__c.Group_Label__c`. |
 | `Allow_Multi_Select__c` | Checkbox | Pick and generate several templates at once. |
 | `Allow_User_Favorites__c` | Checkbox | Users can star templates (stored in `Doc_User_Preference__c`). |
 | `Allow_Regenerate__c` | Checkbox | Allow generating a template that already has a document on this record. |
@@ -170,7 +170,7 @@ Seven objects: five configuration children under one parent, plus one small per-
 
 | Field | Type | Notes |
 |---|---|---|
-| `Document_List_Scope__c` | This configuration's templates · All documents on the record | What the documents list shows. |
+| `Document_List_Scope__c` | This S-Docs Card's templates · All documents on the record | What the documents list shows. |
 | `Max_Documents_Shown__c` | Number | Default 10, with *View all*. |
 
 **Events and housekeeping**
@@ -178,23 +178,23 @@ Seven objects: five configuration children under one parent, plus one small per-
 | Field | Type | Notes |
 |---|---|---|
 | `Publish_Platform_Events__c` | Checkbox | DOM, LMS and Flow events always fire; platform events are opt-in because they cost org limits. |
-| `Revision__c` | Number | Incremented on every save of the Configuration or a child. Used for cache invalidation and as a "changed since tested" signal. |
+| `Revision__c` | Number | Incremented on every save of the S-Docs Card or a child. Used for cache invalidation and as a "changed since tested" signal. |
 | `Last_Tested_On__c` / `Last_Tested_Record__c` | DateTime / Text(18) | Set by the wizard's *Test* view. |
 
-### 4.2 `Doc_Config_Condition__c` — Condition row
+### 4.2 `SDocs_Card_Condition__c` — Condition row
 
 A single criteria row, used in three places through one builder UI:
 
-- the **Configuration's** match conditions,
+- the **S-Docs Card's** match conditions,
 - a **template's** visibility rule ("show Change Order only when Stage = Closed Won"),
 - a **validation step's** rule.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Configuration__c` | Master-detail | Always set. |
-| `Step__c` | Lookup → `Doc_Config_Step__c` | Set when the row belongs to a validation step. |
-| `Config_Template__c` | Lookup → `Doc_Config_Template__c` | Set when the row is a template visibility rule. |
-| `Row_Number__c` | Number(3,0) | 1…n within its owner (Configuration, step or template). |
+| `Card__c` | Master-detail | Always set. |
+| `Step__c` | Lookup → `SDocs_Card_Step__c` | Set when the row belongs to a validation step. |
+| `Card_Template__c` | Lookup → `SDocs_Card_Template__c` | Set when the row is a template visibility rule. |
+| `Row_Number__c` | Number(3,0) | 1…n within its owner (S-Docs Card, step or template). |
 | `Subject__c` | Record · Running User · Profile · Role · Permission Set · Custom Permission · Public Group · Formula · Apex | What is being tested. |
 | `Field_Path__c` | Text(255) | For *Record*: `StageName`, `Account.Industry` (up to 5 relationship hops). For *Running User*: `Department`, `Manager.Region__c`. |
 | `Operator__c` | equals · not equals · less than · greater than · ≤ · ≥ · contains · does not contain · starts with · is one of · is not one of · is blank · is not blank · is member of · is not member of · has · does not have | The wizard offers only the operators valid for the field type and subject. |
@@ -206,16 +206,16 @@ A single criteria row, used in three places through one builder UI:
 
 **Evaluation rules**
 
-- Rows owned by one parent combine using that parent's `Condition_Logic__c` / `Custom_Logic__c`. Configurations and validation steps carry these two fields. Template visibility rows always use *All*, which keeps the template level simple.
+- Rows owned by one parent combine using that parent's `Condition_Logic__c` / `Custom_Logic__c`. S-Docs Cards and validation steps carry these two fields. Template visibility rows always use *All*, which keeps the template level simple.
 - *Formula* and *Apex* rows are ordinary rows. They compose with the others, so `1 AND 2 AND 3` can mix a field check, a permission set check and an Apex check.
 
-### 4.3 `Doc_Config_Template__c` — Template offered
+### 4.3 `SDocs_Card_Template__c` — Template offered
 
 | Field | Type | Notes |
 |---|---|---|
-| `Configuration__c` | Master-detail | |
-| `Template__c` | Lookup → S-Docs template | Must match the Configuration's object; validated on save. |
-| `Row_Key__c` | Text(40) | Short key unique within the Configuration, e.g. `nda`. Steps and inputs refer to templates by this key so references survive export and import. |
+| `Card__c` | Master-detail | |
+| `Template__c` | Lookup → S-Docs template | Must match the S-Docs Card's object; validated on save. |
+| `Row_Key__c` | Text(40) | Short key unique within the S-Docs Card, e.g. `nda`. Steps and inputs refer to templates by this key so references survive export and import. |
 | `Sort_Order__c` | Number | |
 | `Display_Name__c` / `Help_Text__c` | Text(255) / Text(255) | Optional overrides for the picker. |
 | `Group_Label__c` | Text(80) | Used when `Picker_Style__c = Grouped`, e.g. *Contracts*. |
@@ -223,16 +223,16 @@ A single criteria row, used in three places through one builder UI:
 | `Preselected__c` | Checkbox | Checked by default when the picker opens. |
 | `Auto_Generate__c` | Checkbox | Generated automatically according to `Auto_Generate_Policy__c`. |
 
-Visibility rules for one template are `Doc_Config_Condition__c` rows with `Config_Template__c` set. No rows means always shown.
+Visibility rules for one template are `SDocs_Card_Condition__c` rows with `Card_Template__c` set. No rows means always shown.
 
-### 4.4 `Doc_Config_Action__c` — End-user action
+### 4.4 `SDocs_Card_Action__c` — End-user action
 
-The wizard creates one row per action type when a Configuration is created, so "what is turned off" is explicit and visible.
+The wizard creates one row per action type when an S-Docs Card is created, so "what is turned off" is explicit and visible.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Configuration__c` | Master-detail | |
-| `Action__c` | Preview · Download · Edit · Refresh · Versions · Delete · Email · Request Signature · Sign In Person | Unique per Configuration. |
+| `Card__c` | Master-detail | |
+| `Action__c` | Preview · Download · Edit · Refresh · Versions · Delete · Email · Request Signature · Sign In Person | Unique per S-Docs Card. |
 | `Enabled__c` | Checkbox | |
 | `Surface__c` | Toolbar and row menu · Row menu only · Toolbar only | Toolbar actions work on the multi-selection. |
 | `Sort_Order__c` | Number | |
@@ -253,17 +253,17 @@ The wizard creates one row per action type when a Configuration is created, so "
 | Delete | `alsoDeleteFile` |
 | Preview / Refresh / Versions | none in v1 |
 
-### 4.5 `Doc_Config_Step__c` — Before- and after-generation step
+### 4.5 `SDocs_Card_Step__c` — Before- and after-generation step
 
 | Field | Type | Notes |
 |---|---|---|
-| `Configuration__c` | Master-detail | |
+| `Card__c` | Master-detail | |
 | `Name` | Text(80) | e.g. *Check close date*, *Ask for discount*. |
 | `Phase__c` | Before Generate · After Generate | |
 | `Step_Type__c` | Validation · User Prompt · Apex · Flow | *After Generate* allows Apex and Flow only. |
 | `Sort_Order__c` | Number | Steps run in order within a phase. |
 | `Applies_To__c` | All templates · Selected templates | |
-| `Template_Keys__c` | Text(255) | Semicolon list of `Doc_Config_Template__c.Row_Key__c`. |
+| `Template_Keys__c` | Text(255) | Semicolon list of `SDocs_Card_Template__c.Row_Key__c`. |
 | `On_Error__c` | Stop generation · Warn and continue · Continue silently | What happens if the step fails. A validation that *fails* stops or warns according to `Severity__c` instead. |
 | `Run_Mode__c` | Synchronous · Asynchronous | *After Generate* only. Async steps run in a queueable and report back through events. |
 
@@ -271,7 +271,7 @@ The wizard creates one row per action type when a Configuration is created, so "
 
 | Field | Type | Notes |
 |---|---|---|
-| `Condition_Logic__c` / `Custom_Logic__c` | as on Configuration | The condition that must be **true** for generation to proceed. Rows are `Doc_Config_Condition__c` with `Step__c` set. |
+| `Condition_Logic__c` / `Custom_Logic__c` | as on S-Docs Card | The condition that must be **true** for generation to proceed. Rows are `SDocs_Card_Condition__c` with `Step__c` set. |
 | `Error_Message__c` | Text(255) | Merge fields allowed, e.g. *Set a Close Date on {!Name} before generating a proposal.* |
 | `Severity__c` | Block · Warn | *Warn* lets the user continue after acknowledging. |
 
@@ -281,7 +281,7 @@ The wizard creates one row per action type when a Configuration is created, so "
 |---|---|---|
 | `Prompt_Title__c` / `Prompt_Intro__c` | Text(80) / Text(255) | Modal heading and helper text. |
 
-The prompted fields are the `Doc_Config_Input__c` rows whose `Prompt_Step__c` points at this step.
+The prompted fields are the `SDocs_Card_Input__c` rows whose `Prompt_Step__c` points at this step.
 
 **Apex step**
 
@@ -305,21 +305,21 @@ The prompted fields are the `Doc_Config_Input__c` rows whose `Prompt_Step__c` po
 
 That is all in v1. Changing the selected templates from a step is an open question (§9).
 
-### 4.6 `Doc_Config_Input__c` — Generation input
+### 4.6 `SDocs_Card_Input__c` — Generation input
 
 Declaring inputs gives every step and every template a typed contract, instead of each step inventing keys.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Configuration__c` | Master-detail | |
-| `Input_Key__c` | Text(40) | Unique within the Configuration, e.g. `discount_pct`. Templates merge it as `{{input.discount_pct}}`; the exact merge syntax is set in the tech spec. |
+| `Card__c` | Master-detail | |
+| `Input_Key__c` | Text(40) | Unique within the S-Docs Card, e.g. `discount_pct`. Templates merge it as `{{input.discount_pct}}`; the exact merge syntax is set in the tech spec. |
 | `Label__c` / `Help_Text__c` | Text(80) / Text(255) | Shown when prompted. |
 | `Data_Type__c` | Text · Long text · Number · Currency · Percent · Date · Checkbox · Picklist · Record lookup · Contact | |
 | `Options__c` | Text(1000) | Picklist values (semicolon list), or the target object for *Record lookup*. |
 | `Required__c` | Checkbox | Generation cannot start until the input has a value from some source. |
 | `Default_Type__c` | None · Literal · Record field · User field | |
 | `Default_Value__c` | Text(255) | e.g. `10`, or `Account.Default_Discount__c`. |
-| `Prompt_Step__c` | Lookup → `Doc_Config_Step__c` | If set, that user prompt step asks for this input. |
+| `Prompt_Step__c` | Lookup → `SDocs_Card_Step__c` | If set, that user prompt step asks for this input. |
 | `Host_Settable__c` | Checkbox | Lets an embedding LWC or Flow pass the value in. Off by default, so hosts can't override values the admin expects a step to compute. |
 | `Sort_Order__c` | Number | Field order in the prompt. |
 
@@ -327,47 +327,47 @@ Declaring inputs gives every step and every template a typed contract, instead o
 
 ### 4.7 `Doc_User_Preference__c` — Per-user runtime preference
 
-Not configuration. This object holds the end user's own choices so they don't pollute admin data.
+Not S-Docs Card. This object holds the end user's own choices so they don't pollute admin data.
 
 | Field | Type | Notes |
 |---|---|---|
 | `User__c` | Lookup → User | Owner is also the user; the object's org-wide default is *Private*. |
-| `Config_Key__c` | Text(80) | Preferences are per Configuration. |
+| `Card_Key__c` | Text(80) | Preferences are per S-Docs Card. |
 | `Favorite_Row_Keys__c` | Text(1000) | Starred templates. |
 | `Last_Used__c` | DateTime | |
 
 ---
 
-## 5. How a Configuration is chosen
+## 5. How an S-Docs Card is chosen
 
 ```mermaid
 flowchart TD
-    A[Component loads<br/>recordId, objectApiName, placement] --> E[Active Configurations for object<br/>within effective dates<br/>ordered by Evaluation_Order]
+    A[Component loads<br/>recordId, objectApiName, placement] --> E[Active S-Docs Cards for object<br/>within effective dates<br/>ordered by Evaluation_Order]
     E --> F[Drop those whose placement type<br/>doesn't fit]
     F --> G{Next candidate}
-    G -- none left --> N[Show 'not available' state<br/>emit configurationresolved with none]
+    G -- none left --> N[Show 'not available' state<br/>emit cardresolved with none]
     G --> H[Evaluate conditions<br/>Always / All / Any / Custom logic]
     H -- false --> G
     H -- true --> W[Use it]
-    W --> T[Filter templates by their visibility rules<br/>apply actions, steps, inputs<br/>emit configurationresolved]
+    W --> T[Filter templates by their visibility rules<br/>apply actions, steps, inputs<br/>emit cardresolved]
 ```
 
 **Rules**
 
 - **First match wins.** Order is per object. The wizard shows the list in order with drag-to-reorder, and always shows the *Always* fallback, if there is one, at the bottom.
-- **There's no pinning.** The page, flow or host component never chooses a Configuration; the business admin's order does. (Decided 2026-10-02.)
-- **Hosts can narrow, never widen.** An embedding LWC can hide actions or limit templates for its own UI, but cannot enable an action or template the resolved Configuration doesn't allow.
-- **Explainability is built in.** The wizard's *Test* view takes a record and a user (*"run as"* preview), then shows each candidate Configuration and each condition row as pass or fail. The runtime records the same trace in debug logs.
+- **There's no pinning.** The page, flow or host component never chooses an S-Docs Card; the business admin's order does. (Decided 2026-10-02.)
+- **Hosts can narrow, never widen.** An embedding LWC can hide actions or limit templates for its own UI, but cannot enable an action or template the resolved S-Docs Card doesn't allow.
+- **Explainability is built in.** The wizard's *Test* view takes a record and a user (*"run as"* preview), then shows each candidate S-Docs Card and each condition row as pass or fail. The runtime records the same trace in debug logs.
 
 ---
 
 ## 6. Events (first cut)
 
-Not stored as data, but listed here because Configurations control platform event publishing. Payloads are the same on every channel; the tech spec defines them in full.
+Not stored as data, but listed here because S-Docs Cards control platform event publishing. Payloads are the same on every channel; the tech spec defines them in full.
 
 | Event | When | DOM | LMS | Flow output | Platform event |
 |---|---|:-:|:-:|:-:|:-:|
-| `configurationresolved` | A Configuration was chosen (or none) | ✓ | ✓ | ✓ | |
+| `cardresolved` | An S-Docs Card was chosen (or none) | ✓ | ✓ | ✓ | |
 | `generationstarted` | Before-generation steps passed; generation begins | ✓ | ✓ | | opt-in |
 | `generationblocked` | A validation or step stopped generation | ✓ | ✓ | ✓ | opt-in |
 | `documentgenerated` | Each document is ready | ✓ | ✓ | ✓ | opt-in |
@@ -379,39 +379,39 @@ Not stored as data, but listed here because Configurations control platform even
 | `signaturecompleted` / `signaturedeclined` | Async, from the signing service | | | | ✓ |
 | `afterstepcompleted` / `afterstepfailed` | Async after-generation steps | | ✓ | | opt-in |
 
-Common payload: `instanceId`, `correlationId`, `configKey`, `recordId`, `objectApiName`, `placement`, `documents[]` (`documentId`, `fileId`, `templateKey`, `name`, `format`), `inputs` (non-sensitive only), `message`.
+Common payload: `instanceId`, `correlationId`, `cardKey`, `recordId`, `objectApiName`, `placement`, `documents[]` (`documentId`, `fileId`, `templateKey`, `name`, `format`), `inputs` (non-sensitive only), `message`.
 
 ---
 
 ## 7. Security and access
 
-**`S-Docs Configuration Manager` permission set** (API `SDocs_Configuration_Manager`)
+**`S-Docs Card Manager` permission set** (API `SDocs_Card_Manager`)
 
-- Visibility of the *Document Configurations* tab and the wizard.
-- Create, read, edit and delete on the six configuration objects.
+- Visibility of the *S-Docs Cards* tab and the wizard.
+- Create, read, edit and delete on the six S-Docs Card objects.
 - Apex class access for the wizard controller.
 - No Setup, App Builder or *Customize Application* permission needed.
 - Assign it on its own, or add it to the S-Docs Administrator permission set group.
 
 **End users**
 
-- End users need **no access** to the configuration objects.
-- The runtime resolves Configurations in Apex and returns only the resolved, user-safe view: templates, actions, prompt definitions. It never returns formulas, Apex class names or other Configurations.
+- End users need **no access** to the S-Docs Card objects.
+- The runtime resolves S-Docs Cards in Apex and returns only the resolved, user-safe view: templates, actions, prompt definitions. It never returns formulas, Apex class names or other S-Docs Cards.
 
 **Guardrails the wizard enforces**
 
 - Apex and Flow references are chosen from lists filtered to the right interface or flow type, never typed in free text.
-- *Run as System* only for Experience Cloud-only Configurations.
+- *Run as System* only for Experience Cloud-only S-Docs Cards.
 - `Custom_Logic__c` must parse and reference existing rows only.
-- Templates must match the Configuration's object.
+- Templates must match the S-Docs Card's object.
 - `Evaluation_Order__c` is unique per object.
-- The Configuration can't be saved as Active while a required input has no source (no default, no prompt, not host-settable, and not set by any step).
+- The S-Docs Card can't be saved as Active while a required input has no source (no default, no prompt, not host-settable, and not set by any step).
 
 ---
 
 ## 8. Worked example — Opportunity
 
-| Order | Configuration | Scope | Conditions | Templates | Actions | Steps |
+| Order | S-Docs Card | Scope | Conditions | Templates | Actions | Steps |
 |---|---|---|---|---|---|---|
 | 10 | **Renewal Desk** | Embedded | 1. `Type` equals *Renewal* | Renewal Quote, Change Order (shown when `StageName` = *Closed Won*) | Preview, Download, Email | Before: **Flow** *Calc Uplift* → `uplift_pct` |
 | 20 | **Partner Portal** | Experience Cloud · Run as System | 1. User `Profile` is one of *Partner Community User* | Partner Order Form | Preview, Download | — |
@@ -425,11 +425,11 @@ A $184k New Business opportunity opened by a Deal Desk rep on the record page ge
 
 ## 9. Open questions
 
-1. **Rule-based template lists.** Besides picking templates one by one, should a Configuration offer *"all active templates for the object in category X / with tag Y"* so admins don't maintain long lists?
+1. **Rule-based template lists.** Besides picking templates one by one, should an S-Docs Card offer *"all active templates for the object in category X / with tag Y"* so admins don't maintain long lists?
 2. **Can before-generation steps change the template set?** e.g. Apex picks the German variant of a template. Proposed: not in v1; use per-template visibility rules instead.
-3. **Editing live Configurations.** v1 edits Active Configurations in place, with *Test* to check them. Should v1.1 add *draft revision → publish* so edits don't affect users until published?
-4. **Run log.** Should we persist a lightweight record per generation (Configuration used, inputs, step outcomes, documents) for audit, or rely on events and debug logs?
-5. **Moving between orgs.** Proposed: wizard export/import as JSON, matched on `Config_Key__c`, `Row_Key__c` and `Input_Key__c`. Templates are matched by a portable template identifier the tech spec will choose.
-6. **Delegated admins.** Out of scope now. Do we expect *"Sales Ops can only manage Opportunity Configurations"* later? It would add an owner or object scope to `Doc_Configuration__c`.
-7. **Limits.** Proposed caps: 50 Active Configurations per object, 25 condition rows each, 10 steps per phase. These keep resolution within one or two queries and predictable CPU time.
-8. **Targeting one specific page or custom component** (out of v1). In v1 a Configuration can target a placement *type*, such as Embedded, but not one particular page or component. If customers need that later, the likely shape is a small registry of named places that admins pick from, not free-text keys.
+3. **Editing live S-Docs Cards.** v1 edits Active S-Docs Cards in place, with *Test* to check them. Should v1.1 add *draft revision → publish* so edits don't affect users until published?
+4. **Run log.** Should we persist a lightweight record per generation (S-Docs Card used, inputs, step outcomes, documents) for audit, or rely on events and debug logs?
+5. **Moving between orgs.** Proposed: wizard export/import as JSON, matched on `Card_Key__c`, `Row_Key__c` and `Input_Key__c`. Templates are matched by a portable template identifier the tech spec will choose.
+6. **Delegated admins.** Out of scope now. Do we expect *"Sales Ops can only manage Opportunity S-Docs Cards"* later? It would add an owner or object scope to `SDocs_Card__c`.
+7. **Limits.** Proposed caps: 50 Active S-Docs Cards per object, 25 condition rows each, 10 steps per phase. These keep resolution within one or two queries and predictable CPU time.
+8. **Targeting one specific page or custom component** (out of v1). In v1 an S-Docs Card can target a placement *type*, such as Embedded, but not one particular page or component. If customers need that later, the likely shape is a small registry of named places that admins pick from, not free-text keys.

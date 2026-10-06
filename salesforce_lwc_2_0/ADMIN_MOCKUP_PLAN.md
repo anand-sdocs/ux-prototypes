@@ -1,4 +1,4 @@
-# Business-admin configuration mockup: build plan and handoff
+# Business-admin S-Docs Card mockup: build plan and handoff
 
 **Status (2026-10-02):** Built and checked in the browser. `admin.html` + `admin.css` + `admin.js` cover the list, the six-step editor with live preview, the Test view and a simulated **Lightning App Builder** view (with a "Today" comparison). Run it with `python3 -m http.server 4174` in this folder and open `/admin.html`. Next up is the tech spec.
 
@@ -6,32 +6,32 @@
 
 `admin.html` now opens with a guided walkthrough (`tour.js`), built like the Repeating Section prototype: a scenario bar at the top and a step guide with **Show me**. Deep links: `admin.html?scenario=bizadmin|sfadmin|rep|flow`.
 
-1. **Priya Shah, business admin:** (ends by turning on her own **Builder details** and opening Initech to see them) creates *Mid-Market Deals* (Amount ≥ 25,000 and < 100,000; Proposal, Order Form, NDA; adds Email and Request signature), previews, activates, tests Sam on Initech, finds that *Sales — Standard* wins, moves the new configuration up and tests again.
-2. **Marco Diaz, Salesforce admin:** in App Builder, finds and drags *S-Docs Documents* onto the Opportunity page, sets the **Title** (the only property), previews as Sam on Initech and saves.
+1. **Priya Shah, business admin:** (ends by turning on her own **Builder details** and opening Initech to see them) creates *Mid-Market Deals* (Amount ≥ 25,000 and < 100,000; Proposal, Order Form, NDA; adds Email and Request signature), previews, activates, tests Sam on Initech, finds that *Sales — Standard* wins, moves the new S-Docs Card up and tests again.
+2. **Marco Diaz, Salesforce admin:** in App Builder, finds and drags *S-Docs Card* onto the Opportunity page, sets the **Title** (the only property), previews as Sam on Initech and saves.
 3. **Sam Rivera, sales rep:** on Initech – Partner Resale, generates the proposal and order form, requests a signature, and sees the documents flip to Signed. An event panel shows the lifecycle events.
 4. **Bonus, Marco in Flow Builder:** adds the component to a screen, maps `{!recordId}`, stores `{!docIds}` and `{!lastEvent}`, then debugs as Sam. The component picks *Mid-Market Deals* by priority, as on the record page.
 
-The object list on the left only shows objects with saved configurations (there's no "Add object"); New configuration lets you pick any object.
+The object list on the left only shows objects with saved S-Docs Cards (there's no "Add object"); New S-Docs Card lets you pick any object.
 
 
-- **App Builder has one property, Title** (2026-10-02). No Configuration or Mode properties: the component always uses the first match, and **Builder details** is the business admin's own per-person switch on the Document Configurations page.
+- **App Builder has one property, Title** (2026-10-02). No S-Docs Card or Mode properties: the component always uses the first match, and **Builder details** is the business admin's own per-person switch on the S-Docs Cards page.
 - **Phase 1 has no advanced settings** (2026-10-02). `PHASE1 = true` in `admin.js` hides the wizard and strips the seed data down to when-to-show, templates and actions. The wizard code is kept for later phases; set the flag to `false` to see it.
-- **The simple editor is the default** (2026-10-02). It has three cards: *When to show* (field conditions with all/any, plus optional advanced logic; no conditions means everyone), *Templates* (an ordered list) and *Actions* (one checklist; bulk-capable actions also show on the toolbar). The six-step wizard is kept behind **Advanced settings**, and the simple view lists which advanced settings a configuration uses.
-- **Placement keys are dropped from v1** (2026-10-02). Configurations target placement types only.
+- **The simple editor is the default** (2026-10-02). It has three cards: *When to show* (field conditions with all/any, plus optional advanced logic; no conditions means everyone), *Templates* (an ordered list) and *Actions* (one checklist; bulk-capable actions also show on the toolbar). The six-step wizard is kept behind **Advanced settings**, and the simple view lists which advanced settings an S-Docs Card uses.
+- **Placement keys are dropped from v1** (2026-10-02). S-Docs Cards target placement types only.
 
-- Each **Configuration is tied to one Salesforce object**, and an object can have many Configurations.
-- **Order decides.** When a record matches several Configurations, the highest-priority one wins: **#1 at the top of the list**, checked first. *Confirm this reading with Anand.*
-- The visual language **matches the LWC 2.0 prototype** (`index.html` / `styles.css`): Salesforce chrome, the S-Docs card, navy primary. The wizard's live preview reuses the real `.sd-card` classes. It does not use the S-Docs UI Kit, because Anand asked for it to be "based on the LWC mockup".
+- Each **S-Docs Card is tied to one Salesforce object**, and an object can have many S-Docs Cards.
+- **Order decides.** When a record matches several S-Docs Cards, the highest-priority one wins: **#1 at the top of the list**, checked first. *Confirm this reading with Anand.*
+- The visual language **matches the LWC 2.0 prototype** (`index.html` / `styles.css`): Salesforce chrome, the S-Docs Card, navy primary. The wizard's live preview reuses the real `.sd-card` classes. It does not use the S-Docs UI Kit, because Anand asked for it to be "based on the LWC mockup".
 - The design stays independent of the current LWC and SDK. Reuse is decided in the tech spec.
 - Files: `admin.html` + `admin.css` (prefix `ad-`) + `admin.js`, with `styles.css` reused for the chrome, card, modal, toast and menu.
 
 ## Views to build (single page, rendered by JS)
 
-### 1. Configurations list (tab "Document Configurations")
+### 1. S-Docs Cards list (tab "S-Docs Cards")
 
-- **Header:** "Document Configurations", "Test a record" (secondary) and "New configuration" (primary).
-- **Left rail:** the objects, each with a configuration count (Opportunity 6, Account 2, Quote 3, Case 1, Contract 0), plus "Add object".
-- **Main panel:** that object's configurations in priority order. Each row has:
+- **Header:** "S-Docs Cards", "Test a record" (secondary) and "New S-Docs Card" (primary).
+- **Left rail:** the objects, each with an S-Docs Card count (Opportunity 6, Account 2, Quote 3, Case 1, Contract 0), plus "Add object".
+- **Main panel:** that object's S-Docs Cards in priority order. Each row has:
   - a drag handle and the priority number,
   - name and key, and a status pill (Active / Draft / Inactive),
   - placement chips,
@@ -40,12 +40,12 @@ The object list on the left only shows objects with saved configurations (there'
   - a kebab menu: Edit, Test, Duplicate, Move up/down/top, Activate/Deactivate, Delete.
 - **Reordering:** drag and drop, plus up/down in the menu, then a toast.
 - **Info strip:** "Checked top to bottom; the first match wins."
-- **Badges:** a **Fallback** badge on an Always + any-placement config at the bottom. An **Unreachable** warning on any config below an always-matching Active config.
+- **Badges:** a **Fallback** badge on an Always + any-placement card at the bottom. An **Unreachable** warning on any card below an always-matching Active card.
 
-### 2. Configuration editor (wizard)
+### 2. S-Docs Card editor (wizard)
 
 - **Header:** breadcrumb, status, and the buttons Test / Save draft / **Activate** (one primary).
-- **Three columns:** stepper, step body, and a **live preview** rail (sticky) showing the S-Docs card as an end user will see it.
+- **Three columns:** stepper, step body, and a **live preview** rail (sticky) showing the S-Docs Card as an end user will see it.
 
 The six steps:
 
@@ -54,7 +54,7 @@ The six steps:
    - object (locked once created);
    - placements: Record Page / Experience Cloud / Screen Flow / Embedded LWC;
    - active window;
-   - run-as (System only when the config is limited to Experience Cloud);
+   - run-as (System only when the card is limited to Experience Cloud);
    - read-only priority note.
 2. **Who & when:**
    - logic: Always / All / Any / Custom (`1 AND (2 OR 3)`);
@@ -79,31 +79,31 @@ The six steps:
 6. **Review:**
    - checks:
      - custom logic is valid and the rows are complete;
-     - the config has at least one template;
+     - the card has at least one template;
      - run-as System is used only with Experience Cloud;
      - every required input has a source;
-     - the config isn't unreachable;
+     - the card isn't unreachable;
    - summary cards, then Activate.
 
 **Live preview behaviour:**
 - The template dropdown respects picker style, featured and preselected settings, and the per-template visibility rules (evaluated on the sample record).
 - The documents toolbar and row menu show only the enabled actions.
 - **Generate actually runs the before steps.** Validation is evaluated against the sample record, the prompt modal is shown, and Apex/Flow appear as progress toasts. Generated rows are then added.
-- A small **event log** under the card (`configurationresolved`, `generationstarted`, `documentgenerated`…).
+- A small **event log** under the card (`cardresolved`, `generationstarted`, `documentgenerated`…).
 
-### 3. Test a record ("Which configuration applies?")
+### 3. Test a record ("Which S-Docs Card applies?")
 
 - **Controls:** object, record, run-as user, placement.
-- **Trace:** every configuration in priority order, each marked one of:
+- **Trace:** every S-Docs Card in priority order, each marked one of:
   - skipped (Draft, out of date range, placement, or key mismatch),
   - conditions not met, with each row shown ✓/✗ and its actual value,
   - **Wins**,
   - not evaluated (a higher-priority one already matched).
-- **Right side:** the winning configuration's card preview, as that user sees it.
+- **Right side:** the winning S-Docs Card's card preview, as that user sees it.
 
 ## Sample data (planned)
 
-**Opportunity configurations, in order:**
+**Opportunity S-Docs Cards, in order:**
 
 1. **Renewal Desk**: Embedded; `Type = Renewal`; Renewal Quote, Change Order (shown only at Closed Won), Order Form; Flow `Calc_Uplift` → `uplift_pct`.
 2. **Partner Portal**: Experience Cloud, run as System; profile is one of *Partner Community User*; Order Form ★, Proposal; Preview and Download only.
